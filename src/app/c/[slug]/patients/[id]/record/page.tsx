@@ -12,6 +12,7 @@ import { requestMeta } from "@/server/http";
 import { DomainError } from "@/server/tenancy/provisioning";
 import { amendAction, breakGlassAction, clinicalStatusAction } from "../../../../../care-actions";
 import { cookies } from "next/headers";
+import { LabResultsList } from "@/components/lab";
 
 /**
  * The patient's medical record. Access follows the care relationship; anyone
@@ -70,7 +71,7 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
     throw e;
   }
 
-  const { patient, allergies, diagnoses, vitals, encounters, access } = record;
+  const { patient, allergies, diagnoses, vitals, encounters, access, labOrders } = record;
   const tz = ctx.tenant.timezone;
   const s = ctx.tenant.slug;
   return (
@@ -97,6 +98,13 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
           </CardBody>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader title={t("clinic.labOrder.results")} />
+        <CardBody>
+          <LabResultsList orders={labOrders} timeZone={tz} />
+        </CardBody>
+      </Card>
 
       <Card>
         <CardHeader title={t("clinic.record.encounters")} />

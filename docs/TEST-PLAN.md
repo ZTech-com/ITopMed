@@ -2,7 +2,7 @@
 
 All tests use synthetic data only. Integration tests boot an isolated embedded PostgreSQL (port 54339), apply the real migrations and seed plans.
 
-## Automated today (`npm test` — 69 tests, all passing)
+## Automated today (`npm test` — 79 tests, all passing)
 | File | Covers |
 |---|---|
 | `tests/db-security.test.ts` | RLS on every table; runtime roles cannot bypass RLS; role separation (platform cannot read hashes/MFA/sessions, cannot approve support grants); no rows without tenant context; audit append-only for all roles incl. owner; hash chain verifies |
@@ -13,6 +13,8 @@ All tests use synthetic data only. Integration tests boot an isolated embedded P
 | `tests/availability.test.ts` | Time-zone conversion (Tashkent, DST in Berlin), weekdays, HH:MM parsing, slot generation (alignment, block end, exceptions, busy and past slots), overlap detection, money parsing |
 | `tests/phase5.test.ts` | Services (exact money, duplicate codes, invalid prices, price change, read vs manage permissions); doctor profiles (doctor role required); weekly schedules (cross-branch overlap, room/branch mismatch, exceptions, slots, who-works-today); doctors see only their own schedule; services per doctor; branch-scope enforcement for branch managers; permission data migration for existing clinics |
 | `tests/phase6.test.ts` | Registry (sequential MRNs, duplicate detection by phone/similar name/identifier, blocking identical PINFL, birth-date validation), smart search (MRN, typo, phone, PINFL, date), audited views without personal data in metadata; booking (concurrent double-booking race → exactly one wins, overlap, slot removal, cancellation frees slot, absences, past), working-hours boundaries, front desk vs owner permissions, check-in queue numbers, walk-ins, own-day view for doctors; EMR access (denied → audited, break-glass, care relationship, other doctor, head-doctor oversight), nurse access by today's visit, vitals ranges; visit workflow (start, idempotency, draft, assessment required, sign, DB-level immutability even for the owner, amendments, finish, tamper detection); platform role cannot read clinical tables; cross-clinic isolation; operational branch list per role |
+| `tests/phase7.test.ts` | Invoices (draft from a visit, line discounts, sequential numbers, frozen once issued); payments (open shift required, partial payments, overpayment rejected, double submit idempotent, concurrent payments never exceed the total); refunds and voids (limits, idempotency, void only when nothing is paid), shift closing reconciles cash; role separation (front desk cannot take money, cashier cannot read finance reports); financial and operational reports add up; billing invisible to the platform role and other clinics |
+| `tests/phase8.test.ts` | Laboratory: test catalogue (range validation, lab.manage only), order numbering, partial result entry, LOW/HIGH flags, four-eyes verification (service + DB CHECK), verified results immutable even for the schema owner, results shown in the medical record; access limits (other doctor, receptionist, lab staff without EMR access, other clinic, platform role has no grants), cancellation; permission data migration for existing clinics |
 | `tests/i18n.test.ts` | Four catalogs: identical keys, no empty values, matching placeholders, no Cyrillic in uz-Latn |
 
 ## Manually verified in the browser (2026-11-11, dev build)
@@ -20,6 +22,9 @@ Admin login → MFA enrolment → dashboard; clinic creation with localized vali
 
 ### Phase 6 browser walkthrough (2026-11-11)
 Receptionist activation → patient registration (P-000001, phone normalised, no EMR button for front desk) → duplicate review on a near-identical spelling (input kept, explicit confirmation required) → booking (past slots hidden, slot booked). The walkthrough surfaced a real defect — the queue page used an admin-only branch helper and failed for receptionists — fixed with `listOperationalBranches` and a regression test. Check-in and the doctor visit were then verified by automated tests only (the browser pane was closed).
+
+### Phase 8a lab walkthrough (2026-11-11)
+Lab technician sets up analytes → doctor starts the visit and orders two tests (urgent) → nurse station lists the pending collection → nurse marks the specimen collected → technician 1 enters values (low, normal written with a decimal comma, high) → verify button not offered to the person who entered them → technician 2 verifies → doctor sees the flagged results on the visit and in the medical record. Found and fixed: verified results were still drawn as (disabled) input boxes; they now render as plain values. No server errors. The integration test DB now runs with `io_method=sync` because PostgreSQL 18 I/O workers could outlive an interrupted run on Windows and block port 54339.
 
 ## To add
 | Area | Plan |

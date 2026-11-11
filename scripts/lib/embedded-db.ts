@@ -16,6 +16,8 @@ export interface EmbeddedDbOptions {
   platformPassword: string;
   database?: string;
   persistent?: boolean;
+  /** Extra server settings, e.g. ["-c", "io_method=sync"]. */
+  postgresFlags?: string[];
 }
 
 export async function startEmbeddedDb(o: EmbeddedDbOptions) {
@@ -29,6 +31,7 @@ export async function startEmbeddedDb(o: EmbeddedDbOptions) {
     persistent: o.persistent ?? true,
     // Always UTF-8: the platform stores Uzbek (Latin/Cyrillic) and Russian text.
     initdbFlags: ["--encoding=UTF8", "--locale=C"],
+    postgresFlags: o.postgresFlags ?? [],
     onLog: () => {},
   });
   if (fresh) await server.initialise();

@@ -98,7 +98,7 @@ export function TextField({
   defaultValue?: string | null;
   autoComplete?: string;
   placeholder?: string;
-  inputMode?: "text" | "email" | "numeric" | "tel";
+  inputMode?: "text" | "email" | "numeric" | "decimal" | "tel";
   required?: boolean;
   autoFocus?: boolean;
 }) {

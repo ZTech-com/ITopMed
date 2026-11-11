@@ -23,6 +23,8 @@ Vitals with units and reference ranges; nursing notes; tasks assigned by doctors
 ## 4. Laboratory
 Order → specimen collected (barcode) → received → processed → result entry → verification by authorised staff → released to doctor → optionally released to the patient portal after doctor approval.
 
+**Implemented (8a):** doctor orders tests from an open visit (routine/urgent, optional indication) → nurse station or lab marks the specimen collected → lab staff enter values (partial saves allowed; flags computed against the reference range snapshot) → a second person verifies → results become read-only and appear on the visit and in the medical record. Not yet: barcode labels, separate "received" step, critical-value notification, portal release.
+
 ## 5. Billing
 Services from appointment/encounter → invoice → payment (cash, card, Payme, Click) with idempotency → fiscal receipt (integration to be decided) → refunds need permission and reason → cash shift open/close with reconciliation.
 

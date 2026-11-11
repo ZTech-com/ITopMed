@@ -30,6 +30,8 @@ MFA is mandatory for all platform staff. Matrix: `src/server/authz/platform.ts`.
 | HR manager | staff profiles, schedules, staff documents | |
 | Patient (Phase 8) | own appointments, released documents, consents, requests | separate portal and RLS policies |
 
+Phase 8a added `lab.collect` (nurse, laboratory staff: mark specimens collected) and `lab.manage` (laboratory staff, clinic administrator: test catalogue and order cancellation); verification uses `lab.verify` and is always by a different person than the one who entered the results. Existing clinics received them through a data migration.
+
 Phase 5 added `services.read`, `schedules.read` and `schedules.manage` (front desk, managers and HR read/plan schedules; doctors always see their own schedule without these permissions). Existing clinics received them through a data migration.
 
 Source: `src/server/authz/permissions.ts`. Clinics edit role permissions and create custom roles at `/c/{slug}/roles` (owner role is locked). Member roles, branch scope and access status are managed at `/c/{slug}/staff/{membershipId}`: nobody can change their own access, only owners change owners, and a clinic always keeps one active owner.

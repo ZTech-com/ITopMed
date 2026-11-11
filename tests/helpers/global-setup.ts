@@ -37,6 +37,9 @@ export default async function setup() {
     appPassword: "test-app",
     platformPassword: "test-platform",
     persistent: false,
+    // PostgreSQL 18 I/O worker processes can outlive the server on Windows and keep
+    // the test port busy; synchronous I/O starts none and is fine at test scale.
+    postgresFlags: ["-c", "io_method=sync"],
   });
   const env = { ...process.env, MIGRATION_DATABASE_URL: `postgresql://itopmed_owner:test-owner@localhost:${port}/itopmed` };
   execSync("npx prisma migrate deploy", { env, stdio: "pipe" });

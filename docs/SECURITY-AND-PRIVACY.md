@@ -38,6 +38,7 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 | No deletion grants on clinical tables; corrections via status (`ENTERED_IN_ERROR`) or amendments | ✅ | migration `patients_appointments_emr` |
 | Clinical and patient tables have no grants for the platform role | ✅ | tested |
 | Search terms and clinical text never written to logs or audit metadata | ✅ | |
+| Laboratory: four-eyes verification (verifier ≠ person who entered results) in the service **and** as a DB CHECK; verified results immutable by trigger; lab staff work from the order and patient header only — no EMR access; values hidden from the clinical views until verified; no lab tables granted to the platform role | ✅ | `lab/lab.ts`, migration `laboratory`; tested |
 | Protected document storage + short-lived URLs | ⏳ | Phase 6 |
 | Encrypted backups, PITR, tested restores | ⏳ | infrastructure, Phase 9 |
 | Dependency / SAST / secret scanning in CI | ⏳ | Phase 9 (`npm audit` currently reports advisories in dev dependencies — review) |

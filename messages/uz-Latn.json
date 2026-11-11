@@ -55,7 +55,10 @@
     "billing": "Hisob va toʻlovlar",
     "cash": "Kassa",
     "reports": "Hisobotlar",
-    "expenses": "Xarajatlar"
+    "expenses": "Xarajatlar",
+    "lab": "Laboratoriya",
+    "labTests": "Tahlillarni sozlash",
+    "nurse": "Hamshira posti"
   },
   "auth": {
     "adminTitle": "ITop Med boshqaruvi",
@@ -753,6 +756,72 @@
       "void": "Bekor qilish",
       "voided": "Xarajat bekor qilindi.",
       "empty": "Bu davrda xarajatlar yoʻq."
+    },
+    "lab": {
+      "title": "Laboratoriya",
+      "subtitle": "Bosqichlar boʻyicha laboratoriya buyurtmalari. Laboratoriya xodimlari faqat buyurtma va bemor maʼlumotlarini koʻradi, tibbiy kartani emas.",
+      "toCollect": "Namuna olish",
+      "inProgress": "Jarayonda",
+      "toVerify": "Tasdiqlash uchun",
+      "done": "Tasdiqlangan",
+      "empty": "Bu bosqichda buyurtmalar yoʻq.",
+      "tests": "Tahlillar",
+      "indication": "Koʻrsatma",
+      "priority": "Muhimlik",
+      "orderedBy": "Tayinlagan",
+      "orderedAt": "Tayinlangan",
+      "collect": "Namuna olindi",
+      "collected": "Namuna olingan deb belgilandi.",
+      "enter": "Natijalarni kiritish",
+      "enterHint": "Qiymatlar meʼyoriy oraliq bilan avtomatik solishtiriladi. Qisman saqlash mumkin.",
+      "save": "Natijalarni saqlash",
+      "saved": "Natijalar saqlandi.",
+      "verify": "Natijalarni tasdiqlash",
+      "verifyHint": "Natijalarni kiritgan emas, boshqa xodim tasdiqlashi kerak. Tasdiqlangan natijalar oʻzgarmaydi.",
+      "verified": "Natijalar tasdiqlandi.",
+      "cancel": "Buyurtmani bekor qilish",
+      "cancelled": "Buyurtma bekor qilindi.",
+      "value": "Qiymat",
+      "unit": "Birlik",
+      "reference": "Meʼyor",
+      "flag": "Belgi",
+      "pending": "Natijalar kutilmoqda",
+      "patient": "Bemor",
+      "back": "Barcha buyurtmalar",
+      "noAnalytes": "Bu tahlil uchun koʻrsatkichlar hali sozlanmagan."
+    },
+    "labTests": {
+      "title": "Tahlillarni sozlash",
+      "subtitle": "Har bir tahlil uchun koʻrsatkichlar, birliklar va meʼyoriy qiymatlar («Tahlil» turidagi xizmatlar).",
+      "noTests": "Hozircha tahlillar yoʻq. Avval «Tahlil» turidagi xizmatlarni yarating.",
+      "addAnalyte": "Koʻrsatkich qoʻshish",
+      "name": "Koʻrsatkich",
+      "loinc": "LOINC kodi",
+      "unit": "Birlik",
+      "refLow": "Quyi chegara",
+      "refHigh": "Yuqori chegara",
+      "sortOrder": "Tartib",
+      "added": "Koʻrsatkich qoʻshildi.",
+      "archive": "Olib tashlash",
+      "archived": "Koʻrsatkich olib tashlandi.",
+      "noAnalytes": "Hozircha koʻrsatkichlar yoʻq."
+    },
+    "labOrder": {
+      "title": "Tahlillar",
+      "order": "Tahlil tayinlash",
+      "chooseTests": "Tahlillar",
+      "noLabTests": "Klinikada tahlillar sozlanmagan.",
+      "ordered": "{number} laboratoriya buyurtmasi yaratildi.",
+      "results": "Tahlil natijalari",
+      "none": "Tahlillar yoʻq."
+    },
+    "nurse": {
+      "title": "Hamshira posti",
+      "subtitle": "Bugun filialingizdagi bemorlar: koʻrsatkichlar va namuna olish.",
+      "empty": "Hozir hech kim kutmayapti.",
+      "pendingCollections": "Olinadigan namunalar",
+      "noCollections": "Olinadigan namunalar yoʻq.",
+      "recordVitals": "Koʻrsatkichlar"
     }
   },
   "status": {
@@ -791,7 +860,11 @@
     "ISSUED": "Chiqarilgan",
     "PARTIALLY_PAID": "Qisman toʻlangan",
     "PAID": "Toʻlangan",
-    "VOID": "Bekor qilingan"
+    "VOID": "Bekor qilingan",
+    "ORDERED": "Tayinlangan",
+    "COLLECTED": "Namuna olingan",
+    "RESULTED": "Tasdiq kutilmoqda",
+    "VERIFIED": "Tasdiqlangan"
   },
   "platformRole": {
     "SUPER_ADMIN": "Super administrator",
@@ -859,7 +932,11 @@
     "vitalRange": "Qiymat ruxsat etilgan oraliqdan tashqarida.",
     "vitalRequired": "Kamida bitta qiymat kiriting.",
     "breakGlassReason": "Sababni tanlang.",
-    "quantity": "Soni 1 dan 1000 gacha boʻlishi kerak."
+    "quantity": "Soni 1 dan 1000 gacha boʻlishi kerak.",
+    "number": "Son kiriting, masalan 5,4.",
+    "loinc": "LOINC formati, masalan 718-7.",
+    "rangeOrder": "Yuqori chegara quyi chegaradan kichik boʻlmasligi kerak.",
+    "chooseTest": "Kamida bitta tahlilni tanlang."
   },
   "errors": {
     "generic": "Nimadir notoʻgʻri ketdi. Qayta urinib koʻring.",
@@ -931,7 +1008,10 @@
     "openShiftFirst": "Avval kassa smenasini oching.",
     "refundTooLarge": "Qaytarish ushbu toʻlovning qaytarilishi mumkin boʻlgan summasidan oshib ketdi.",
     "shiftAlreadyOpen": "Bu filialda sizning ochiq smenangiz bor.",
-    "notYourShift": "Smenani faqat uni ochgan kassir yopa oladi."
+    "notYourShift": "Smenani faqat uni ochgan kassir yopa oladi.",
+    "fourEyes": "Natijalarni ularni kiritgan emas, boshqa xodim tasdiqlashi kerak.",
+    "invalidResultValue": "Son kiriting, masalan 5,4.",
+    "noResultsEntered": "Kamida bitta qiymat kiriting."
   },
   "email": {
     "invitation": {
@@ -1010,7 +1090,9 @@
     "reports_operational": "Operatsion hisobotlarni koʻrish",
     "services_read": "Xizmatlar va narxlarni koʻrish",
     "schedules_read": "Shifokorlar jadvalini koʻrish",
-    "schedules_manage": "Shifokorlar jadvalini boshqarish"
+    "schedules_manage": "Shifokorlar jadvalini boshqarish",
+    "lab_collect": "Namuna olish",
+    "lab_manage": "Tahlillar va meʼyoriy qiymatlarni sozlash"
   },
   "specialties": {
     "general_practice": "Umumiy amaliyot",
@@ -1176,5 +1258,14 @@
     "PLATFORM_USER": "ITop Med qoʻllab-quvvatlash",
     "SYSTEM": "Tizim",
     "ANONYMOUS": "Tizimga kirmagan"
+  },
+  "priority": {
+    "ROUTINE": "Rejali",
+    "URGENT": "Shoshilinch"
+  },
+  "labFlag": {
+    "NORMAL": "Meʼyorda",
+    "LOW": "Meʼyordan past",
+    "HIGH": "Meʼyordan yuqori"
   }
 }

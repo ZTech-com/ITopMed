@@ -9,6 +9,7 @@ import type { Tx } from "../db";
 import { uuidv7 } from "../security/crypto";
 import { DomainError } from "../tenancy/provisioning";
 import { withRecordAccess, type BreakGlassReason } from "./access";
+import { labOrdersForRecord } from "../lab/lab";
 
 const uuid = z.uuid();
 const clinicalText = z.string().max(10_000, "validation.tooLong");
@@ -48,7 +49,7 @@ export function amendmentHash(a: { id: string; noteId: string; authorId: string;
 /** The full medical record of one patient, subject to care-relationship access. Audited. */
 export async function getMedicalRecord(ctx: ClinicContext, patientId: string, meta: RequestMeta, opts: { breakGlass?: BreakGlassReason } = {}) {
   return withRecordAccess(ctx, patientId, meta, { breakGlass: opts.breakGlass }, async (tx, access) => {
-    const [patient, allergies, diagnoses, vitals, encounters] = await Promise.all([
+    const [patient, allergies, diagnoses, vitals, encounters, labOrders] = await Promise.all([
       tx.patient.findUniqueOrThrow({ where: { id: patientId }, select: { id: true, mrn: true, lastName: true, firstName: true, middleName: true, birthDate: true, sex: true } }),
       tx.allergy.findMany({ where: { patientId, status: { not: "ENTERED_IN_ERROR" } }, orderBy: { recordedAt: "desc" } }),
       tx.diagnosis.findMany({ where: { patientId, status: { not: "ENTERED_IN_ERROR" } }, orderBy: { recordedAt: "desc" } }),
@@ -62,6 +63,7 @@ export async function getMedicalRecord(ctx: ClinicContext, patientId: string, me
           notes: { include: { amendments: { orderBy: { createdAt: "asc" } } }, orderBy: { createdAt: "asc" } },
         },
       }),
+      labOrdersForRecord(tx, patientId),
     ]);
     const authorIds = [...new Set(encounters.flatMap((e) => e.notes.flatMap((n) => [n.authorId, ...n.amendments.map((a) => a.authorId)])))];
     const authors = new Map((await tx.user.findMany({ where: { id: { in: authorIds } }, select: { id: true, fullName: true } })).map((u) => [u.id, u.fullName]));
@@ -71,6 +73,7 @@ export async function getMedicalRecord(ctx: ClinicContext, patientId: string, me
       allergies,
       diagnoses,
       vitals,
+      labOrders,
       encounters: encounters.map((e) => ({
         ...e,
         notes: e.notes.map((n) => ({
@@ -124,7 +127,7 @@ export async function startVisit(ctx: ClinicContext, appointmentId: string, meta
 export async function getEncounter(ctx: ClinicContext, encounterId: string, meta: RequestMeta) {
   const enc = await inClinic(ctx, (tx) => loadEncounter(tx, encounterId));
   return withRecordAccess(ctx, enc.patientId, meta, {}, async (tx, access) => {
-    const [encounter, allergies] = await Promise.all([
+    const [encounter, allergies, labOrders] = await Promise.all([
       tx.encounter.findUniqueOrThrow({
         where: { id: enc.id },
         include: {
@@ -136,8 +139,9 @@ export async function getEncounter(ctx: ClinicContext, encounterId: string, meta
         },
       }),
       tx.allergy.findMany({ where: { patientId: enc.patientId, status: "ACTIVE" } }),
+      labOrdersForRecord(tx, enc.patientId, enc.id),
     ]);
-    return { encounter, allergies, isOwn: access.doctorProfileId === enc.doctorProfileId };
+    return { encounter, allergies, labOrders, isOwn: access.doctorProfileId === enc.doctorProfileId };
   });
 }
 

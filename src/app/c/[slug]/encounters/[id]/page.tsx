@@ -9,6 +9,9 @@ import { NOTE_SECTIONS, amendmentHash, getEncounter, noteHash } from "@/server/e
 import { requestMeta } from "@/server/http";
 import { DomainError } from "@/server/tenancy/provisioning";
 import { allergyAction, amendAction, clinicalStatusAction, diagnosisAction, finishVisitAction, noteAction, vitalsAction } from "../../../../care-actions";
+import { labOrderAction } from "../../../../lab-actions";
+import { LabResultsList } from "@/components/lab";
+import { listLabTests } from "@/server/lab/lab";
 
 /** The doctor's visit workspace. Every load is an audited record access. */
 export default async function EncounterPage({ params }: { params: Promise<{ slug: string; id: string }> }) {
@@ -19,7 +22,8 @@ export default async function EncounterPage({ params }: { params: Promise<{ slug
     if (e instanceof DomainError) notFound();
     throw e;
   });
-  const { encounter: e, allergies, isOwn } = data;
+  const { encounter: e, allergies, labOrders, isOwn } = data;
+  const labTests = ctx.permissions.has("orders.create") ? (await listLabTests(ctx)).filter((x) => x.labAnalytes.length > 0) : [];
   const tz = ctx.tenant.timezone;
   const open = e.status === "OPEN";
   const canWrite = isOwn && open && ctx.permissions.has("emr.write");
@@ -112,6 +116,39 @@ export default async function EncounterPage({ params }: { params: Promise<{ slug
           </CardBody>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader title={t("clinic.labOrder.title")} />
+        <CardBody className="space-y-4">
+          <LabResultsList orders={labOrders} timeZone={tz} />
+          {canWrite && ctx.permissions.has("orders.create") ? (
+            labTests.length === 0 ? (
+              <p className="text-[13px] text-text-3">{t("clinic.labOrder.noLabTests")}</p>
+            ) : (
+              <Form action={labOrderAction} className="border-t border-border pt-4">
+                <input type="hidden" name="$slug" value={s} />
+                <input type="hidden" name="encounterId" value={e.id} />
+                <fieldset>
+                  <legend className="text-[13px] font-medium">{t("clinic.labOrder.chooseTests")}</legend>
+                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {labTests.map((x) => (
+                      <label key={x.id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-[var(--radius-control)] border border-border bg-surface-2 px-3 text-[14px] has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
+                        <input type="checkbox" name="serviceIds" value={x.id} className="size-4 accent-[var(--accent)]" />
+                        {x.name}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
+                  <SelectField name="priority" label={t("clinic.lab.priority")} options={(["ROUTINE", "URGENT"] as const).map((p) => ({ value: p, label: t(`priority.${p}`) }))} />
+                  <TextField name="indication" label={t("clinic.lab.indication")} optionalLabel={t("common.optional")} />
+                </div>
+                <SubmitButton variant="secondary">{t("clinic.labOrder.order")}</SubmitButton>
+              </Form>
+            )
+          ) : null}
+        </CardBody>
+      </Card>
 
       {canWrite ? (
         <Card>

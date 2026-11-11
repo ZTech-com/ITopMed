@@ -55,7 +55,10 @@
     "billing": "Billing",
     "cash": "Cash desk",
     "reports": "Reports",
-    "expenses": "Expenses"
+    "expenses": "Expenses",
+    "lab": "Laboratory",
+    "labTests": "Lab test setup",
+    "nurse": "Nurse station"
   },
   "auth": {
     "adminTitle": "ITop Med Administration",
@@ -753,6 +756,72 @@
       "void": "Cancel",
       "voided": "Expense cancelled.",
       "empty": "No expenses in this period."
+    },
+    "lab": {
+      "title": "Laboratory",
+      "subtitle": "Lab orders by stage. Lab staff see the order and patient identity only, not the medical record.",
+      "toCollect": "To collect",
+      "inProgress": "In progress",
+      "toVerify": "To verify",
+      "done": "Verified",
+      "empty": "No orders in this stage.",
+      "tests": "Tests",
+      "indication": "Indication",
+      "priority": "Priority",
+      "orderedBy": "Ordered by",
+      "orderedAt": "Ordered",
+      "collect": "Specimen collected",
+      "collected": "Specimen marked as collected.",
+      "enter": "Enter results",
+      "enterHint": "Values are compared with the reference range automatically. You can save partial results.",
+      "save": "Save results",
+      "saved": "Results saved.",
+      "verify": "Verify results",
+      "verifyHint": "Verification must be done by a different person than the one who entered the results. Verified results are final.",
+      "verified": "Results verified.",
+      "cancel": "Cancel order",
+      "cancelled": "Order cancelled.",
+      "value": "Value",
+      "unit": "Unit",
+      "reference": "Reference range",
+      "flag": "Flag",
+      "pending": "Results pending",
+      "patient": "Patient",
+      "back": "All lab orders",
+      "noAnalytes": "This test has no analytes set up yet."
+    },
+    "labTests": {
+      "title": "Lab test setup",
+      "subtitle": "Analytes, units and reference ranges for each lab test (services of type “Lab test”).",
+      "noTests": "No lab tests yet. Create services of type “Lab test” first.",
+      "addAnalyte": "Add analyte",
+      "name": "Analyte",
+      "loinc": "LOINC code",
+      "unit": "Unit",
+      "refLow": "Reference low",
+      "refHigh": "Reference high",
+      "sortOrder": "Order",
+      "added": "Analyte added.",
+      "archive": "Remove",
+      "archived": "Analyte removed.",
+      "noAnalytes": "No analytes yet."
+    },
+    "labOrder": {
+      "title": "Lab tests",
+      "order": "Order tests",
+      "chooseTests": "Tests",
+      "noLabTests": "No lab tests are set up in this clinic.",
+      "ordered": "Lab order {number} created.",
+      "results": "Lab results",
+      "none": "No lab orders."
+    },
+    "nurse": {
+      "title": "Nurse station",
+      "subtitle": "Patients in your branch today: vital signs and specimen collection.",
+      "empty": "No patients waiting right now.",
+      "pendingCollections": "Specimens to collect",
+      "noCollections": "No specimens waiting.",
+      "recordVitals": "Vital signs"
     }
   },
   "status": {
@@ -791,7 +860,11 @@
     "ISSUED": "Issued",
     "PARTIALLY_PAID": "Partially paid",
     "PAID": "Paid",
-    "VOID": "Void"
+    "VOID": "Void",
+    "ORDERED": "Ordered",
+    "COLLECTED": "Specimen collected",
+    "RESULTED": "Awaiting verification",
+    "VERIFIED": "Verified"
   },
   "platformRole": {
     "SUPER_ADMIN": "Super administrator",
@@ -859,7 +932,11 @@
     "vitalRange": "This value is outside the plausible range.",
     "vitalRequired": "Enter at least one value.",
     "breakGlassReason": "Choose a reason.",
-    "quantity": "Quantity must be between 1 and 1000."
+    "quantity": "Quantity must be between 1 and 1000.",
+    "number": "Enter a number, e.g. 5.4.",
+    "loinc": "LOINC format, e.g. 718-7.",
+    "rangeOrder": "The upper limit must not be lower than the lower limit.",
+    "chooseTest": "Choose at least one test."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -931,7 +1008,10 @@
     "openShiftFirst": "Open your cash shift first.",
     "refundTooLarge": "The refund exceeds the refundable amount of this payment.",
     "shiftAlreadyOpen": "You already have an open shift at this branch.",
-    "notYourShift": "Only the cashier who opened the shift can close it."
+    "notYourShift": "Only the cashier who opened the shift can close it.",
+    "fourEyes": "Results must be verified by a different person than the one who entered them.",
+    "invalidResultValue": "Enter a number, e.g. 5.4.",
+    "noResultsEntered": "Enter at least one value."
   },
   "email": {
     "invitation": {
@@ -1010,7 +1090,9 @@
     "reports_operational": "View operational reports",
     "services_read": "View services and prices",
     "schedules_read": "View doctors’ schedules",
-    "schedules_manage": "Manage doctors’ schedules"
+    "schedules_manage": "Manage doctors’ schedules",
+    "lab_collect": "Collect specimens",
+    "lab_manage": "Set up lab tests and reference ranges"
   },
   "specialties": {
     "general_practice": "General practice",
@@ -1176,5 +1258,14 @@
     "PLATFORM_USER": "ITop Med support",
     "SYSTEM": "System",
     "ANONYMOUS": "Not signed in"
+  },
+  "priority": {
+    "ROUTINE": "Routine",
+    "URGENT": "Urgent"
+  },
+  "labFlag": {
+    "NORMAL": "Normal",
+    "LOW": "Low",
+    "HIGH": "High"
   }
 }

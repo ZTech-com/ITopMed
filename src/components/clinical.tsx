@@ -141,7 +141,7 @@ export async function VitalsForm({ action, slug, patientId, encounterId }: { act
       {encounterId ? <input type="hidden" name="encounterId" value={encounterId} /> : null}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {VITAL_KINDS.map((k) => (
-          <TextField key={k} name={k} label={`${t(`vital.${k}`)} (${VITALS[k].unit})`} inputMode="numeric" optionalLabel={undefined} />
+          <TextField key={k} name={k} label={`${t(`vital.${k}`)} (${VITALS[k].unit})`} inputMode="decimal" optionalLabel={undefined} />
         ))}
       </div>
       <SubmitButton variant="secondary">{t("clinic.visit.recordVitals")}</SubmitButton>

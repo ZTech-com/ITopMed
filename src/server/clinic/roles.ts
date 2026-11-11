@@ -15,7 +15,7 @@ export const LOCKED_ROLE_KEYS = new Set(["clinic_owner"]);
 /** Permissions that expose patients' medical information. Changes are flagged in the audit trail. */
 export const CLINICAL_PERMISSIONS = new Set<Permission>([
   "emr.read", "emr.read_all", "emr.write", "emr.sign", "emr.amend", "vitals.write", "nursing.write",
-  "orders.create", "lab.read", "lab.process", "lab.verify", "documents.read", "documents.upload", "prescriptions.write",
+  "orders.create", "lab.read", "lab.process", "lab.verify", "lab.collect", "documents.read", "documents.upload", "prescriptions.write",
 ]);
 
 export const PERMISSION_GROUPS: { key: string; permissions: Permission[] }[] = [
@@ -23,7 +23,7 @@ export const PERMISSION_GROUPS: { key: string; permissions: Permission[] }[] = [
   { key: "patients", permissions: ["patients.read", "patients.create", "patients.update", "patients.merge", "appointments.read", "appointments.manage", "queue.manage", "schedules.read", "schedules.manage"] },
   { key: "clinical", permissions: [...CLINICAL_PERMISSIONS] },
   { key: "finance", permissions: ["billing.read", "billing.invoice", "billing.payment", "billing.refund", "cash.shift", "finance.reports", "finance.manage"] },
-  { key: "operations", permissions: ["inventory.read", "inventory.manage", "inventory.dispense", "hr.read", "hr.manage", "reports.operational"] },
+  { key: "operations", permissions: ["inventory.read", "inventory.manage", "inventory.dispense", "hr.read", "hr.manage", "reports.operational", "lab.manage"] },
 ];
 
 /** i18n key for a permission (next-intl treats dots as nesting). */

@@ -19,6 +19,8 @@ export default async function ClinicLayout({ children, params }: { children: Rea
   const nav: NavItem[] = [
     { href: base, label: t("nav.dashboard"), icon: "dashboard", exact: true },
     ...(isDoctor && can("emr.write") ? [{ href: `${base}/my-queue`, label: t("nav.myQueue"), icon: "visits" as const }] : []),
+    ...(can("vitals.write") && !isDoctor ? [{ href: `${base}/nurse`, label: t("nav.nurse"), icon: "nurse" as const }] : []),
+    ...(can("lab.read") || can("lab.process") ? [{ href: `${base}/lab`, label: t("nav.lab"), icon: "lab" as const }] : []),
     ...(can("patients.read") ? [{ href: `${base}/patients`, label: t("nav.patients"), icon: "patients" as const }] : []),
     ...(can("queue.manage") ? [{ href: `${base}/queue`, label: t("nav.queue"), icon: "queue" as const }] : []),
     ...(can("appointments.manage") ? [{ href: `${base}/appointments`, label: t("nav.appointments"), icon: "booking" as const }] : []),
