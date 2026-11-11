@@ -49,7 +49,7 @@ export function assertBranch(ctx: ClinicContext, branchId: string) {
  * only branches inside the caller's branch scope.
  */
 export async function listOperationalBranches(ctx: ClinicContext): Promise<{ id: string; name: string; isMain: boolean }[]> {
-  requirePermission(ctx, "clinic.settings.read", "staff.read", "schedules.read", "queue.manage", "appointments.manage", "cash.shift", "billing.invoice", "finance.manage");
+  requirePermission(ctx, "clinic.settings.read", "staff.read", "schedules.read", "queue.manage", "appointments.manage", "cash.shift", "billing.invoice", "finance.manage", "inventory.read", "inventory.dispense", "hr.read");
   return inClinic(ctx, (tx) =>
     tx.branch.findMany({
       where: { archivedAt: null, ...(ctx.branchIds ? { id: { in: ctx.branchIds } } : {}) },

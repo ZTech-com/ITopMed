@@ -26,8 +26,8 @@ MFA is mandatory for all platform staff. Matrix: `src/server/authz/platform.ts`.
 | Laboratory staff | lab queue, specimens, results, verification | |
 | Cashier | invoices, payments, refunds, cash shift | |
 | Accountant | revenue/expenses, statements, debts | MFA required |
-| Pharmacist / inventory | stock, movements, expiry, dispensing (where legal) | |
-| HR manager | staff profiles, schedules, staff documents | |
+| Pharmacist / inventory | catalogue, suppliers, receiving, issuing/dispensing (FEFO), write-offs, stock counts | finds patients only by record number when dispensing; no patient search or EMR |
+| HR manager | staff profiles, licences/certificates, leave (blocks doctors' days), schedules | sees leave categories; colleagues only see absences |
 | Patient (portal, Phase 8b) | own appointments (cancel up to 2 h before), lab results released by the doctor, issued invoices and payments, own consents (except portal access), password | separate identity realm (`PatientAccount`), cookie and DB role (`itopmed_portal`); never sees notes, diagnoses or staff data |
 
 Phase 8b added `portal.manage` (receptionist, clinic administrator: issue/reissue activation codes, turn portal access off). Releasing lab results to the portal needs `emr.write` and a care relationship (or head-doctor oversight).

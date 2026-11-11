@@ -5,16 +5,16 @@
  */
 export const MODULES = [
   { key: "core", core: true, status: "available" },
-  { key: "patients", core: false, status: "planned" },
-  { key: "appointments", core: false, status: "planned" },
-  { key: "queue", core: false, status: "planned" },
-  { key: "emr", core: false, status: "planned" },
-  { key: "laboratory", core: false, status: "planned" },
-  { key: "billing", core: false, status: "planned" },
-  { key: "inventory", core: false, status: "planned" },
-  { key: "hr", core: false, status: "planned" },
-  { key: "patient_portal", core: false, status: "planned" },
-  { key: "reports", core: false, status: "planned" },
+  { key: "patients", core: false, status: "available" },
+  { key: "appointments", core: false, status: "available" },
+  { key: "queue", core: false, status: "available" },
+  { key: "emr", core: false, status: "available" },
+  { key: "laboratory", core: false, status: "available" },
+  { key: "billing", core: false, status: "available" },
+  { key: "inventory", core: false, status: "available" },
+  { key: "hr", core: false, status: "available" },
+  { key: "patient_portal", core: false, status: "available" },
+  { key: "reports", core: false, status: "available" },
   { key: "integrations", core: false, status: "planned" },
 ] as const;
 

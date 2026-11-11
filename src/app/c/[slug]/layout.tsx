@@ -28,6 +28,8 @@ export default async function ClinicLayout({ children, params }: { children: Rea
     ...(can("cash.shift") ? [{ href: `${base}/cash`, label: t("nav.cash"), icon: "cash" as const }] : []),
     ...(can("finance.reports") || can("reports.operational") ? [{ href: `${base}/reports`, label: t("nav.reports"), icon: "reports" as const }] : []),
     ...(can("finance.manage") ? [{ href: `${base}/expenses`, label: t("nav.expenses"), icon: "expenses" as const }] : []),
+    ...(can("inventory.read") || can("inventory.dispense") ? [{ href: `${base}/inventory`, label: t("nav.inventory"), icon: "inventory" as const }] : []),
+    ...(can("hr.read") ? [{ href: `${base}/hr`, label: t("nav.hr"), icon: "hr" as const }] : []),
     ...(isDoctor ? [{ href: `${base}/my-schedule`, label: t("nav.mySchedule"), icon: "calendar" as const }] : []),
     ...(can("schedules.read") ? [{ href: `${base}/doctors`, label: t("nav.doctors"), icon: "doctors" as const }] : []),
     ...(can("services.read") ? [{ href: `${base}/services`, label: t("nav.services"), icon: "services" as const }] : []),

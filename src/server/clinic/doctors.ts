@@ -11,6 +11,7 @@ import { busyIntervals } from "../appointments/appointments";
 import { uuidv7 } from "../security/crypto";
 import { DomainError } from "../tenancy/provisioning";
 import { assertBranch, auditClinic, canUseBranch, inClinic, requirePermission } from "./context";
+import { sequential } from "../db";
 
 export const DOCTOR_ROLE_KEYS = ["doctor", "head_doctor"] as const;
 export const EXCEPTION_KINDS = ["DAY_OFF", "VACATION", "TRAINING", "OTHER_ABSENCE"] as const;
@@ -59,7 +60,7 @@ export async function getDoctorDetail(ctx: ClinicContext, profileId: string) {
   return inClinic(ctx, async (tx) => {
     const p = await loadProfile(tx, ctx, profileId);
     if (!isOwnProfile(ctx, p) && !canReadSchedules(ctx)) throw new DomainError("errors.forbidden");
-    const [schedules, exceptions, services] = await Promise.all([
+    const [schedules, exceptions, services] = await sequential([
       tx.workSchedule.findMany({ where: { doctorProfileId: p.id }, include: { branch: { select: { name: true } }, room: { select: { name: true } } }, orderBy: [{ weekday: "asc" }, { startMinute: "asc" }] }),
       tx.scheduleException.findMany({ where: { doctorProfileId: p.id, date: { gte: localDateToDbDate(todayIn(ctx.tenant.timezone)) } }, orderBy: { date: "asc" }, take: 60 }),
       tx.doctorService.findMany({ where: { doctorProfileId: p.id }, select: { serviceId: true } }),
@@ -242,7 +243,7 @@ export async function doctorSlots(ctx: ClinicContext, profileId: string, date: L
   return inClinic(ctx, async (tx) => {
     const p = await loadProfile(tx, ctx, profileId);
     if (!isOwnProfile(ctx, p) && !canReadSchedules(ctx)) throw new DomainError("errors.forbidden");
-    const [blocks, exception] = await Promise.all([
+    const [blocks, exception] = await sequential([
       tx.workSchedule.findMany({ where: { doctorProfileId: p.id, weekday: isoWeekday(date) } }),
       tx.scheduleException.findUnique({ where: { doctorProfileId_date: { doctorProfileId: p.id, date: localDateToDbDate(date) } } }),
     ]);

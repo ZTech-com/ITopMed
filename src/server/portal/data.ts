@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { ConsentPurpose } from "@/generated/prisma/client";
 import { recordAudit } from "../audit";
 import type { RequestMeta } from "../auth/platform-auth";
-import { withPortal, type Tx } from "../db";
+import { withPortal, type Tx, sequential } from "../db";
 import { hashIp, uuidv7 } from "../security/crypto";
 import { DomainError } from "../tenancy/provisioning";
 import type { PatientPrincipal } from "./auth";
@@ -48,7 +48,7 @@ const appointmentSelect = {
 export async function listMyAppointments(p: PatientPrincipal) {
   return inPortal(p, async (tx) => {
     const now = new Date();
-    const [upcoming, past] = await Promise.all([
+    const [upcoming, past] = await sequential([
       tx.appointment.findMany({ where: { startsAt: { gte: new Date(now.getTime() - 60 * 60 * 1000) }, status: { in: ["BOOKED", "CHECKED_IN", "IN_PROGRESS"] } }, select: appointmentSelect, orderBy: { startsAt: "asc" }, take: 20 }),
       tx.appointment.findMany({ where: { OR: [{ startsAt: { lt: now } }, { status: { in: ["COMPLETED", "CANCELLED", "NO_SHOW"] } }] }, select: appointmentSelect, orderBy: { startsAt: "desc" }, take: 30 }),
     ]);

@@ -6,6 +6,7 @@ import { auditClinic, inClinic, requirePermission } from "../clinic/context";
 import { uuidv7 } from "../security/crypto";
 import { DomainError } from "../tenancy/provisioning";
 import { ACTIVATION_TTL_MS, hashActivationCode, newActivationCode } from "./auth";
+import { sequential } from "../db";
 
 /**
  * Front-desk side of the patient portal. Staff never see or set the patient's
@@ -25,7 +26,7 @@ export async function getPortalAccount(ctx: ClinicContext, patientId: string) {
   const id = uuid.safeParse(patientId);
   if (!id.success) return null;
   return inClinic(ctx, async (tx) => {
-    const [account, consent] = await Promise.all([
+    const [account, consent] = await sequential([
       tx.patientAccount.findFirst({
         where: { patientId: id.data, tenantId: ctx.tenant.id },
         select: { id: true, status: true, login: true, activationExpiresAt: true, activatedAt: true, lastLoginAt: true, lockedUntil: true },

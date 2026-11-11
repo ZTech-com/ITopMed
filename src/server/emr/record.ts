@@ -10,6 +10,7 @@ import { uuidv7 } from "../security/crypto";
 import { DomainError } from "../tenancy/provisioning";
 import { withRecordAccess, type BreakGlassReason } from "./access";
 import { labOrdersForRecord } from "../lab/lab";
+import { sequential } from "../db";
 
 const uuid = z.uuid();
 const clinicalText = z.string().max(10_000, "validation.tooLong");
@@ -49,7 +50,7 @@ export function amendmentHash(a: { id: string; noteId: string; authorId: string;
 /** The full medical record of one patient, subject to care-relationship access. Audited. */
 export async function getMedicalRecord(ctx: ClinicContext, patientId: string, meta: RequestMeta, opts: { breakGlass?: BreakGlassReason } = {}) {
   return withRecordAccess(ctx, patientId, meta, { breakGlass: opts.breakGlass }, async (tx, access) => {
-    const [patient, allergies, diagnoses, vitals, encounters, labOrders] = await Promise.all([
+    const [patient, allergies, diagnoses, vitals, encounters, labOrders] = await sequential([
       tx.patient.findUniqueOrThrow({ where: { id: patientId }, select: { id: true, mrn: true, lastName: true, firstName: true, middleName: true, birthDate: true, sex: true } }),
       tx.allergy.findMany({ where: { patientId, status: { not: "ENTERED_IN_ERROR" } }, orderBy: { recordedAt: "desc" } }),
       tx.diagnosis.findMany({ where: { patientId, status: { not: "ENTERED_IN_ERROR" } }, orderBy: { recordedAt: "desc" } }),
@@ -127,7 +128,7 @@ export async function startVisit(ctx: ClinicContext, appointmentId: string, meta
 export async function getEncounter(ctx: ClinicContext, encounterId: string, meta: RequestMeta) {
   const enc = await inClinic(ctx, (tx) => loadEncounter(tx, encounterId));
   return withRecordAccess(ctx, enc.patientId, meta, {}, async (tx, access) => {
-    const [encounter, allergies, labOrders] = await Promise.all([
+    const [encounter, allergies, labOrders] = await sequential([
       tx.encounter.findUniqueOrThrow({
         where: { id: enc.id },
         include: {

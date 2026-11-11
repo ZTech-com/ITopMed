@@ -40,6 +40,18 @@ function portalClient(): PrismaClient {
 
 export type Tx = Prisma.TransactionClient;
 
+/**
+ * Runs several queries of ONE transaction one after another. A transaction
+ * owns a single connection, so Promise.all would only queue them inside the
+ * driver (deprecated by node-pg). Prisma query promises are lazy — they start
+ * when awaited — so awaiting them in order runs them sequentially.
+ */
+export async function sequential<T extends readonly unknown[]>(queries: readonly [...{ [K in keyof T]: PromiseLike<T[K]> }]): Promise<T> {
+  const out: unknown[] = [];
+  for (const q of queries) out.push(await q);
+  return out as unknown as T;
+}
+
 export interface AppContext {
   tenantId?: string | null;
   userId?: string | null;

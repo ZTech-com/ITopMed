@@ -8,12 +8,13 @@ import { assertBranch, auditClinic, inClinic, requirePermission } from "../clini
 import type { Tx } from "../db";
 import { uuidv7 } from "../security/crypto";
 import { DomainError } from "../tenancy/provisioning";
+import { sequential } from "../db";
 
 const uuid = z.uuid();
 
 /** Cash expected in the drawer: opening float + cash payments − cash refunds of this shift. */
 async function expectedCash(tx: Tx, shift: { id: string; openingFloatMinor: bigint }) {
-  const [paid, refunded] = await Promise.all([
+  const [paid, refunded] = await sequential([
     tx.payment.aggregate({ where: { cashShiftId: shift.id, method: "CASH" }, _sum: { amountMinor: true } }),
     tx.refund.aggregate({ where: { cashShiftId: shift.id }, _sum: { amountMinor: true } }),
   ]);
@@ -78,7 +79,10 @@ export async function myShifts(ctx: ClinicContext) {
       orderBy: { openedAt: "desc" },
       take: 10,
     });
-    return Promise.all(shifts.map(async (s) => ({ ...s, live: s.status === "OPEN" ? await expectedCash(tx, s) : null })));
+    // One transaction = one connection: compute live totals one shift at a time.
+    const out = [];
+    for (const s of shifts) out.push({ ...s, live: s.status === "OPEN" ? await expectedCash(tx, s) : null });
+    return out;
   });
 }
 

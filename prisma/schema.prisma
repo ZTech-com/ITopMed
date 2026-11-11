@@ -164,6 +164,13 @@ model Tenant {
   labResults         LabResult[]
   patientAccounts    PatientAccount[]
   patientSessions    PatientSession[]
+  inventoryItems     InventoryItem[]
+  suppliers          Supplier[]
+  stockBatches       StockBatch[]
+  stockMovements     StockMovement[]
+  staffProfiles      StaffProfile[]
+  staffCredentials   StaffCredential[]
+  staffLeaves        StaffLeave[]
 
   @@index([status])
 }
@@ -180,17 +187,19 @@ model Branch {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  departments  Department[]
-  members      MembershipBranch[]
-  rooms        Room[]
-  schedules    WorkSchedule[]
-  appointments Appointment[]
-  invoices     Invoice[]
-  payments     Payment[]
-  cashShifts   CashShift[]
-  expenses     Expense[]
-  labOrders    LabOrder[]
+  tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  departments    Department[]
+  members        MembershipBranch[]
+  rooms          Room[]
+  schedules      WorkSchedule[]
+  appointments   Appointment[]
+  invoices       Invoice[]
+  payments       Payment[]
+  cashShifts     CashShift[]
+  expenses       Expense[]
+  labOrders      LabOrder[]
+  stockBatches   StockBatch[]
+  stockMovements StockMovement[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -210,6 +219,7 @@ model Department {
   branch   Branch?         @relation(fields: [branchId], references: [id], onDelete: SetNull)
   services Service[]
   doctors  DoctorProfile[]
+  staff    StaffProfile[]
 
   @@unique([tenantId, branchId, name])
   @@index([tenantId])
@@ -352,6 +362,9 @@ model Membership {
   roles         MembershipRole[]
   branches      MembershipBranch[]
   doctorProfile DoctorProfile?
+  staffProfile  StaffProfile?
+  credentials   StaffCredential[]
+  leaves        StaffLeave[]
 
   @@unique([tenantId, userId])
   @@index([userId])
@@ -671,10 +684,13 @@ model ScheduleException {
   /// Local calendar date in the clinic time zone.
   date            DateTime              @db.Date
   kind            ScheduleExceptionKind
+  /// Set when the day off comes from an HR leave record (removed when the leave is cancelled).
+  leaveId         String?               @db.Uuid
   createdAt       DateTime              @default(now())
 
   tenant Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   doctor DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  leave  StaffLeave?   @relation(fields: [leaveId], references: [id], onDelete: Restrict)
 
   @@unique([doctorProfileId, date])
   @@index([tenantId, date])
@@ -727,6 +743,7 @@ model Patient {
   invoices      Invoice[]
   labOrders     LabOrder[]
   portalAccount PatientAccount?
+  dispenses     StockMovement[]
 
   @@unique([tenantId, mrn])
   @@index([tenantId, lastName, firstName])
@@ -1402,4 +1419,226 @@ model PatientSession {
 
   @@index([accountId])
   @@index([tenantId])
+}
+
+// ───────────── Pharmacy & inventory (Phase 8c) ─────────────
+
+enum InventoryCategory {
+  MEDICINE
+  CONSUMABLE
+  REAGENT
+  EQUIPMENT
+  OTHER
+}
+
+/// Catalogue entry. Quantities are whole dispensing units (tablet, ampoule, piece, pack).
+model InventoryItem {
+  id         String            @id @db.Uuid
+  tenantId   String            @db.Uuid
+  code       String
+  name       String
+  category   InventoryCategory @default(MEDICINE)
+  /// Dosage form and strength as printed on the pack, e.g. "tablet", "500 mg".
+  form       String?
+  strength   String?
+  /// Dispensing unit key: pcs, pack, ml, ampoule, vial, g.
+  unit       String
+  /// Reorder level per branch, in units. 0 = no alert.
+  minStock   Int               @default(0)
+  barcode    String?
+  archivedAt DateTime?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  tenant    Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  batches   StockBatch[]
+  movements StockMovement[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, name])
+}
+
+model Supplier {
+  id         String    @id @db.Uuid
+  tenantId   String    @db.Uuid
+  name       String
+  taxId      String?
+  phone      String?
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  tenant  Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  batches StockBatch[]
+
+  @@unique([tenantId, name])
+}
+
+/// One received lot of an item at a branch. quantity is maintained ONLY by the
+/// database from the StockMovement ledger (trigger) and can never go negative.
+model StockBatch {
+  id            String    @id @db.Uuid
+  tenantId      String    @db.Uuid
+  itemId        String    @db.Uuid
+  branchId      String    @db.Uuid
+  supplierId    String?   @db.Uuid
+  lotNumber     String
+  expiresOn     DateTime? @db.Date
+  quantity      Int       @default(0)
+  unitCostMinor BigInt?
+  currency      String    @default("UZS")
+  receivedAt    DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+
+  tenant    Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  item      InventoryItem   @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  branch    Branch          @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  supplier  Supplier?       @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  movements StockMovement[]
+
+  @@index([tenantId, branchId, itemId])
+  @@index([tenantId, expiresOn])
+}
+
+enum StockMovementKind {
+  RECEIPT
+  ISSUE
+  DISPENSE
+  ADJUSTMENT
+  WRITE_OFF
+}
+
+enum StockReason {
+  COUNT_CORRECTION
+  EXPIRED
+  DAMAGED
+  LOST
+  RECALLED
+  OTHER
+}
+
+/// Append-only stock ledger. Positive = stock in (receipt, adjustment up), negative = stock out.
+model StockMovement {
+  id           String            @id @db.Uuid
+  tenantId     String            @db.Uuid
+  batchId      String            @db.Uuid
+  itemId       String            @db.Uuid
+  branchId     String            @db.Uuid
+  kind         StockMovementKind
+  quantity     Int
+  reason       StockReason?
+  /// DISPENSE only: the patient who received it (clinical data, no platform access).
+  patientId    String?           @db.Uuid
+  /// ISSUE only: internal consumer (department).
+  departmentId String?           @db.Uuid
+  /// Supplier invoice or waybill number for receipts.
+  documentRef  String?
+  createdById  String            @db.Uuid
+  createdAt    DateTime          @default(now())
+
+  tenant  Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  batch   StockBatch    @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  item    InventoryItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  branch  Branch        @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  patient Patient?      @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, itemId, createdAt])
+  @@index([tenantId, patientId])
+}
+
+// ───────────── HR (Phase 8c) ─────────────
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+}
+
+/// HR data for a clinic member. Deliberately minimal: no home address, passport or health data.
+model StaffProfile {
+  id              String         @id @db.Uuid
+  tenantId        String         @db.Uuid
+  membershipId    String         @unique @db.Uuid
+  personnelNumber String?
+  position        String?
+  departmentId    String?        @db.Uuid
+  employmentType  EmploymentType @default(FULL_TIME)
+  hiredOn         DateTime?      @db.Date
+  workPhone       String?
+  updatedById     String         @db.Uuid
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  membership Membership  @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, personnelNumber])
+  @@index([tenantId])
+}
+
+enum CredentialKind {
+  MEDICAL_LICENSE
+  SPECIALIST_CERTIFICATE
+  QUALIFICATION_CATEGORY
+  TRAINING
+  OTHER
+}
+
+/// Licences and certificates with expiry tracking.
+model StaffCredential {
+  id           String         @id @db.Uuid
+  tenantId     String         @db.Uuid
+  membershipId String         @db.Uuid
+  kind         CredentialKind
+  title        String
+  number       String?
+  issuer       String?
+  issuedOn     DateTime?      @db.Date
+  expiresOn    DateTime?      @db.Date
+  archivedAt   DateTime?
+  createdById  String         @db.Uuid
+  createdAt    DateTime       @default(now())
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, expiresOn])
+  @@index([tenantId, membershipId])
+}
+
+/// Category only: never diagnoses or other health details about employees.
+enum LeaveKind {
+  VACATION
+  SICK_LEAVE
+  TRAINING
+  UNPAID
+  OTHER
+}
+
+enum LeaveStatus {
+  APPROVED
+  CANCELLED
+}
+
+model StaffLeave {
+  id           String      @id @db.Uuid
+  tenantId     String      @db.Uuid
+  membershipId String      @db.Uuid
+  kind         LeaveKind
+  startsOn     DateTime    @db.Date
+  endsOn       DateTime    @db.Date
+  status       LeaveStatus @default(APPROVED)
+  createdById  String      @db.Uuid
+  cancelledAt  DateTime?
+  createdAt    DateTime    @default(now())
+
+  tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  membership Membership          @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+  daysOff    ScheduleException[]
+
+  @@index([tenantId, startsOn])
+  @@index([tenantId, membershipId])
 }

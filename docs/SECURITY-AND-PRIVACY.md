@@ -42,6 +42,8 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 | Patient portal isolation: separate DB role; patient identity derived from the session hash inside PostgreSQL; own rows only; unreleased results and draft invoices hidden by policy; no grants on clinical notes, diagnoses, allergies, vitals, encounters, staff or audit tables; internal columns (lab indication, appointment admin note, payment references, staff ids) not granted | ✅ | migration `patient_portal`; `tests/portal.test.ts` |
 | Patient onboarding without sending secrets: one-time activation code handed over in person (hash-only, 72 h), date-of-birth check, consent recorded before issue, lockout and code burning, staff never set or see patient passwords (column grants) | ✅ | `portal/staff.ts`, `portal/auth.ts` |
 | Results released to patients only by a doctor in a care relationship (not break-the-glass), one-way and audited | ✅ | `lab/lab.ts` `releaseLabOrder` |
+| Stock integrity: quantities changed only through an append-only ledger; negative stock, expired issue and ledger edits refused by the database; clinic role has no UPDATE on batches; every movement attributed and audited | ✅ | migration `inventory_hr`; `tests/inventory-hr.test.ts` |
+| Staff privacy in HR: minimal fields, leave by category only, sick leave never shown to colleagues (generic absence in schedules) and kept out of audit metadata; HR and inventory tables not granted to the platform role | ✅ | `hr/hr.ts` |
 | Patient MFA / SMS one-time codes | ⏳ | needs the SMS provider (Phase 8d) |
 | Protected document storage + short-lived URLs | ⏳ | Phase 6 |
 | Encrypted backups, PITR, tested restores | ⏳ | infrastructure, Phase 9 |

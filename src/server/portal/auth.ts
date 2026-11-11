@@ -4,7 +4,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { phoneSchema } from "@/lib/validation";
 import { recordAudit } from "../audit";
 import type { RequestMeta } from "../auth/platform-auth";
-import { withPortal, type Tx } from "../db";
+import { withPortal, type Tx, sequential } from "../db";
 import { normalizePhone } from "../patients/patients";
 import { isLocalDate } from "../scheduling/time";
 import { hashIp, randomToken, sha256Hex } from "../security/crypto";
@@ -217,7 +217,7 @@ export async function validatePatientSession(token: string | undefined | null): 
     if (!s || s.revokedAt || s.expiresAt.getTime() <= now || now - s.lastSeenAt.getTime() > PATIENT_SESSION_IDLE_MS) return null;
     const account = await tx.patientAccount.findFirst({ where: { id: s.accountId }, select: { id: true, patientId: true, status: true, locale: true } });
     if (!account || account.status !== "ACTIVE") return null;
-    const [patient, tenant] = await Promise.all([
+    const [patient, tenant] = await sequential([
       tx.patient.findFirst({ where: { id: account.patientId }, select: { mrn: true, firstName: true, lastName: true, middleName: true } }),
       tx.tenant.findFirst({ where: { id: s.tenantId }, select: { id: true, slug: true, name: true, status: true, defaultLocale: true, timezone: true, currency: true } }),
     ]);
