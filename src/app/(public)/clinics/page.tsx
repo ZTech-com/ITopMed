@@ -8,11 +8,15 @@ import { requireClinicUser } from "@/server/auth/guards";
 import { clinicLogoutAction } from "../../clinic-actions";
 
 const USABLE = new Set(["TRIAL", "ACTIVE"]);
+/** Targets of the app-icon shortcuts (manifest.ts). Allow-list prevents open redirects. */
+const SHORTCUTS = new Set(["patients", "queue", "my-queue", "appointments"]);
 
-export default async function ClinicChooserPage() {
+export default async function ClinicChooserPage({ searchParams }: { searchParams: Promise<{ to?: string }> }) {
   const p = await requireClinicUser();
+  const to = (await searchParams).to;
+  const suffix = to && SHORTCUTS.has(to) ? `/${to}` : "";
   const usable = p.clinics.filter((c) => USABLE.has(c.status));
-  if (usable.length === 1) redirect(`/c/${usable[0]!.slug}`);
+  if (usable.length === 1) redirect(`/c/${usable[0]!.slug}${suffix}`);
   const t = await getTranslations();
   return (
     <AuthLayout title={t("auth.chooseClinic")} subtitle={p.user.fullName}>
@@ -23,7 +27,7 @@ export default async function ClinicChooserPage() {
           {p.clinics.map((c) => (
             <li key={c.tenantId}>
               {USABLE.has(c.status) ? (
-                <Link href={`/c/${c.slug}`} className="flex items-center justify-between gap-3 rounded-xl px-3 py-3 hover:bg-sunken">
+                <Link href={`/c/${c.slug}${suffix}`} className="flex items-center justify-between gap-3 rounded-xl px-3 py-3 hover:bg-sunken">
                   <span className="font-medium">{c.name}</span>
                   <ChevronRight aria-hidden className="size-4 text-text-3" />
                 </Link>

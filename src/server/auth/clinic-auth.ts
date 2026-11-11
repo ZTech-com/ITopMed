@@ -100,13 +100,8 @@ export async function validateClinicSession(token: string | undefined | null): P
       where: { userId: user.id, status: "ACTIVE" },
       include: { tenant: { select: { id: true, slug: true, name: true, status: true, defaultLocale: true } } },
     });
-    // Role keys need tenant context per membership; check privileged roles per clinic.
-    let privileged = false;
-    for (const m of memberships) {
-      await setContext(tx, { sessionId, userId: user.id, tenantId: m.tenantId });
-      const n = await tx.membershipRole.count({ where: { membershipId: m.id, role: { key: { in: [...MFA_REQUIRED_ROLES] } } } });
-      if (n > 0) privileged = true;
-    }
+    // One query across all clinics (SECURITY DEFINER, limited to the current user).
+    const privileged = (await tx.$queryRaw<{ privileged: boolean }[]>`SELECT app_current_user_has_role(${[...MFA_REQUIRED_ROLES]}::text[]) AS privileged`)[0]?.privileged ?? false;
     return {
       sessionId,
       mfaVerified: Boolean(s.mfaVerifiedAt),

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { currentTheme } from "./app-shell";
+import { InstallApp } from "../install-app";
 import { Preferences } from "./preferences";
 
 /** Centered card layout for sign-in, MFA and invitation pages. */
@@ -29,6 +30,9 @@ export async function AuthLayout({ eyebrow, title, subtitle, children }: { eyebr
             {subtitle ? <p className="mt-2 text-[15px] leading-relaxed text-text-2">{subtitle}</p> : null}
           </div>
           <div className="rounded-[20px] border border-border bg-surface p-6 shadow-card sm:p-8">{children}</div>
+          <div className="mx-auto mt-5 max-w-[300px]">
+            <InstallApp />
+          </div>
         </div>
       </main>
     </div>

@@ -18,7 +18,9 @@ const g = globalThis as unknown as { __itmDb?: Clients };
 const clients: Clients = (g.__itmDb ??= {});
 
 function make(url: string) {
-  return new PrismaClient({ adapter: new PrismaPg({ connectionString: url, max: 10 }) });
+  // Pool size per app instance; tune with DB_POOL_MAX to the database max_connections budget.
+  const max = Number(process.env.DB_POOL_MAX ?? 10);
+  return new PrismaClient({ adapter: new PrismaPg({ connectionString: url, max: Number.isFinite(max) && max > 0 ? max : 10, idleTimeoutMillis: 30_000 }) });
 }
 
 function appClient(): PrismaClient {

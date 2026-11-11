@@ -22,6 +22,10 @@ export default async function ClinicLayout({ children, params }: { children: Rea
     ...(can("patients.read") ? [{ href: `${base}/patients`, label: t("nav.patients"), icon: "patients" as const }] : []),
     ...(can("queue.manage") ? [{ href: `${base}/queue`, label: t("nav.queue"), icon: "queue" as const }] : []),
     ...(can("appointments.manage") ? [{ href: `${base}/appointments`, label: t("nav.appointments"), icon: "booking" as const }] : []),
+    ...(can("billing.read") ? [{ href: `${base}/billing`, label: t("nav.billing"), icon: "billing" as const }] : []),
+    ...(can("cash.shift") ? [{ href: `${base}/cash`, label: t("nav.cash"), icon: "cash" as const }] : []),
+    ...(can("finance.reports") || can("reports.operational") ? [{ href: `${base}/reports`, label: t("nav.reports"), icon: "reports" as const }] : []),
+    ...(can("finance.manage") ? [{ href: `${base}/expenses`, label: t("nav.expenses"), icon: "expenses" as const }] : []),
     ...(isDoctor ? [{ href: `${base}/my-schedule`, label: t("nav.mySchedule"), icon: "calendar" as const }] : []),
     ...(can("schedules.read") ? [{ href: `${base}/doctors`, label: t("nav.doctors"), icon: "doctors" as const }] : []),
     ...(can("services.read") ? [{ href: `${base}/services`, label: t("nav.services"), icon: "services" as const }] : []),
@@ -39,6 +43,7 @@ export default async function ClinicLayout({ children, params }: { children: Rea
       nav={nav}
       user={{ name: ctx.principal.user.fullName, detail: ctx.roleKeys.map((r) => roleLabel(t as never, r)).join(", ") }}
       signOut={clinicLogoutAction}
+      primary={nav.slice(0, 4)}
     >
       {children}
     </AppShell>

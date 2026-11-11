@@ -2,6 +2,8 @@ import { LogOut, Menu } from "lucide-react";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
+import { InstallApp } from "../install-app";
+import { MobileTabBar } from "./mobile-tab-bar";
 import { NavLinks, type NavItem } from "./nav-links";
 import { Preferences } from "./preferences";
 
@@ -37,6 +39,7 @@ export async function AppShell({
   signOut,
   children,
   banner,
+  primary,
 }: {
   context: string;
   nav: NavItem[];
@@ -44,12 +47,15 @@ export async function AppShell({
   signOut: () => Promise<void>;
   children: ReactNode;
   banner?: ReactNode;
+  /** Up to 4 primary screens for the phone/tablet bottom bar. */
+  primary?: NavItem[];
 }) {
   const t = await getTranslations();
   const theme = await currentTheme();
 
   const footer = (
     <div className="space-y-3 border-t border-border pt-4">
+      <InstallApp />
       <Preferences theme={theme} />
       <div className="flex items-center justify-between gap-2 px-1">
         <div className="min-w-0">
@@ -96,10 +102,11 @@ export async function AppShell({
         </div>
       </details>
 
-      <main id="main" className="min-w-0 flex-1">
+      <main id="main" className={primary && primary.length > 1 ? "min-w-0 flex-1 pb-[calc(56px+env(safe-area-inset-bottom))] lg:pb-0" : "min-w-0 flex-1"}>
         {banner}
         <div className="animate-rise mx-auto w-full max-w-[1200px] px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">{children}</div>
       </main>
+      {primary ? <MobileTabBar items={primary.slice(0, 4)} label={t("a11y.mainNav")} /> : null}
     </div>
   );
 }

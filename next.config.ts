@@ -20,12 +20,14 @@ const config: NextConfig = {
   serverExternalPackages: ["@node-rs/argon2", "embedded-postgres"],
   experimental: {
     serverActions: { bodySizeLimit: "1mb" },
+    // Tree-shake icon imports for smaller client bundles.
+    optimizePackageImports: ["lucide-react"],
   },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
       // Authenticated pages may contain personal data: never store them in shared or browser caches.
-      { source: "/((?!_next/static|icons|manifest.webmanifest|sw.js).*)", headers: [{ key: "Cache-Control", value: "no-store" }] },
+      { source: "/((?!_next/static|icons|manifest.webmanifest|sw.js|offline.html).*)", headers: [{ key: "Cache-Control", value: "no-store" }] },
     ];
   },
 };

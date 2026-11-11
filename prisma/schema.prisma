@@ -152,6 +152,12 @@ model Tenant {
   diagnoses          Diagnosis[]
   allergies          Allergy[]
   vitalSigns         VitalSign[]
+  invoices           Invoice[]
+  invoiceLines       InvoiceLine[]
+  payments           Payment[]
+  refunds            Refund[]
+  cashShifts         CashShift[]
+  expenses           Expense[]
 
   @@index([status])
 }
@@ -174,6 +180,10 @@ model Branch {
   rooms        Room[]
   schedules    WorkSchedule[]
   appointments Appointment[]
+  invoices     Invoice[]
+  payments     Payment[]
+  cashShifts   CashShift[]
+  expenses     Expense[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -567,6 +577,7 @@ model Service {
   department   Department?     @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   doctors      DoctorService[]
   appointments Appointment[]
+  invoiceLines InvoiceLine[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -702,6 +713,7 @@ model Patient {
   diagnoses    Diagnosis[]
   allergies    Allergy[]
   vitals       VitalSign[]
+  invoices     Invoice[]
 
   @@unique([tenantId, mrn])
   @@index([tenantId, lastName, firstName])
@@ -825,6 +837,7 @@ model Appointment {
   room      Room?         @relation(fields: [roomId], references: [id], onDelete: SetNull)
   service   Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   encounter Encounter?
+  invoice   Invoice?
 
   @@index([tenantId, startsAt])
   @@index([tenantId, doctorProfileId, startsAt])
@@ -998,4 +1011,204 @@ model VitalSign {
   encounter Encounter? @relation(fields: [encounterId], references: [id], onDelete: Restrict)
 
   @@index([tenantId, patientId, measuredAt])
+}
+
+// ───────────────────────────── Billing & finance (Phase 7) ────────────────────
+// All money: BigInt minor units (tiyin / cents) + ISO 4217 currency.
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  VOID
+}
+
+enum VoidReason {
+  CREATED_IN_ERROR
+  DUPLICATE
+  SERVICE_CANCELLED
+  OTHER
+}
+
+/// Lines can change only while DRAFT (trigger). Totals are recomputed by the
+/// service in the same transaction and guarded by CHECK constraints.
+model Invoice {
+  id            String        @id @db.Uuid
+  tenantId      String        @db.Uuid
+  /// Assigned when issued: INV-<year>-<6 digits>, sequential per clinic and year.
+  number        String?
+  patientId     String        @db.Uuid
+  branchId      String        @db.Uuid
+  appointmentId String?       @unique @db.Uuid
+  status        InvoiceStatus @default(DRAFT)
+  currency      String
+  subtotalMinor BigInt        @default(0)
+  discountMinor BigInt        @default(0)
+  totalMinor    BigInt        @default(0)
+  /// Payments minus refunds.
+  paidMinor     BigInt        @default(0)
+  issuedAt      DateTime?
+  voidedAt      DateTime?
+  voidReason    VoidReason?
+  createdById   String        @db.Uuid
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient     Patient       @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  branch      Branch        @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  appointment Appointment?  @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  lines       InvoiceLine[]
+  payments    Payment[]
+  refunds     Refund[]
+
+  @@unique([tenantId, number])
+  @@index([tenantId, status, createdAt])
+  @@index([tenantId, patientId])
+}
+
+model InvoiceLine {
+  id             String   @id @db.Uuid
+  tenantId       String   @db.Uuid
+  invoiceId      String   @db.Uuid
+  serviceId      String?  @db.Uuid
+  /// Snapshot of the service name at billing time.
+  description    String
+  quantity       Int
+  unitPriceMinor BigInt
+  discountMinor  BigInt   @default(0)
+  totalMinor     BigInt
+  createdAt      DateTime @default(now())
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  invoice Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, invoiceId])
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  PAYME
+  CLICK
+  UZUM
+  OTHER
+}
+
+model Payment {
+  id             String        @id @db.Uuid
+  tenantId       String        @db.Uuid
+  invoiceId      String        @db.Uuid
+  branchId       String        @db.Uuid
+  amountMinor    BigInt
+  currency       String
+  method         PaymentMethod
+  /// Terminal / transaction reference (entered manually until provider integrations exist).
+  externalRef    String?
+  /// Client-generated per form render: a double click or retry cannot pay twice.
+  idempotencyKey String
+  cashShiftId    String?       @db.Uuid
+  refundedMinor  BigInt        @default(0)
+  receivedById   String        @db.Uuid
+  receivedAt     DateTime      @default(now())
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  invoice   Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  branch    Branch     @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  cashShift CashShift? @relation(fields: [cashShiftId], references: [id], onDelete: Restrict)
+  refunds   Refund[]
+
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, receivedAt])
+  @@index([tenantId, invoiceId])
+}
+
+enum RefundReason {
+  SERVICE_NOT_PROVIDED
+  OVERPAYMENT
+  PATIENT_REQUEST
+  BILLING_ERROR
+  OTHER
+}
+
+model Refund {
+  id             String       @id @db.Uuid
+  tenantId       String       @db.Uuid
+  paymentId      String       @db.Uuid
+  invoiceId      String       @db.Uuid
+  amountMinor    BigInt
+  reason         RefundReason
+  idempotencyKey String
+  cashShiftId    String?      @db.Uuid
+  createdById    String       @db.Uuid
+  createdAt      DateTime     @default(now())
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  payment   Payment    @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  invoice   Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  cashShift CashShift? @relation(fields: [cashShiftId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, createdAt])
+}
+
+enum CashShiftStatus {
+  OPEN
+  CLOSED
+}
+
+/// One open shift per cashier and branch (partial unique index in SQL).
+model CashShift {
+  id                String          @id @db.Uuid
+  tenantId          String          @db.Uuid
+  branchId          String          @db.Uuid
+  cashierId         String          @db.Uuid
+  currency          String
+  status            CashShiftStatus @default(OPEN)
+  openedAt          DateTime        @default(now())
+  openingFloatMinor BigInt
+  closedAt          DateTime?
+  expectedCashMinor BigInt?
+  countedCashMinor  BigInt?
+  differenceMinor   BigInt?
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branch   Branch    @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  payments Payment[]
+  refunds  Refund[]
+
+  @@index([tenantId, branchId, openedAt])
+}
+
+enum ExpenseCategory {
+  SALARY
+  RENT
+  UTILITIES
+  MEDICAL_SUPPLIES
+  EQUIPMENT
+  TAXES
+  MARKETING
+  OTHER
+}
+
+model Expense {
+  id          String          @id @db.Uuid
+  tenantId    String          @db.Uuid
+  branchId    String?         @db.Uuid
+  category    ExpenseCategory
+  amountMinor BigInt
+  currency    String
+  spentOn     DateTime        @db.Date
+  description String?
+  createdById String          @db.Uuid
+  createdAt   DateTime        @default(now())
+  voidedAt    DateTime?
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, spentOn])
 }

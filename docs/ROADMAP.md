@@ -9,7 +9,7 @@
 | 4 | Tenant isolation, users, roles, permissions | ✅ done (2026-11-11) — staff invitations incl. existing accounts joining more clinics, password reset, role editor (custom roles, locked owner role), member access (roles, branch scope, suspend/restore/remove) with owner/self/last-owner guardrails, break-glass request → clinic approval → expiry/revocation. ⏳ MFA recovery codes / admin MFA reset, platform-staff invitation UI |
 | 5 | Admin, receptionist, doctor workspaces | ✅ done (2026-11-11) — role-aware dashboard (operations + setup for admins, front desk "who works today", "My day" for doctors), services & prices (exact money), departments & rooms, doctor profiles, weekly schedules with overlap prevention, absences, services per doctor, availability engine (time-zone/DST-safe slots), branch-scope enforcement. Appointments/queue themselves are Phase 6 |
 | 6 | Patients, appointments, queue, EMR | ✅ done (2026-11-11) — patient registry (MRN, PINFL/passport, smart search incl. typo-tolerant names, duplicate detection with human confirmation, consents per purpose), booking inside working hours with database-enforced no-double-booking, check-in with daily queue tickets, walk-ins, cancellations/no-shows, doctor's day, encounters, structured notes, signing (immutable + hash), amendments, ICD-10 diagnoses, allergies, vital signs, care-relationship access with audited break-the-glass. ⏳ patient merge, rescheduling UI, printable documents, lab orders (Phase 8) |
-| 7 | Billing, payments, reports | ⏳ |
+| 7 | Billing, payments, reports | ✅ backend + UI + 7 tests (2026-11-11): invoices (draft → issued, frozen by DB trigger, sequential numbers), payments with idempotency and row locks, refunds, voids, cash shifts with reconciliation, expenses, financial and operational reports, printable non-fiscal receipt. ⏳ browser walkthrough, fiscal receipts (OFD), Payme/Click/Uzum online integration |
 | 8 | Other staff workspaces, patient portal, integrations | ⏳ |
 | 9 | Security tests, accessibility, performance, backup, production readiness | ⏳ |
 
@@ -25,7 +25,7 @@
 | 7 | Receptionist registers a synthetic patient and books | ✅ automated + browser |
 | 8 | Doctor sees the appointment and opens the authorised record | ✅ automated (browser walkthrough stopped at check-in when the pane was closed) |
 | 9 | Doctor creates and signs a clinical note | ✅ automated |
-| 10–11 | Invoice/payment, owner reports | ⏳ Phase 7 |
+| 10–11 | Invoice/payment, owner reports | ✅ automated (browser walkthrough pending) |
 | 12 | Clinic A cannot access Clinic B | ✅ for all current tables |
 | 13 | Unauthorised users cannot view clinical records | ✅ RBAC + care-relationship ABAC + RLS; platform role has no grants; denials audited |
 | 14 | Critical actions audited | ✅ for current actions |

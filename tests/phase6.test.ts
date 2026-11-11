@@ -179,6 +179,8 @@ describe("screen data for operational roles (regression)", () => {
     const nurse = await staff(s.a, ["nurse"]);
     const hr = await staff(s.a, ["hr_manager"]);
     for (const ctx of [s.reception.ctx, nurse.ctx, hr.ctx]) expect((await listOperationalBranches(ctx)).map((b) => b.id)).toEqual([s.branch.id]);
+    const cashier = await staff(s.a, ["cashier"]);
+    expect((await listOperationalBranches(cashier.ctx)).length).toBe(1);
     const pharmacist = await staff(s.a, ["pharmacist"]);
     await expect(listOperationalBranches(pharmacist.ctx)).rejects.toThrow("errors.forbidden");
   });
