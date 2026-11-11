@@ -18,6 +18,10 @@ export default async function ClinicLayout({ children, params }: { children: Rea
   // Navigation is derived from permissions; every page re-checks on the server.
   const nav: NavItem[] = [
     { href: base, label: t("nav.dashboard"), icon: "dashboard", exact: true },
+    ...(isDoctor && can("emr.write") ? [{ href: `${base}/my-queue`, label: t("nav.myQueue"), icon: "visits" as const }] : []),
+    ...(can("patients.read") ? [{ href: `${base}/patients`, label: t("nav.patients"), icon: "patients" as const }] : []),
+    ...(can("queue.manage") ? [{ href: `${base}/queue`, label: t("nav.queue"), icon: "queue" as const }] : []),
+    ...(can("appointments.manage") ? [{ href: `${base}/appointments`, label: t("nav.appointments"), icon: "booking" as const }] : []),
     ...(isDoctor ? [{ href: `${base}/my-schedule`, label: t("nav.mySchedule"), icon: "calendar" as const }] : []),
     ...(can("schedules.read") ? [{ href: `${base}/doctors`, label: t("nav.doctors"), icon: "doctors" as const }] : []),
     ...(can("services.read") ? [{ href: `${base}/services`, label: t("nav.services"), icon: "services" as const }] : []),

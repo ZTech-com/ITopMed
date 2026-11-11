@@ -187,3 +187,28 @@ export function SubmitButton({ children, pendingLabel, variant = "primary", clas
     </button>
   );
 }
+
+/** Current form state (for components that render action results, e.g. duplicate review). */
+export function useFormResult(): FormState {
+  return useContext(Ctx);
+}
+
+export function TextAreaField({ rows = 4, defaultValue, placeholder, readOnly, ...field }: FieldProps & { rows?: number; defaultValue?: string | null; placeholder?: string; readOnly?: boolean }) {
+  const id = useId();
+  const { error, value } = useField(field.name);
+  return (
+    <FieldShell {...field} id={id} error={error}>
+      <textarea
+        id={id}
+        name={field.name}
+        rows={rows}
+        defaultValue={value ?? defaultValue ?? undefined}
+        placeholder={placeholder}
+        readOnly={readOnly}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : field.hint ? `${id}-hint` : undefined}
+        className={cx(inputClass, "min-h-24 resize-y py-2.5 leading-relaxed", readOnly && "bg-sunken")}
+      />
+    </FieldShell>
+  );
+}

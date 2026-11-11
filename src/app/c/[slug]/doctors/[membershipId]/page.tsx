@@ -4,8 +4,7 @@ import { ScheduleView, weekdayNames } from "@/components/schedule-view";
 import { Form, SelectField, SubmitButton, TextField } from "@/components/ui/form";
 import { Alert, Badge, Card, CardBody, CardHeader, PageHeader, buttonClass } from "@/components/ui/primitives";
 import { requireClinic } from "@/server/auth/guards";
-import { listBranches } from "@/server/clinic/admin";
-import { canUseBranch } from "@/server/clinic/context";
+import { canUseBranch, listOperationalBranches } from "@/server/clinic/context";
 import { EXCEPTION_KINDS, doctorSlots, getDoctorDetail, listDoctors } from "@/server/clinic/doctors";
 import { listDepartments, listRooms, listServices } from "@/server/clinic/resources";
 import { SPECIALTIES } from "@/server/scheduling/specialties";
@@ -33,7 +32,7 @@ export default async function DoctorPage({ params, searchParams }: { params: Pro
   const [departments, detail, branches, rooms, services, names] = await Promise.all([
     listDepartments(ctx),
     doctor.profile ? getDoctorDetail(ctx, doctor.profile.id) : null,
-    listBranches(ctx),
+    listOperationalBranches(ctx),
     listRooms(ctx),
     ctx.permissions.has("services.read") ? listServices(ctx) : Promise.resolve([]),
     weekdayNames(),

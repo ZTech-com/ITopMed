@@ -3,7 +3,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { Form, SubmitButton } from "@/components/ui/form";
 import { Alert, Badge, Card, CardBody, CardHeader, DescriptionList, PageHeader, STATUS_TONE, buttonClass } from "@/components/ui/primitives";
 import { requireClinic } from "@/server/auth/guards";
-import { listBranches } from "@/server/clinic/admin";
+import { listOperationalBranches } from "@/server/clinic/context";
 import { getMember } from "@/server/clinic/members";
 import { listRoles } from "@/server/clinic/roles";
 import { DomainError } from "@/server/tenancy/provisioning";
@@ -19,7 +19,7 @@ export default async function MemberPage({ params }: { params: Promise<{ slug: s
     if (e instanceof DomainError) notFound();
     throw e;
   });
-  const [t, format, roles, branches] = await Promise.all([getTranslations(), getFormatter(), listRoles(ctx), listBranches(ctx)]);
+  const [t, format, roles, branches] = await Promise.all([getTranslations(), getFormatter(), listRoles(ctx), listOperationalBranches(ctx)]);
 
   const isSelf = member.userId === ctx.principal.user.id;
   const targetIsOwner = member.roles.some((r) => r.role.key === "clinic_owner");

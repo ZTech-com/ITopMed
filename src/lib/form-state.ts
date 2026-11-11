@@ -7,6 +7,8 @@ export interface FormState {
   values?: Record<string, string>;
   /** Changes on every submission so success banners re-render. */
   nonce?: number;
+  /** Structured result for specialised UI (e.g. duplicate candidates). Never secrets. */
+  data?: Record<string, unknown>;
 }
 
 export const initialFormState: FormState = {};

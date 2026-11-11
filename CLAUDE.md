@@ -21,6 +21,8 @@ Tests boot their own throw-away PostgreSQL on port 54339 and apply the real migr
 1. **Tenant isolation.** Clinic data is only ever read/written through `withAppContext()` (`src/server/db.ts`) with `tenantId` + `userId`. Never use the platform client for clinic workflows.
 2. **Every new table** ships, in the same migration, with: explicit `GRANT`s for `itopmed_app` / `itopmed_platform`, `ENABLE ROW LEVEL SECURITY`, and policies. `tests/db-security.test.ts` fails if RLS is missing.
    - Some policies deliberately expose a user's *own* rows across clinics (e.g. `Membership` for the clinic switcher). When querying such tables inside a clinic, **always add an explicit `tenantId` filter** as well.
+   - Prisma does not model hand-written SQL (RLS policies, exclusion constraints, trigram indexes, triggers). **Review every generated migration** and delete any `DROP` of those objects before applying it.
+   - Page loaders must use helpers whose permissions match every role that can open the page (e.g. `listOperationalBranches`, not the admin-only `listBranches`).
 3. **Clinical tables are never granted to `itopmed_platform`.** Platform staff do not read medical records. Break-glass access goes through `SupportAccessGrant` (clinic approval, time-limited, audited).
 4. **Authorization on the server, every time:** pages call `requirePlatform()` / `requireClinic(slug, permission)`; services re-check permissions. Deny by default. UI hiding is cosmetic.
 5. **Audit** every security-relevant or clinical action with `recordAudit()` inside the same transaction. Audit metadata must never contain clinical content, secrets or tokens.

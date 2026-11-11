@@ -31,7 +31,13 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 | Branch scope (ABAC): branch-restricted members only see/change resources of their branches | ✅ | `clinic/context.ts` (`assertBranch`, `branchWhere`); tested |
 | Operational tables (rooms, services, schedules) granted to the clinic role only — none to the platform role | ✅ | migration `clinic_resources_scheduling` |
 | Staff absences stored as categories only (no free-text health information about employees) | ✅ | `ScheduleExceptionKind` |
-| Read-access audit for medical records | ⏳ | Phase 6 |
+| Read-access audit for medical records (`emr.viewed`, `emr.access_denied`, `emr.break_glass`, `patient.viewed`) | ✅ | `emr/access.ts`, `patients.ts` |
+| Care-relationship ABAC for the EMR (doctor: visit within 365 days back / 30 ahead; nurse: visit today in own branch; head doctor: oversight) | ✅ | `emr/access.ts`; tested |
+| Break-the-glass: POST-only, reason category (no free text in the audit trail), 10-minute patient-scoped cookie | ✅ | `care-actions.ts` |
+| Signed notes immutable and undeletable at database level; tamper evidence via SHA-256 content hash shown in the UI | ✅ | trigger `clinical_note_guard`; tested incl. owner-level tampering |
+| No deletion grants on clinical tables; corrections via status (`ENTERED_IN_ERROR`) or amendments | ✅ | migration `patients_appointments_emr` |
+| Clinical and patient tables have no grants for the platform role | ✅ | tested |
+| Search terms and clinical text never written to logs or audit metadata | ✅ | |
 | Protected document storage + short-lived URLs | ⏳ | Phase 6 |
 | Encrypted backups, PITR, tested restores | ⏳ | infrastructure, Phase 9 |
 | Dependency / SAST / secret scanning in CI | ⏳ | Phase 9 (`npm audit` currently reports advisories in dev dependencies — review) |

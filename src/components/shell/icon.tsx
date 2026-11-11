@@ -1,4 +1,4 @@
-import { Activity, Building2, CalendarDays, DoorOpen, KeyRound, LifeBuoy, Stethoscope, UserRound, GitBranch, LayoutDashboard, ScrollText, Settings, ShieldCheck, Users } from "lucide-react";
+import { Activity, Building2, CalendarDays, CalendarPlus, ClipboardList, Contact, ListOrdered, DoorOpen, KeyRound, LifeBuoy, Stethoscope, UserRound, GitBranch, LayoutDashboard, ScrollText, Settings, ShieldCheck, Users } from "lucide-react";
 
 /** Icons are referenced by name so server components can pass them to client nav. */
 const ICONS = {
@@ -16,6 +16,10 @@ const ICONS = {
   doctors: UserRound,
   services: Stethoscope,
   facilities: DoorOpen,
+  patients: Contact,
+  booking: CalendarPlus,
+  queue: ListOrdered,
+  visits: ClipboardList,
 } as const;
 
 export type IconName = keyof typeof ICONS;

@@ -42,3 +42,19 @@ export function canUseBranch(ctx: ClinicContext, branchId: string) {
 export function assertBranch(ctx: ClinicContext, branchId: string) {
   if (!canUseBranch(ctx, branchId)) throw new DomainError("errors.branchScope");
 }
+
+/**
+ * Branch names for operational screens (queue, schedules, staff access), for
+ * anyone who works with branches — not only clinic administrators. Returns
+ * only branches inside the caller's branch scope.
+ */
+export async function listOperationalBranches(ctx: ClinicContext): Promise<{ id: string; name: string; isMain: boolean }[]> {
+  requirePermission(ctx, "clinic.settings.read", "staff.read", "schedules.read", "queue.manage", "appointments.manage");
+  return inClinic(ctx, (tx) =>
+    tx.branch.findMany({
+      where: { archivedAt: null, ...(ctx.branchIds ? { id: { in: ctx.branchIds } } : {}) },
+      select: { id: true, name: true, isMain: true },
+      orderBy: [{ isMain: "desc" }, { name: "asc" }],
+    }),
+  );
+}

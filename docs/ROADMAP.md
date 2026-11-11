@@ -8,7 +8,7 @@
 | 3 | Clinic provisioning, onboarding, secure owner invitations | ✅ done — atomic provisioning, invitations (resend/revoke), lifecycle, modules, plan change, owner activation + clinic settings/branches |
 | 4 | Tenant isolation, users, roles, permissions | ✅ done (2026-11-11) — staff invitations incl. existing accounts joining more clinics, password reset, role editor (custom roles, locked owner role), member access (roles, branch scope, suspend/restore/remove) with owner/self/last-owner guardrails, break-glass request → clinic approval → expiry/revocation. ⏳ MFA recovery codes / admin MFA reset, platform-staff invitation UI |
 | 5 | Admin, receptionist, doctor workspaces | ✅ done (2026-11-11) — role-aware dashboard (operations + setup for admins, front desk "who works today", "My day" for doctors), services & prices (exact money), departments & rooms, doctor profiles, weekly schedules with overlap prevention, absences, services per doctor, availability engine (time-zone/DST-safe slots), branch-scope enforcement. Appointments/queue themselves are Phase 6 |
-| 6 | Patients, appointments, queue, EMR | ⏳ |
+| 6 | Patients, appointments, queue, EMR | ✅ done (2026-11-11) — patient registry (MRN, PINFL/passport, smart search incl. typo-tolerant names, duplicate detection with human confirmation, consents per purpose), booking inside working hours with database-enforced no-double-booking, check-in with daily queue tickets, walk-ins, cancellations/no-shows, doctor's day, encounters, structured notes, signing (immutable + hash), amendments, ICD-10 diagnoses, allergies, vital signs, care-relationship access with audited break-the-glass. ⏳ patient merge, rescheduling UI, printable documents, lab orders (Phase 8) |
 | 7 | Billing, payments, reports | ⏳ |
 | 8 | Other staff workspaces, patient portal, integrations | ⏳ |
 | 9 | Security tests, accessibility, performance, backup, production readiness | ⏳ |
@@ -22,9 +22,12 @@
 | 4 | Owner receives secure invitation | ✅ (email SIMULATED via dev mailbox; SMTP transport ready, not configured) |
 | 5 | Owner activates and configures clinic | ✅ |
 | 6 | Clinic creates staff with individual roles | ✅ |
-| 7–11 | Patients, appointments, notes, billing, reports | ⏳ Phases 5–7 |
+| 7 | Receptionist registers a synthetic patient and books | ✅ automated + browser |
+| 8 | Doctor sees the appointment and opens the authorised record | ✅ automated (browser walkthrough stopped at check-in when the pane was closed) |
+| 9 | Doctor creates and signs a clinical note | ✅ automated |
+| 10–11 | Invoice/payment, owner reports | ⏳ Phase 7 |
 | 12 | Clinic A cannot access Clinic B | ✅ for all current tables |
-| 13 | Unauthorised users cannot view clinical records | 🟡 owner/admin lack `emr.read`; enforcement tests come with EMR |
+| 13 | Unauthorised users cannot view clinical records | ✅ RBAC + care-relationship ABAC + RLS; platform role has no grants; denials audited |
 | 14 | Critical actions audited | ✅ for current actions |
 | 15 | Four languages on major screens | ✅ for built screens (machine-assisted translations need review) |
 | 16 | Desktop/tablet/phone | 🟡 responsive layout; real-device testing pending |
@@ -35,7 +38,9 @@
 * Email delivery is simulated in development; production requires SMTP configuration.
 * Platform staff have no self-service password reset (by design: a SUPER_ADMIN or the CLI resets them). Lost-authenticator recovery is not built yet.
 * Approved support grants are recorded and checked by `getActiveGrant`, but no platform screen uses them yet — operational support views will consume them in Phase 6+.
-* Slot availability does not yet subtract booked appointments (no appointments exist until Phase 6); the engine already accepts busy intervals.
+* ICD-10 codes are validated by format only; an official ICD-10 catalogue (licensed nomenclature as used by the MoH) still has to be imported.
+* Patient merge (for confirmed duplicates) is not implemented yet — duplicates are prevented at registration.
+* Production databases must allow the migration role to create the `btree_gist` and `pg_trgm` extensions (both are trusted extensions).
 * Specialty list and service catalog conventions need review by the clinical advisor (MoH nomenclature).
 * `npm audit` reports advisories in the dependency tree — review and resolve before production.
 * Project lives in a OneDrive folder; `node_modules` syncing can be slow — consider a non-synced path.

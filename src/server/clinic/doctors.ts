@@ -6,7 +6,8 @@ import type { RequestMeta } from "../auth/platform-auth";
 import type { Tx } from "../db";
 import { blocksOverlap, daySlots } from "../scheduling/availability";
 import { SPECIALTIES } from "../scheduling/specialties";
-import { dbDateToLocalDate, isLocalDate, isoWeekday, localDateToDbDate, parseHm, todayIn, type LocalDate } from "../scheduling/time";
+import { addDays, dbDateToLocalDate, isLocalDate, isoWeekday, localDateToDbDate, localToInstant, parseHm, todayIn, type LocalDate } from "../scheduling/time";
+import { busyIntervals } from "../appointments/appointments";
 import { uuidv7 } from "../security/crypto";
 import { DomainError } from "../tenancy/provisioning";
 import { assertBranch, auditClinic, canUseBranch, inClinic, requirePermission } from "./context";
@@ -236,7 +237,7 @@ export async function doctorsWorkingOn(ctx: ClinicContext, date: LocalDate): Pro
 }
 
 /** Bookable slots for one doctor on one date (appointments are subtracted in Phase 6). */
-export async function doctorSlots(ctx: ClinicContext, profileId: string, date: LocalDate) {
+export async function doctorSlots(ctx: ClinicContext, profileId: string, date: LocalDate, opts: { includePast?: boolean } = {}) {
   if (!isLocalDate(date)) throw new DomainError("errors.invalidInput");
   return inClinic(ctx, async (tx) => {
     const p = await loadProfile(tx, ctx, profileId);
@@ -245,12 +246,16 @@ export async function doctorSlots(ctx: ClinicContext, profileId: string, date: L
       tx.workSchedule.findMany({ where: { doctorProfileId: p.id, weekday: isoWeekday(date) } }),
       tx.scheduleException.findUnique({ where: { doctorProfileId_date: { doctorProfileId: p.id, date: localDateToDbDate(date) } } }),
     ]);
+    const tz = ctx.tenant.timezone;
+    const busy = await busyIntervals(tx, p.id, localToInstant(date, 0, tz), localToInstant(addDays(date, 1), 0, tz));
     return daySlots({
       date,
-      timeZone: ctx.tenant.timezone,
+      timeZone: tz,
       blocks: blocks.filter((b) => isOwnProfile(ctx, p) || canUseBranch(ctx, b.branchId)),
       hasException: Boolean(exception),
       slotMinutes: p.defaultSlotMinutes,
+      busy,
+      notBefore: opts.includePast ? undefined : new Date(),
     });
   });
 }

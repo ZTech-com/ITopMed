@@ -74,7 +74,7 @@ describe("doctor profiles and schedules", () => {
     // A room of another branch cannot be used.
     await expect(addScheduleBlock(a.ctx, profileId, { weekday: 2, start: "09:00", end: "10:00", branchId: second, roomId: room }, META)).rejects.toThrow("errors.roomNotInBranch");
 
-    const slots = await doctorSlots(a.ctx, profileId, MONDAY);
+    const slots = await doctorSlots(a.ctx, profileId, MONDAY, { includePast: true });
     expect(slots).toHaveLength(6 + 4);
     expect(slots[0]!.start.toISOString()).toBe("2030-01-07T04:00:00.000Z"); // 09:00 Tashkent
 

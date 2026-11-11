@@ -127,7 +127,7 @@ model Tenant {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
-  createdBy          PlatformUser?        @relation(fields: [createdById], references: [id])
+  createdBy          PlatformUser?           @relation(fields: [createdById], references: [id])
   branches           Branch[]
   departments        Department[]
   memberships        Membership[]
@@ -142,6 +142,16 @@ model Tenant {
   workSchedules      WorkSchedule[]
   scheduleExceptions ScheduleException[]
   doctorServices     DoctorService[]
+  patients           Patient[]
+  patientIdentifiers PatientIdentifier[]
+  patientConsents    PatientConsent[]
+  appointments       Appointment[]
+  encounters         Encounter[]
+  clinicalNotes      ClinicalNote[]
+  noteAmendments     ClinicalNoteAmendment[]
+  diagnoses          Diagnosis[]
+  allergies          Allergy[]
+  vitalSigns         VitalSign[]
 
   @@index([status])
 }
@@ -158,11 +168,12 @@ model Branch {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  departments Department[]
-  members     MembershipBranch[]
-  rooms       Room[]
-  schedules   WorkSchedule[]
+  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  departments  Department[]
+  members      MembershipBranch[]
+  rooms        Room[]
+  schedules    WorkSchedule[]
+  appointments Appointment[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -519,9 +530,10 @@ model Room {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  branch    Branch         @relation(fields: [branchId], references: [id], onDelete: Restrict)
-  schedules WorkSchedule[]
+  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branch       Branch         @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  schedules    WorkSchedule[]
+  appointments Appointment[]
 
   @@unique([tenantId, branchId, name])
   @@index([tenantId])
@@ -551,9 +563,10 @@ model Service {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
-  tenant     Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  department Department?     @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  doctors    DoctorService[]
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  department   Department?     @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  doctors      DoctorService[]
+  appointments Appointment[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -574,12 +587,14 @@ model DoctorProfile {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  membership Membership          @relation(fields: [membershipId], references: [id], onDelete: Restrict)
-  department Department?         @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  schedules  WorkSchedule[]
-  exceptions ScheduleException[]
-  services   DoctorService[]
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  membership   Membership          @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+  department   Department?         @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  schedules    WorkSchedule[]
+  exceptions   ScheduleException[]
+  services     DoctorService[]
+  appointments Appointment[]
+  encounters   Encounter[]
 
   @@index([tenantId])
 }
@@ -641,4 +656,346 @@ model ScheduleException {
 
   @@unique([doctorProfileId, date])
   @@index([tenantId, date])
+}
+
+// ───────────────────────────── Patients (Phase 6) ─────────────────────────────
+
+enum Sex {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+enum PatientStatus {
+  ACTIVE
+  ARCHIVED
+  MERGED
+}
+
+/// Demographics only. Clinical data lives in separate EMR tables with stricter access.
+model Patient {
+  id              String        @id @db.Uuid
+  tenantId        String        @db.Uuid
+  /// Clinic-local medical record number, e.g. "P-000042".
+  mrn             String
+  lastName        String
+  firstName       String
+  middleName      String?
+  birthDate       DateTime      @db.Date
+  sex             Sex
+  phone           String?
+  email           String?
+  address         String?
+  preferredLocale String?
+  status          PatientStatus @default(ACTIVE)
+  mergedIntoId    String?       @db.Uuid
+  createdById     String        @db.Uuid
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  identifiers  PatientIdentifier[]
+  consents     PatientConsent[]
+  appointments Appointment[]
+  encounters   Encounter[]
+  notes        ClinicalNote[]
+  diagnoses    Diagnosis[]
+  allergies    Allergy[]
+  vitals       VitalSign[]
+
+  @@unique([tenantId, mrn])
+  @@index([tenantId, lastName, firstName])
+  @@index([tenantId, birthDate])
+  @@index([tenantId, phone])
+}
+
+enum IdentifierType {
+  PINFL
+  PASSPORT
+  BIRTH_CERTIFICATE
+  INSURANCE
+  OTHER
+}
+
+model PatientIdentifier {
+  id        String         @id @db.Uuid
+  tenantId  String         @db.Uuid
+  patientId String         @db.Uuid
+  type      IdentifierType
+  value     String
+  createdAt DateTime       @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, type, value])
+  @@index([tenantId, patientId])
+}
+
+enum ConsentPurpose {
+  SMS_REMINDERS
+  TELEGRAM_NOTIFICATIONS
+  EMAIL_NOTIFICATIONS
+  MARKETING
+  HEALTH_DATA_EXCHANGE
+  PATIENT_PORTAL
+}
+
+enum ConsentMethod {
+  PAPER_SIGNED
+  VERBAL_RECORDED
+  PORTAL
+}
+
+/// Consent is recorded per purpose. Care itself is not based on consent here;
+/// see docs/SECURITY-AND-PRIVACY.md (legal basis per purpose).
+model PatientConsent {
+  id           String         @id @db.Uuid
+  tenantId     String         @db.Uuid
+  patientId    String         @db.Uuid
+  purpose      ConsentPurpose
+  method       ConsentMethod
+  grantedAt    DateTime       @default(now())
+  withdrawnAt  DateTime?
+  recordedById String         @db.Uuid
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, patientId, purpose])
+}
+
+// ───────────────────────────── Appointments & queue ───────────────────────────
+
+enum AppointmentStatus {
+  BOOKED
+  CHECKED_IN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum AppointmentSource {
+  FRONT_DESK
+  PHONE
+  WALK_IN
+  PORTAL
+}
+
+enum CancellationReason {
+  PATIENT_REQUEST
+  CLINIC_RESCHEDULE
+  DOCTOR_UNAVAILABLE
+  DUPLICATE
+  OTHER
+}
+
+/// Overlapping active appointments for the same doctor are rejected by a
+/// database exclusion constraint (see migration), not only by application code.
+model Appointment {
+  id                 String              @id @db.Uuid
+  tenantId           String              @db.Uuid
+  patientId          String              @db.Uuid
+  doctorProfileId    String              @db.Uuid
+  branchId           String              @db.Uuid
+  roomId             String?             @db.Uuid
+  serviceId          String?             @db.Uuid
+  startsAt           DateTime
+  endsAt             DateTime
+  status             AppointmentStatus   @default(BOOKED)
+  source             AppointmentSource   @default(FRONT_DESK)
+  /// Administrative note only (e.g. "prefers morning"). Never clinical details.
+  adminNote          String?
+  /// Daily per-branch queue number, assigned at check-in.
+  queueNumber        Int?
+  checkedInAt        DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  cancelledAt        DateTime?
+  cancellationReason CancellationReason?
+  createdById        String              @db.Uuid
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient   Patient       @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor    DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Restrict)
+  branch    Branch        @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  room      Room?         @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  service   Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  encounter Encounter?
+
+  @@index([tenantId, startsAt])
+  @@index([tenantId, doctorProfileId, startsAt])
+  @@index([tenantId, patientId])
+}
+
+// ───────────────────────────── Electronic medical record ──────────────────────
+
+enum EncounterStatus {
+  OPEN
+  CLOSED
+}
+
+model Encounter {
+  id              String          @id @db.Uuid
+  tenantId        String          @db.Uuid
+  patientId       String          @db.Uuid
+  doctorProfileId String          @db.Uuid
+  appointmentId   String?         @unique @db.Uuid
+  branchId        String          @db.Uuid
+  status          EncounterStatus @default(OPEN)
+  startedAt       DateTime        @default(now())
+  closedAt        DateTime?
+  createdAt       DateTime        @default(now())
+
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient     Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor      DoctorProfile  @relation(fields: [doctorProfileId], references: [id], onDelete: Restrict)
+  appointment Appointment?   @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  notes       ClinicalNote[]
+  diagnoses   Diagnosis[]
+  vitals      VitalSign[]
+
+  @@index([tenantId, patientId, startedAt])
+}
+
+enum NoteStatus {
+  DRAFT
+  SIGNED
+}
+
+/// Structured consultation note. Once SIGNED it is immutable (trigger);
+/// corrections are appended as ClinicalNoteAmendment rows.
+model ClinicalNote {
+  id          String     @id @db.Uuid
+  tenantId    String     @db.Uuid
+  encounterId String     @db.Uuid
+  patientId   String     @db.Uuid
+  authorId    String     @db.Uuid
+  status      NoteStatus @default(DRAFT)
+  complaints  String     @default("")
+  history     String     @default("")
+  examination String     @default("")
+  assessment  String     @default("")
+  plan        String     @default("")
+  signedAt    DateTime?
+  signedById  String?    @db.Uuid
+  /// SHA-256 of the canonical signed content (tamper evidence).
+  contentHash String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  tenant     Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  encounter  Encounter               @relation(fields: [encounterId], references: [id], onDelete: Restrict)
+  patient    Patient                 @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  amendments ClinicalNoteAmendment[]
+
+  @@index([tenantId, patientId])
+}
+
+model ClinicalNoteAmendment {
+  id          String   @id @db.Uuid
+  tenantId    String   @db.Uuid
+  noteId      String   @db.Uuid
+  authorId    String   @db.Uuid
+  reason      String
+  content     String
+  contentHash String
+  createdAt   DateTime @default(now())
+
+  tenant Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  note   ClinicalNote @relation(fields: [noteId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, noteId])
+}
+
+enum DiagnosisKind {
+  PRIMARY
+  SECONDARY
+}
+
+enum ClinicalStatus {
+  ACTIVE
+  RESOLVED
+  ENTERED_IN_ERROR
+}
+
+model Diagnosis {
+  id           String         @id @db.Uuid
+  tenantId     String         @db.Uuid
+  patientId    String         @db.Uuid
+  encounterId  String?        @db.Uuid
+  /// ICD-10 code as used in Uzbekistan, e.g. "I10" or "J06.9".
+  icd10Code    String
+  description  String
+  kind         DiagnosisKind  @default(PRIMARY)
+  status       ClinicalStatus @default(ACTIVE)
+  recordedById String         @db.Uuid
+  recordedAt   DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  encounter Encounter? @relation(fields: [encounterId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, patientId])
+}
+
+enum AllergySeverity {
+  MILD
+  MODERATE
+  SEVERE
+  UNKNOWN
+}
+
+model Allergy {
+  id           String          @id @db.Uuid
+  tenantId     String          @db.Uuid
+  patientId    String          @db.Uuid
+  substance    String
+  reaction     String?
+  severity     AllergySeverity @default(UNKNOWN)
+  status       ClinicalStatus  @default(ACTIVE)
+  recordedById String          @db.Uuid
+  recordedAt   DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, patientId])
+}
+
+enum VitalKind {
+  SYSTOLIC_BP
+  DIASTOLIC_BP
+  HEART_RATE
+  RESPIRATORY_RATE
+  TEMPERATURE
+  SPO2
+  WEIGHT
+  HEIGHT
+  BLOOD_GLUCOSE
+}
+
+/// One measured value. Units are fixed per kind (UCUM) in src/server/emr/vitals.ts.
+model VitalSign {
+  id           String    @id @db.Uuid
+  tenantId     String    @db.Uuid
+  patientId    String    @db.Uuid
+  encounterId  String?   @db.Uuid
+  kind         VitalKind
+  value        Decimal   @db.Decimal(7, 2)
+  unit         String
+  measuredAt   DateTime
+  recordedById String    @db.Uuid
+  createdAt    DateTime  @default(now())
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  encounter Encounter? @relation(fields: [encounterId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, patientId, measuredAt])
 }

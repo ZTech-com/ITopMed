@@ -1,0 +1,77 @@
+import { Stethoscope } from "lucide-react";
+import Link from "next/link";
+import { getFormatter, getTranslations } from "next-intl/server";
+import { patientName } from "@/components/patients";
+import { Form } from "@/components/ui/form";
+import { Alert, Badge, Card, EmptyState, PageHeader, STATUS_TONE, buttonClass } from "@/components/ui/primitives";
+import { listDay } from "@/server/appointments/appointments";
+import { requireClinic } from "@/server/auth/guards";
+import { getMyDoctorProfileId } from "@/server/clinic/doctors";
+import { withAppContext } from "@/server/db";
+import { todayIn } from "@/server/scheduling/time";
+import { startVisitAction } from "../../../care-actions";
+
+const ORDER: Record<string, number> = { IN_PROGRESS: 0, CHECKED_IN: 1, BOOKED: 2, COMPLETED: 3, NO_SHOW: 4, CANCELLED: 5 };
+
+export default async function MyQueuePage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ finished?: string }> }) {
+  const { slug } = await params;
+  const ctx = await requireClinic(slug, "emr.write");
+  const [t, format, sp, profileId] = await Promise.all([getTranslations(), getFormatter(), searchParams, getMyDoctorProfileId(ctx)]);
+  const tz = ctx.tenant.timezone;
+  const all = profileId ? await listDay(ctx, todayIn(tz), { doctorProfileId: profileId }) : [];
+  const mine = all.filter((a) => a.doctorProfileId === profileId).sort((a, b) => ORDER[a.status]! - ORDER[b.status]! || (a.queueNumber ?? 999) - (b.queueNumber ?? 999) || +a.startsAt - +b.startsAt);
+  const encounters = new Map(
+    (await withAppContext({ tenantId: ctx.tenant.id, userId: ctx.principal.user.id }, (tx) => tx.encounter.findMany({ where: { appointmentId: { in: mine.map((a) => a.id) } }, select: { id: true, appointmentId: true } }))).map((e) => [e.appointmentId!, e.id]),
+  );
+
+  return (
+    <div className="max-w-4xl space-y-6">
+      <PageHeader title={t("clinic.visit.myQueue")} description={t("clinic.visit.myQueueSubtitle")} />
+      {sp.finished ? <Alert tone="success">{t("clinic.visit.finished")}</Alert> : null}
+      {!profileId ? <Alert tone="neutral">{t("clinic.mySchedule.noProfile")}</Alert> : null}
+      <Card className="overflow-hidden">
+        {mine.length === 0 ? (
+          <EmptyState icon={<Stethoscope className="size-6" />} title={t("clinic.visit.emptyQueue")} />
+        ) : (
+          <ul className="divide-y divide-border">
+            {mine.map((a) => {
+              const enc = encounters.get(a.id);
+              return (
+                <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 sm:px-6">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <div className="w-16 shrink-0">
+                      <p className="text-[15px] font-semibold tabular-nums">{format.dateTime(a.startsAt, { timeStyle: "short", timeZone: tz })}</p>
+                      {a.queueNumber ? <p className="text-[12px] font-semibold text-accent">#{a.queueNumber}</p> : null}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{patientName(a.patient)}</p>
+                      <p className="truncate text-[13px] text-text-2">
+                        {a.patient.mrn}
+                        {a.service ? ` · ${a.service.name}` : ""}
+                        {a.room ? ` · ${a.room.name}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge tone={STATUS_TONE[a.status]}>{t(`status.${a.status}`)}</Badge>
+                    {enc ? (
+                      <Link href={`/c/${ctx.tenant.slug}/encounters/${enc}`} className={buttonClass(a.status === "IN_PROGRESS" ? "primary" : "secondary", "sm")}>
+                        {t("clinic.visit.continue")}
+                      </Link>
+                    ) : a.status === "BOOKED" || a.status === "CHECKED_IN" ? (
+                      <Form action={startVisitAction} className="space-y-0">
+                        <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+                        <input type="hidden" name="appointmentId" value={a.id} />
+                        <button className={buttonClass(a.status === "CHECKED_IN" ? "primary" : "secondary", "sm")}>{t("clinic.visit.start")}</button>
+                      </Form>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+    </div>
+  );
+}
