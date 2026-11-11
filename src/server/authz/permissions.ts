@@ -39,6 +39,8 @@ export const PERMISSIONS = [
   "lab.verify",
   "lab.collect",
   "lab.manage",
+  // Patient portal accounts (activation codes, disabling access)
+  "portal.manage",
   "documents.read",
   "documents.upload",
   "prescriptions.write",
@@ -125,6 +127,7 @@ export const ROLE_TEMPLATES: Record<SystemRoleKey, Permission[]> = {
     "schedules.read",
     "schedules.manage",
     "lab.manage",
+    "portal.manage",
     "patients.create",
     "patients.update",
     "patients.merge",
@@ -133,7 +136,7 @@ export const ROLE_TEMPLATES: Record<SystemRoleKey, Permission[]> = {
     "billing.read",
   ],
   branch_manager: [...ADMIN_BASE, "appointments.manage", "queue.manage", "billing.read", "services.read", "schedules.read", "schedules.manage"],
-  receptionist: ["patients.read", "patients.create", "patients.update", "appointments.read", "appointments.manage", "queue.manage", "services.read", "schedules.read"],
+  receptionist: ["patients.read", "patients.create", "patients.update", "appointments.read", "appointments.manage", "queue.manage", "services.read", "schedules.read", "portal.manage"],
   doctor: [
     "patients.read",
     "appointments.read",

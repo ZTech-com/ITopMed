@@ -21,6 +21,9 @@ async function main() {
     ownerPassword: required("DEV_PG_OWNER_PASSWORD"),
     appPassword: required("DEV_PG_APP_PASSWORD"),
     platformPassword: required("DEV_PG_PLATFORM_PASSWORD"),
+    portalPassword: required("DEV_PG_PORTAL_PASSWORD"),
+    // PostgreSQL 18 I/O workers can block shutdown on Windows; synchronous I/O is plenty for local development.
+    postgresFlags: ["-c", "io_method=sync"],
   });
   console.log(`PostgreSQL (dev) running on localhost:${port}, data: ${dataDir}`);
   console.log("Press Ctrl+C to stop.");

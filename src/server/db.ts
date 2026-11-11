@@ -4,7 +4,7 @@ import { PrismaClient, type Prisma } from "@/generated/prisma/client";
 import { env } from "./env";
 
 /**
- * Two physically separate connection pools, one per PostgreSQL role:
+ * Three physically separate connection pools, one per PostgreSQL role:
  *
  *  - appDb       → itopmed_app       clinic workspaces, Row-Level Security enforced.
  *                   Must ONLY be used through `withAppContext`, which binds the
@@ -12,8 +12,11 @@ import { env } from "./env";
  *  - platformDb  → itopmed_platform  ITop Med administration. The role has no
  *                   grants on clinical tables, so platform code cannot read
  *                   medical records even if it tried.
+ *  - portalDb    → itopmed_portal    patient portal. Policies derive the patient from
+ *                   the presented session hash inside PostgreSQL; the role sees only
+ *                   that patient's own released data and has no grants on clinical notes.
  */
-type Clients = { app?: PrismaClient; platform?: PrismaClient };
+type Clients = { app?: PrismaClient; platform?: PrismaClient; portal?: PrismaClient };
 const g = globalThis as unknown as { __itmDb?: Clients };
 const clients: Clients = (g.__itmDb ??= {});
 
@@ -29,6 +32,10 @@ function appClient(): PrismaClient {
 
 export function platformDb(): PrismaClient {
   return (clients.platform ??= make(env().PLATFORM_DATABASE_URL));
+}
+
+function portalClient(): PrismaClient {
+  return (clients.portal ??= make(env().PORTAL_DATABASE_URL));
 }
 
 export type Tx = Prisma.TransactionClient;
@@ -65,13 +72,26 @@ export async function setContext(tx: Tx, ctx: AppContext) {
     set_config('app.reset_token_hash', ${ctx.resetTokenHash ?? ""}, true)`;
 }
 
+/**
+ * Patient portal transaction. Only the session hash (or, during activation,
+ * the activation-code hash) is passed in; who the patient is, is decided by
+ * the database from that value.
+ */
+export async function withPortal<T>(ctx: { sessionId?: string | null; inviteTokenHash?: string | null }, fn: (tx: Tx) => Promise<T>): Promise<T> {
+  return portalClient().$transaction(async (tx) => {
+    await setContext(tx, { sessionId: ctx.sessionId, inviteTokenHash: ctx.inviteTokenHash });
+    return fn(tx);
+  }, TX_OPTIONS);
+}
+
 export async function withPlatform<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
   return platformDb().$transaction(fn, TX_OPTIONS);
 }
 
 /** For tests and graceful shutdown. */
 export async function disconnectAll() {
-  await Promise.all([clients.app?.$disconnect(), clients.platform?.$disconnect()]);
+  await Promise.all([clients.app?.$disconnect(), clients.platform?.$disconnect(), clients.portal?.$disconnect()]);
   clients.app = undefined;
   clients.platform = undefined;
+  clients.portal = undefined;
 }

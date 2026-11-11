@@ -8,6 +8,9 @@ import { requireClinic } from "@/server/auth/guards";
 import { requestMeta } from "@/server/http";
 import { CONSENT_METHODS, CONSENT_PURPOSES, getPatient } from "@/server/patients/patients";
 import { consentAction } from "../../../../care-actions";
+import { portalCodeAction } from "../../../../portal-actions";
+import { PortalAccessCard } from "@/components/portal-staff";
+import { getPortalAccount } from "@/server/portal/staff";
 
 export default async function PatientPage({ params, searchParams }: { params: Promise<{ slug: string; id: string }>; searchParams: Promise<{ registered?: string; saved?: string; booked?: string }> }) {
   const { slug, id } = await params;
@@ -15,6 +18,7 @@ export default async function PatientPage({ params, searchParams }: { params: Pr
   const [t, format, sp] = await Promise.all([getTranslations(), getFormatter(), searchParams]);
   const p = await getPatient(ctx, id, await requestMeta());
   if (!p) notFound();
+  const portal = await getPortalAccount(ctx, p.id);
   const base = `/c/${ctx.tenant.slug}`;
   const tz = ctx.tenant.timezone;
   const canUpdate = ctx.permissions.has("patients.update");
@@ -129,6 +133,16 @@ export default async function PatientPage({ params, searchParams }: { params: Pr
           ) : null}
         </Card>
       </div>
+
+      <PortalAccessCard
+        slug={ctx.tenant.slug}
+        patientId={p.id}
+        account={portal?.account ?? null}
+        hasConsent={portal?.hasConsent ?? false}
+        canManage={ctx.permissions.has("portal.manage")}
+        action={portalCodeAction}
+        timeZone={tz}
+      />
     </div>
   );
 }

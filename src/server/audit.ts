@@ -2,7 +2,7 @@ import "server-only";
 import type { Tx } from "./db";
 import { uuidv7 } from "./security/crypto";
 
-export type AuditActorType = "PLATFORM_USER" | "USER" | "SYSTEM" | "ANONYMOUS";
+export type AuditActorType = "PLATFORM_USER" | "USER" | "SYSTEM" | "ANONYMOUS" | "PATIENT";
 export type AuditOutcome = "SUCCESS" | "DENIED" | "FAILURE";
 
 export interface AuditInput {

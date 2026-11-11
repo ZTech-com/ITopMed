@@ -39,6 +39,10 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 | Clinical and patient tables have no grants for the platform role | ✅ | tested |
 | Search terms and clinical text never written to logs or audit metadata | ✅ | |
 | Laboratory: four-eyes verification (verifier ≠ person who entered results) in the service **and** as a DB CHECK; verified results immutable by trigger; lab staff work from the order and patient header only — no EMR access; values hidden from the clinical views until verified; no lab tables granted to the platform role | ✅ | `lab/lab.ts`, migration `laboratory`; tested |
+| Patient portal isolation: separate DB role; patient identity derived from the session hash inside PostgreSQL; own rows only; unreleased results and draft invoices hidden by policy; no grants on clinical notes, diagnoses, allergies, vitals, encounters, staff or audit tables; internal columns (lab indication, appointment admin note, payment references, staff ids) not granted | ✅ | migration `patient_portal`; `tests/portal.test.ts` |
+| Patient onboarding without sending secrets: one-time activation code handed over in person (hash-only, 72 h), date-of-birth check, consent recorded before issue, lockout and code burning, staff never set or see patient passwords (column grants) | ✅ | `portal/staff.ts`, `portal/auth.ts` |
+| Results released to patients only by a doctor in a care relationship (not break-the-glass), one-way and audited | ✅ | `lab/lab.ts` `releaseLabOrder` |
+| Patient MFA / SMS one-time codes | ⏳ | needs the SMS provider (Phase 8d) |
 | Protected document storage + short-lived URLs | ⏳ | Phase 6 |
 | Encrypted backups, PITR, tested restores | ⏳ | infrastructure, Phase 9 |
 | Dependency / SAST / secret scanning in CI | ⏳ | Phase 9 (`npm audit` currently reports advisories in dev dependencies — review) |

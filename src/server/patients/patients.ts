@@ -291,6 +291,15 @@ export async function withdrawConsent(ctx: ClinicContext, consentId: string, met
     if (!c || c.withdrawnAt) throw new DomainError("errors.notFound");
     await tx.patientConsent.update({ where: { id: c.id }, data: { withdrawnAt: new Date() } });
     await auditClinic(tx, ctx, meta, { action: "consent.withdrawn", entityType: "Patient", entityId: c.patientId, metadata: { purpose: c.purpose } });
+    if (c.purpose === "PATIENT_PORTAL") {
+      // No consent, no portal: close the account and end its sessions in the same transaction.
+      const acc = await tx.patientAccount.findFirst({ where: { patientId: c.patientId, tenantId: ctx.tenant.id }, select: { id: true, status: true } });
+      if (acc && acc.status !== "DISABLED") {
+        await tx.patientAccount.updateMany({ where: { id: acc.id }, data: { status: "DISABLED", activationCodeHash: null, activationExpiresAt: null } });
+        await tx.patientSession.updateMany({ where: { accountId: acc.id, revokedAt: null }, data: { revokedAt: new Date() } });
+        await auditClinic(tx, ctx, meta, { action: "portal.disabled", entityType: "Patient", entityId: c.patientId, metadata: { reason: "consent_withdrawn" } });
+      }
+    }
   });
 }
 

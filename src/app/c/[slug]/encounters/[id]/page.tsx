@@ -10,6 +10,7 @@ import { requestMeta } from "@/server/http";
 import { DomainError } from "@/server/tenancy/provisioning";
 import { allergyAction, amendAction, clinicalStatusAction, diagnosisAction, finishVisitAction, noteAction, vitalsAction } from "../../../../care-actions";
 import { labOrderAction } from "../../../../lab-actions";
+import { labReleaseAction } from "../../../../portal-actions";
 import { LabResultsList } from "@/components/lab";
 import { listLabTests } from "@/server/lab/lab";
 
@@ -120,7 +121,7 @@ export default async function EncounterPage({ params }: { params: Promise<{ slug
       <Card>
         <CardHeader title={t("clinic.labOrder.title")} />
         <CardBody className="space-y-4">
-          <LabResultsList orders={labOrders} timeZone={tz} />
+          <LabResultsList orders={labOrders} timeZone={tz} release={isOwn && ctx.permissions.has("emr.write") ? { slug: s, action: labReleaseAction } : undefined} />
           {canWrite && ctx.permissions.has("orders.create") ? (
             labTests.length === 0 ? (
               <p className="text-[13px] text-text-3">{t("clinic.labOrder.noLabTests")}</p>

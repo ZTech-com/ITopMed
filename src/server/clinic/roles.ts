@@ -20,7 +20,7 @@ export const CLINICAL_PERMISSIONS = new Set<Permission>([
 
 export const PERMISSION_GROUPS: { key: string; permissions: Permission[] }[] = [
   { key: "admin", permissions: ["clinic.settings.read", "clinic.settings.manage", "clinic.branches.manage", "clinic.subscription.read", "staff.read", "staff.manage", "roles.manage", "audit.read", "support_access.decide", "services.read", "services.manage"] },
-  { key: "patients", permissions: ["patients.read", "patients.create", "patients.update", "patients.merge", "appointments.read", "appointments.manage", "queue.manage", "schedules.read", "schedules.manage"] },
+  { key: "patients", permissions: ["patients.read", "patients.create", "patients.update", "patients.merge", "appointments.read", "appointments.manage", "queue.manage", "schedules.read", "schedules.manage", "portal.manage"] },
   { key: "clinical", permissions: [...CLINICAL_PERMISSIONS] },
   { key: "finance", permissions: ["billing.read", "billing.invoice", "billing.payment", "billing.refund", "cash.shift", "finance.reports", "finance.manage"] },
   { key: "operations", permissions: ["inventory.read", "inventory.manage", "inventory.dispense", "hr.read", "hr.manage", "reports.operational", "lab.manage"] },

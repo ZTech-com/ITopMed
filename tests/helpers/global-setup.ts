@@ -36,6 +36,7 @@ export default async function setup() {
     ownerPassword: "test-owner",
     appPassword: "test-app",
     platformPassword: "test-platform",
+    portalPassword: "test-portal",
     persistent: false,
     // PostgreSQL 18 I/O worker processes can outlive the server on Windows and keep
     // the test port busy; synchronous I/O starts none and is fine at test scale.

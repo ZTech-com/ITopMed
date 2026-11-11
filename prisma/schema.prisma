@@ -162,6 +162,8 @@ model Tenant {
   labOrders          LabOrder[]
   labOrderItems      LabOrderItem[]
   labResults         LabResult[]
+  patientAccounts    PatientAccount[]
+  patientSessions    PatientSession[]
 
   @@index([status])
 }
@@ -490,6 +492,7 @@ enum AuditActorType {
   USER
   SYSTEM
   ANONYMOUS
+  PATIENT
 }
 
 enum AuditOutcome {
@@ -712,17 +715,18 @@ model Patient {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  identifiers  PatientIdentifier[]
-  consents     PatientConsent[]
-  appointments Appointment[]
-  encounters   Encounter[]
-  notes        ClinicalNote[]
-  diagnoses    Diagnosis[]
-  allergies    Allergy[]
-  vitals       VitalSign[]
-  invoices     Invoice[]
-  labOrders    LabOrder[]
+  tenant        Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  identifiers   PatientIdentifier[]
+  consents      PatientConsent[]
+  appointments  Appointment[]
+  encounters    Encounter[]
+  notes         ClinicalNote[]
+  diagnoses     Diagnosis[]
+  allergies     Allergy[]
+  vitals        VitalSign[]
+  invoices      Invoice[]
+  labOrders     LabOrder[]
+  portalAccount PatientAccount?
 
   @@unique([tenantId, mrn])
   @@index([tenantId, lastName, firstName])
@@ -1283,6 +1287,9 @@ model LabOrder {
   verifiedAt      DateTime?
   verifiedById    String?        @db.Uuid
   cancelledAt     DateTime?
+  /// Set by the doctor when verified results may be shown in the patient portal (one-way).
+  releasedAt      DateTime?
+  releasedById    String?        @db.Uuid
 
   tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   patient   Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict)
@@ -1337,5 +1344,62 @@ model LabResult {
   analyte LabAnalyte   @relation(fields: [analyteId], references: [id], onDelete: Restrict)
 
   @@unique([orderItemId, analyteId])
+  @@index([tenantId])
+}
+
+// ───────────── Patient portal (Phase 8b) ─────────────
+
+enum PortalAccountStatus {
+  INVITED
+  ACTIVE
+  DISABLED
+}
+
+/// Patient portal login: a separate identity realm from staff (User). One per
+/// patient per clinic. Created by the front desk with a one-time activation
+/// code handed to the patient in person; only the SHA-256 of the code is stored.
+model PatientAccount {
+  id                  String              @id @db.Uuid
+  tenantId            String              @db.Uuid
+  patientId           String              @unique @db.Uuid
+  /// Login phone (+998…), chosen by the patient at activation; unique per clinic.
+  login               String?
+  passwordHash        String?
+  status              PortalAccountStatus @default(INVITED)
+  activationCodeHash  String?             @unique
+  activationExpiresAt DateTime?
+  activatedAt         DateTime?
+  failedLoginCount    Int                 @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  locale              String?
+  createdById         String              @db.Uuid
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  tenant   Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient  Patient          @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  sessions PatientSession[]
+
+  @@unique([tenantId, login])
+  @@index([tenantId])
+}
+
+/// Patient portal session. id = SHA-256 of the cookie token.
+model PatientSession {
+  id         String    @id
+  tenantId   String    @db.Uuid
+  accountId  String    @db.Uuid
+  expiresAt  DateTime
+  lastSeenAt DateTime  @default(now())
+  revokedAt  DateTime?
+  ipHash     String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+
+  tenant  Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  account PatientAccount @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@index([accountId])
   @@index([tenantId])
 }

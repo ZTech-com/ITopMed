@@ -31,6 +31,8 @@ Services from appointment/encounter → invoice → payment (cash, card, Payme, 
 ## 6. Patient portal
 Appointments, requests, released documents only (never drafts), consent management, notifications without clinical content.
 
+**Implemented (8b):** front desk records portal consent and hands over a one-time activation code → patient activates at `/p/{clinic}/activate` with code + date of birth and chooses phone + password → sees upcoming/past appointments (cancel online until 2 h before), lab results the doctor has released (values, units, normal ranges, plain-language flags, "not a diagnosis" note, printable), issued invoices with payments, and manages reminder/data-sharing consents. Doctors release verified results from the visit or the medical record. Not yet: online booking/rescheduling, documents, notifications, online payment.
+
 ## Open clinical questions
 * Mandatory MoH forms (e.g. outpatient card forms) and required fields.
 * Prescription rules, controlled substances, e-prescription availability.

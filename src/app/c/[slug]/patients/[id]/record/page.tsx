@@ -13,6 +13,7 @@ import { DomainError } from "@/server/tenancy/provisioning";
 import { amendAction, breakGlassAction, clinicalStatusAction } from "../../../../../care-actions";
 import { cookies } from "next/headers";
 import { LabResultsList } from "@/components/lab";
+import { labReleaseAction } from "../../../../../portal-actions";
 
 /**
  * The patient's medical record. Access follows the care relationship; anyone
@@ -102,7 +103,11 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
       <Card>
         <CardHeader title={t("clinic.labOrder.results")} />
         <CardBody>
-          <LabResultsList orders={labOrders} timeZone={tz} />
+          <LabResultsList
+            orders={labOrders}
+            timeZone={tz}
+            release={ctx.permissions.has("emr.write") && (access.mode === "care" || access.mode === "oversight") ? { slug: s, action: labReleaseAction } : undefined}
+          />
         </CardBody>
       </Card>
 

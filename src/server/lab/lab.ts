@@ -270,6 +270,26 @@ export async function cancelLabOrder(ctx: ClinicContext, orderId: string, meta: 
   });
 }
 
+/**
+ * A doctor caring for the patient releases verified results to the patient
+ * portal. One-way and audited; the database trigger only permits this change
+ * on a verified order. Break-the-glass access cannot release.
+ */
+export async function releaseLabOrder(ctx: ClinicContext, orderId: string, meta: RequestMeta) {
+  requirePermission(ctx, "emr.write");
+  const id = uuid.safeParse(orderId);
+  if (!id.success) throw new DomainError("errors.notFound");
+  const order = await inClinic(ctx, (tx) => tx.labOrder.findUnique({ where: { id: id.data }, select: { id: true, patientId: true, status: true, releasedAt: true } }));
+  if (!order) throw new DomainError("errors.notFound");
+  await withRecordAccess(ctx, order.patientId, meta, { auditView: false }, async (tx, access) => {
+    if (access.mode !== "care" && access.mode !== "oversight") throw new DomainError("errors.noCareRelationship");
+    if (order.status !== "VERIFIED") throw new DomainError("errors.invalidTransition");
+    if (order.releasedAt) return;
+    await tx.labOrder.update({ where: { id: order.id }, data: { releasedAt: new Date(), releasedById: ctx.principal.user.id } });
+    await auditClinic(tx, ctx, meta, { action: "lab.released_to_portal", entityType: "LabOrder", entityId: order.id });
+  });
+}
+
 /** Lab orders of one patient for the medical record (inside an access-checked transaction). */
 export function labOrdersForRecord(tx: Tx, patientId: string, encounterId?: string) {
   return tx.labOrder.findMany({

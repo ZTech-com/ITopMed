@@ -95,7 +95,8 @@
     "resetSubmit": "Save new password",
     "resetDone": "Your password has been changed and all sessions were signed out. Sign in with the new password.",
     "resetInvalid": "This reset link is invalid or has expired. Request a new one.",
-    "backToSignIn": "Back to sign in"
+    "backToSignIn": "Back to sign in",
+    "portalInvalid": "Incorrect phone number or password."
   },
   "invite": {
     "title": "Activate your account",
@@ -813,7 +814,10 @@
       "noLabTests": "No lab tests are set up in this clinic.",
       "ordered": "Lab order {number} created.",
       "results": "Lab results",
-      "none": "No lab orders."
+      "none": "No lab orders.",
+      "release": "Release to patient portal",
+      "released": "Results are now visible in the patient portal.",
+      "releasedBadge": "In patient portal"
     },
     "nurse": {
       "title": "Nurse station",
@@ -822,6 +826,30 @@
       "pendingCollections": "Specimens to collect",
       "noCollections": "No specimens waiting.",
       "recordVitals": "Vital signs"
+    },
+    "portal": {
+      "title": "Patient portal",
+      "hint": "Patients see their appointments, released lab results and invoices — never doctors’ notes.",
+      "status": {
+        "NONE": "Not set up",
+        "INVITED": "Waiting for activation",
+        "ACTIVE": "Active",
+        "DISABLED": "Disabled"
+      },
+      "none": "The patient has no portal access yet. Issue an activation code and hand it over in person.",
+      "waiting": "Activation code issued; valid until {date}.",
+      "codeExpired": "The activation code has expired. Issue a new one.",
+      "activeInfo": "Signs in with {phone}; activated {date}.",
+      "lastLogin": "Last sign-in {date}.",
+      "disabledInfo": "Portal access is turned off. Issuing a new code turns it back on.",
+      "locked": "Temporarily locked after failed attempts until {date}.",
+      "consent": "Consent to portal access",
+      "consentHint": "How the patient agreed. Recorded in the consent register.",
+      "issue": "Issue activation code",
+      "reissue": "Issue new code (resets password)",
+      "disable": "Turn off portal access",
+      "disabled": "Portal access turned off; all patient sessions ended.",
+      "codeIssued": "Activation code: {code}. Give it to the patient in person (not by phone or messenger) with the address {url}. It is shown only once and is valid for 72 hours."
     }
   },
   "status": {
@@ -1011,7 +1039,13 @@
     "notYourShift": "Only the cashier who opened the shift can close it.",
     "fourEyes": "Results must be verified by a different person than the one who entered them.",
     "invalidResultValue": "Enter a number, e.g. 5.4.",
-    "noResultsEntered": "Enter at least one value."
+    "noResultsEntered": "Enter at least one value.",
+    "currentPasswordWrong": "The current password is not correct.",
+    "patientInactive": "This patient record is archived.",
+    "portalCannotCancel": "This appointment can no longer be cancelled online. Please call the clinic.",
+    "portalCodeInvalid": "The activation code or date of birth is not correct, or the code has expired. Ask the clinic for a new code.",
+    "portalConsentRequired": "Record the patient’s consent to portal access first.",
+    "portalLoginTaken": "This phone number is already used for another portal account at this clinic."
   },
   "email": {
     "invitation": {
@@ -1092,7 +1126,8 @@
     "schedules_read": "View doctors’ schedules",
     "schedules_manage": "Manage doctors’ schedules",
     "lab_collect": "Collect specimens",
-    "lab_manage": "Set up lab tests and reference ranges"
+    "lab_manage": "Set up lab tests and reference ranges",
+    "portal_manage": "Patient portal access (activation codes)"
   },
   "specialties": {
     "general_practice": "General practice",
@@ -1267,5 +1302,106 @@
     "NORMAL": "Normal",
     "LOW": "Low",
     "HIGH": "High"
+  },
+  "portal": {
+    "title": "Patient portal",
+    "phone": "Mobile phone",
+    "phoneHint": "The number you chose when activating the portal.",
+    "nav": {
+      "home": "Home",
+      "appointments": "Appointments",
+      "results": "Results",
+      "invoices": "Payments",
+      "account": "Account"
+    },
+    "login": {
+      "title": "Patient portal",
+      "subtitle": "Your appointments, test results and payments.",
+      "firstTime": "First time here?",
+      "activate": "Activate with your code",
+      "forgot": "Forgot your password? Ask the reception desk for a new activation code."
+    },
+    "activate": {
+      "title": "Activate the patient portal",
+      "subtitle": "Enter the code you received at the clinic and choose your password.",
+      "code": "Activation code",
+      "codeHint": "12 characters, e.g. ABCD-2345-EFGH.",
+      "birthDate": "Your date of birth",
+      "phoneHint": "You will sign in with this number.",
+      "submit": "Activate",
+      "done": "Your portal is active. Sign in with your phone number and password.",
+      "haveAccount": "Already activated? Sign in"
+    },
+    "home": {
+      "greeting": "Hello, {name}",
+      "subtitle": "Here is an overview of your care at this clinic.",
+      "nextVisit": "Next visit",
+      "results": "Test results",
+      "balanceDue": "To pay",
+      "unpaid": "{count, plural, one {# unpaid invoice} other {# unpaid invoices}}",
+      "upcoming": "Upcoming appointments",
+      "latestResults": "Latest test results",
+      "all": "See all"
+    },
+    "appointments": {
+      "title": "Appointments",
+      "subtitle": "Your visits at this clinic.",
+      "upcoming": "Upcoming",
+      "past": "History",
+      "cancelRule": "You can cancel online up to 2 hours before the visit.",
+      "cancel": "Cancel visit",
+      "cancelled": "The appointment has been cancelled.",
+      "noneUpcoming": "No upcoming appointments.",
+      "nonePast": "No past visits yet.",
+      "bookingNote": "To book or reschedule, please contact the reception desk. Online booking is not available yet."
+    },
+    "results": {
+      "title": "Test results",
+      "subtitle": "Results your doctor has reviewed and released to you.",
+      "none": "No released results yet. Your doctor releases results after reviewing them.",
+      "detailTitle": "Laboratory results",
+      "test": "Test",
+      "value": "Result",
+      "normal": "Normal range",
+      "flag": "Assessment",
+      "outOfRange": "Outside normal range",
+      "outOfRangeCount": "{count, plural, one {# value outside the normal range} other {# values outside the normal range}}",
+      "allNormal": "All within normal range",
+      "ordered": "Ordered",
+      "verified": "Verified by the laboratory",
+      "doctor": "Doctor",
+      "branch": "Branch",
+      "print": "Print",
+      "disclaimer": "Values outside the normal range are not a diagnosis. Discuss your results with your doctor."
+    },
+    "invoices": {
+      "title": "Payments",
+      "subtitle": "Invoices and payments at this clinic.",
+      "none": "No invoices yet.",
+      "total": "Total",
+      "paid": "Paid",
+      "due": "To pay",
+      "discount": "discount",
+      "refunded": "refunded",
+      "payNote": "Online payment is not available yet; please pay at the clinic’s cash desk."
+    },
+    "account": {
+      "title": "Account",
+      "subtitle": "Your consents and password.",
+      "consents": "Consents",
+      "consentsHint": "You can give or withdraw consent for reminders and data sharing at any time. Portal access itself is managed by the clinic.",
+      "withdraw": "Withdraw",
+      "withdrawnOn": "withdrawn {date}",
+      "grant": "Give consent for",
+      "grantSubmit": "Give consent",
+      "consentGranted": "Consent recorded.",
+      "consentWithdrawn": "Consent withdrawn.",
+      "password": "Password",
+      "passwordHint": "Changing the password signs you out on all other devices.",
+      "currentPassword": "Current password",
+      "changePassword": "Change password",
+      "passwordChanged": "Password changed. Other devices have been signed out.",
+      "contactClinic": "To change your name, date of birth or phone number, contact the clinic’s reception desk."
+    }
   }
 }

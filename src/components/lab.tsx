@@ -1,4 +1,6 @@
 import { getFormatter, getTranslations } from "next-intl/server";
+import type { FormState } from "@/lib/form-state";
+import { Form, SubmitButton } from "./ui/form";
 import { Badge, STATUS_TONE } from "./ui/primitives";
 
 interface ResultRow {
@@ -18,6 +20,8 @@ export interface LabOrderForDisplay {
   priority: string;
   orderedAt: Date;
   verifiedAt: Date | null;
+  /** Set once the doctor has released verified results to the patient portal. */
+  releasedAt?: Date | null;
   items: { id: string; name: string; results: ResultRow[] }[];
 }
 
@@ -33,7 +37,16 @@ export function referenceRange(low: { toString(): string } | null, high: { toStr
  * numbers are never shown in the record), abnormal values flagged with text,
  * not colour alone.
  */
-export async function LabResultsList({ orders, timeZone }: { orders: LabOrderForDisplay[]; timeZone: string }) {
+export async function LabResultsList({
+  orders,
+  timeZone,
+  release,
+}: {
+  orders: LabOrderForDisplay[];
+  timeZone: string;
+  /** Doctors in a care relationship may release verified results to the patient portal. */
+  release?: { slug: string; action: (s: FormState, fd: FormData) => Promise<FormState> };
+}) {
   const [t, format] = await Promise.all([getTranslations(), getFormatter()]);
   if (orders.length === 0) return <p className="text-[14px] text-text-2">{t("clinic.labOrder.none")}</p>;
   return (
@@ -46,8 +59,20 @@ export async function LabResultsList({ orders, timeZone }: { orders: LabOrderFor
               <span className="text-text-2"> · {format.dateTime(o.orderedAt, { dateStyle: "medium", timeStyle: "short", timeZone })}</span>
               {o.priority === "URGENT" ? <span className="ml-2"><Badge tone="danger">{t("priority.URGENT")}</Badge></span> : null}
             </p>
-            <Badge tone={STATUS_TONE[o.status] ?? "neutral"}>{t(`status.${o.status}` as never)}</Badge>
+            <span className="flex flex-wrap items-center gap-2">
+              {o.releasedAt ? <Badge tone="success">{t("clinic.labOrder.releasedBadge")}</Badge> : null}
+              <Badge tone={STATUS_TONE[o.status] ?? "neutral"}>{t(`status.${o.status}` as never)}</Badge>
+            </span>
           </div>
+          {release && o.status === "VERIFIED" && !o.releasedAt ? (
+            <Form action={release.action} className="mt-2 space-y-2">
+              <input type="hidden" name="$slug" value={release.slug} />
+              <input type="hidden" name="orderId" value={o.id} />
+              <SubmitButton variant="secondary" className="h-9 px-3 text-[13px]">
+                {t("clinic.labOrder.release")}
+              </SubmitButton>
+            </Form>
+          ) : null}
           {o.items.map((item) => (
             <div key={item.id} className="mt-2">
               <p className="text-[13px] font-semibold">{item.name}</p>

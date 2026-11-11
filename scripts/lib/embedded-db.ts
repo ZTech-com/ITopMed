@@ -14,6 +14,7 @@ export interface EmbeddedDbOptions {
   ownerPassword: string;
   appPassword: string;
   platformPassword: string;
+  portalPassword: string;
   database?: string;
   persistent?: boolean;
   /** Extra server settings, e.g. ["-c", "io_method=sync"]. */
@@ -49,6 +50,7 @@ export async function startEmbeddedDb(o: EmbeddedDbOptions) {
     await ensureRole(admin, "itopmed_owner", o.ownerPassword, "LOGIN CREATEDB NOBYPASSRLS");
     await ensureRole(admin, "itopmed_app", o.appPassword, "LOGIN NOBYPASSRLS");
     await ensureRole(admin, "itopmed_platform", o.platformPassword, "LOGIN NOBYPASSRLS");
+    await ensureRole(admin, "itopmed_portal", o.portalPassword, "LOGIN NOBYPASSRLS");
     const exists = await admin.query("SELECT 1 FROM pg_database WHERE datname = $1", [database]);
     if (exists.rowCount === 0) {
       await admin.query(`CREATE DATABASE "${database}" OWNER itopmed_owner ENCODING 'UTF8' TEMPLATE template0 LC_COLLATE 'C' LC_CTYPE 'C'`);
@@ -56,7 +58,7 @@ export async function startEmbeddedDb(o: EmbeddedDbOptions) {
     const enc = await admin.query("SELECT pg_encoding_to_char(encoding) AS e FROM pg_database WHERE datname = $1", [database]);
     if (enc.rows[0]?.e !== "UTF8") throw new Error(`Database ${database} is not UTF8 (${enc.rows[0]?.e}). Drop it and restart.`);
     await admin.query(`REVOKE ALL ON DATABASE "${database}" FROM PUBLIC`);
-    await admin.query(`GRANT CONNECT ON DATABASE "${database}" TO itopmed_app, itopmed_platform`);
+    await admin.query(`GRANT CONNECT ON DATABASE "${database}" TO itopmed_app, itopmed_platform, itopmed_portal`);
   } finally {
     await admin.end();
   }

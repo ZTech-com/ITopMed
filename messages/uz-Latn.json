@@ -95,7 +95,8 @@
     "resetSubmit": "Yangi parolni saqlash",
     "resetDone": "Parolingiz oʻzgartirildi va barcha seanslar yakunlandi. Yangi parol bilan kiring.",
     "resetInvalid": "Tiklash havolasi yaroqsiz yoki muddati oʻtgan. Yangisini soʻrang.",
-    "backToSignIn": "Kirish sahifasiga qaytish"
+    "backToSignIn": "Kirish sahifasiga qaytish",
+    "portalInvalid": "Telefon raqami yoki parol notoʻgʻri."
   },
   "invite": {
     "title": "Hisobni faollashtirish",
@@ -813,7 +814,10 @@
       "noLabTests": "Klinikada tahlillar sozlanmagan.",
       "ordered": "{number} laboratoriya buyurtmasi yaratildi.",
       "results": "Tahlil natijalari",
-      "none": "Tahlillar yoʻq."
+      "none": "Tahlillar yoʻq.",
+      "release": "Bemor portalida ochish",
+      "released": "Natijalar endi bemor portalida koʻrinadi.",
+      "releasedBadge": "Bemor portalida"
     },
     "nurse": {
       "title": "Hamshira posti",
@@ -822,6 +826,30 @@
       "pendingCollections": "Olinadigan namunalar",
       "noCollections": "Olinadigan namunalar yoʻq.",
       "recordVitals": "Koʻrsatkichlar"
+    },
+    "portal": {
+      "title": "Bemor portali",
+      "hint": "Bemor oʻz qabullari, unga ochilgan tahlil natijalari va hisoblarini koʻradi — shifokor yozuvlarini emas.",
+      "status": {
+        "NONE": "Ulanmagan",
+        "INVITED": "Faollashtirish kutilmoqda",
+        "ACTIVE": "Faol",
+        "DISABLED": "Oʻchirilgan"
+      },
+      "none": "Bemorda hali portalga kirish yoʻq. Faollashtirish kodini shaxsan bering.",
+      "waiting": "Faollashtirish kodi berilgan; {date} gacha amal qiladi.",
+      "codeExpired": "Kodning muddati tugagan. Yangisini bering.",
+      "activeInfo": "{phone} raqami bilan kiradi; {date} da faollashtirilgan.",
+      "lastLogin": "Oxirgi kirish {date}.",
+      "disabledInfo": "Portalga kirish oʻchirilgan. Yangi kod uni qayta yoqadi.",
+      "locked": "Muvaffaqiyatsiz urinishlardan soʻng {date} gacha vaqtincha bloklangan.",
+      "consent": "Portalga kirishga rozilik",
+      "consentHint": "Bemor qanday rozilik berdi. Roziliklar reyestrida qayd etiladi.",
+      "issue": "Faollashtirish kodini berish",
+      "reissue": "Yangi kod berish (parol tiklanadi)",
+      "disable": "Portalga kirishni oʻchirish",
+      "disabled": "Portalga kirish oʻchirildi; bemorning barcha seanslari yakunlandi.",
+      "codeIssued": "Faollashtirish kodi: {code}. Uni bemorga shaxsan bering (telefon yoki messenjer orqali emas) va {url} manzilini ayting. Kod faqat bir marta koʻrsatiladi va 72 soat amal qiladi."
     }
   },
   "status": {
@@ -1011,7 +1039,13 @@
     "notYourShift": "Smenani faqat uni ochgan kassir yopa oladi.",
     "fourEyes": "Natijalarni ularni kiritgan emas, boshqa xodim tasdiqlashi kerak.",
     "invalidResultValue": "Son kiriting, masalan 5,4.",
-    "noResultsEntered": "Kamida bitta qiymat kiriting."
+    "noResultsEntered": "Kamida bitta qiymat kiriting.",
+    "currentPasswordWrong": "Joriy parol notoʻgʻri.",
+    "patientInactive": "Bu bemor kartasi arxivda.",
+    "portalCannotCancel": "Bu qabulni endi onlayn bekor qilib boʻlmaydi. Iltimos, klinikaga qoʻngʻiroq qiling.",
+    "portalCodeInvalid": "Faollashtirish kodi yoki tugʻilgan sana notoʻgʻri yoxud kodning muddati tugagan. Klinikadan yangi kod soʻrang.",
+    "portalConsentRequired": "Avval bemorning portalga kirishga roziligini qayd eting.",
+    "portalLoginTaken": "Bu telefon raqami ushbu klinikada boshqa portal hisobi uchun ishlatilgan."
   },
   "email": {
     "invitation": {
@@ -1092,7 +1126,8 @@
     "schedules_read": "Shifokorlar jadvalini koʻrish",
     "schedules_manage": "Shifokorlar jadvalini boshqarish",
     "lab_collect": "Namuna olish",
-    "lab_manage": "Tahlillar va meʼyoriy qiymatlarni sozlash"
+    "lab_manage": "Tahlillar va meʼyoriy qiymatlarni sozlash",
+    "portal_manage": "Bemorlarning portalga kirishi (faollashtirish kodlari)"
   },
   "specialties": {
     "general_practice": "Umumiy amaliyot",
@@ -1267,5 +1302,106 @@
     "NORMAL": "Meʼyorda",
     "LOW": "Meʼyordan past",
     "HIGH": "Meʼyordan yuqori"
+  },
+  "portal": {
+    "title": "Bemor portali",
+    "phone": "Mobil telefon",
+    "phoneHint": "Portalni faollashtirishda koʻrsatgan raqamingiz.",
+    "nav": {
+      "home": "Bosh sahifa",
+      "appointments": "Qabullar",
+      "results": "Tahlillar",
+      "invoices": "Toʻlovlar",
+      "account": "Profil"
+    },
+    "login": {
+      "title": "Bemor portali",
+      "subtitle": "Qabullaringiz, tahlil natijalari va toʻlovlaringiz.",
+      "firstTime": "Birinchi marta kirayapsizmi?",
+      "activate": "Kod bilan faollashtirish",
+      "forgot": "Parolni unutdingizmi? Registraturadan yangi faollashtirish kodini soʻrang."
+    },
+    "activate": {
+      "title": "Bemor portalini faollashtirish",
+      "subtitle": "Klinikada olgan kodingizni kiriting va parol oʻylab toping.",
+      "code": "Faollashtirish kodi",
+      "codeHint": "12 ta belgi, masalan ABCD-2345-EFGH.",
+      "birthDate": "Tugʻilgan sanangiz",
+      "phoneHint": "Shu raqam bilan tizimga kirasiz.",
+      "submit": "Faollashtirish",
+      "done": "Portal faollashtirildi. Telefon raqami va parol bilan kiring.",
+      "haveAccount": "Allaqachon faollashtirganmisiz? Kirish"
+    },
+    "home": {
+      "greeting": "Assalomu alaykum, {name}",
+      "subtitle": "Ushbu klinikadagi davolanishingiz haqida qisqacha.",
+      "nextVisit": "Keyingi qabul",
+      "results": "Tahlil natijalari",
+      "balanceDue": "Toʻlash kerak",
+      "unpaid": "{count} ta toʻlanmagan hisob",
+      "upcoming": "Kelgusi qabullar",
+      "latestResults": "Soʻnggi natijalar",
+      "all": "Barchasi"
+    },
+    "appointments": {
+      "title": "Qabullar",
+      "subtitle": "Ushbu klinikaga tashriflaringiz.",
+      "upcoming": "Kelgusi",
+      "past": "Tarix",
+      "cancelRule": "Qabulni boshlanishidan kamida 2 soat oldin onlayn bekor qilish mumkin.",
+      "cancel": "Qabulni bekor qilish",
+      "cancelled": "Qabul bekor qilindi.",
+      "noneUpcoming": "Kelgusi qabullar yoʻq.",
+      "nonePast": "Hali oʻtgan tashriflar yoʻq.",
+      "bookingNote": "Yozilish yoki qabulni koʻchirish uchun registraturaga murojaat qiling. Onlayn yozilish hozircha mavjud emas."
+    },
+    "results": {
+      "title": "Tahlil natijalari",
+      "subtitle": "Shifokoringiz koʻrib chiqib, sizga ochgan natijalar.",
+      "none": "Hozircha ochilgan natijalar yoʻq. Shifokor natijalarni koʻrib chiqqach ochadi.",
+      "detailTitle": "Laboratoriya tahlili natijalari",
+      "test": "Koʻrsatkich",
+      "value": "Natija",
+      "normal": "Meʼyor",
+      "flag": "Baho",
+      "outOfRange": "Meʼyordan tashqarida",
+      "outOfRangeCount": "{count} ta koʻrsatkich meʼyordan tashqarida",
+      "allNormal": "Hammasi meʼyorda",
+      "ordered": "Tayinlangan",
+      "verified": "Laboratoriya tasdiqlagan",
+      "doctor": "Shifokor",
+      "branch": "Filial",
+      "print": "Chop etish",
+      "disclaimer": "Meʼyordan tashqaridagi qiymatlar tashxis emas. Natijalarni shifokoringiz bilan muhokama qiling."
+    },
+    "invoices": {
+      "title": "Toʻlovlar",
+      "subtitle": "Ushbu klinikadagi hisoblar va toʻlovlar.",
+      "none": "Hozircha hisoblar yoʻq.",
+      "total": "Jami",
+      "paid": "Toʻlangan",
+      "due": "Toʻlash kerak",
+      "discount": "chegirma",
+      "refunded": "qaytarilgan",
+      "payNote": "Onlayn toʻlov hozircha mavjud emas; iltimos, klinika kassasida toʻlang."
+    },
+    "account": {
+      "title": "Profil",
+      "subtitle": "Roziliklaringiz va parolingiz.",
+      "consents": "Roziliklar",
+      "consentsHint": "Eslatmalar va maʼlumot almashish uchun rozilikni istalgan vaqtda berishingiz yoki qaytarib olishingiz mumkin. Portalga kirishni klinika boshqaradi.",
+      "withdraw": "Qaytarib olish",
+      "withdrawnOn": "{date} da qaytarib olingan",
+      "grant": "Rozilik berish",
+      "grantSubmit": "Rozilik berish",
+      "consentGranted": "Rozilik qayd etildi.",
+      "consentWithdrawn": "Rozilik qaytarib olindi.",
+      "password": "Parol",
+      "passwordHint": "Parolni oʻzgartirsangiz, boshqa barcha qurilmalardan chiqasiz.",
+      "currentPassword": "Joriy parol",
+      "changePassword": "Parolni oʻzgartirish",
+      "passwordChanged": "Parol oʻzgartirildi. Boshqa qurilmalardan chiqildi.",
+      "contactClinic": "Ism, tugʻilgan sana yoki telefon raqamini oʻzgartirish uchun klinika registraturasiga murojaat qiling."
+    }
   }
 }

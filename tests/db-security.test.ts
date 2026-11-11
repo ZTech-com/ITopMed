@@ -29,7 +29,7 @@ describe("database security", async () => {
   });
 
   it("runtime roles cannot bypass RLS", async () => {
-    const r = await owner.query(`SELECT rolname, rolbypassrls, rolsuper FROM pg_roles WHERE rolname IN ('itopmed_app','itopmed_platform')`);
+    const r = await owner.query(`SELECT rolname, rolbypassrls, rolsuper FROM pg_roles WHERE rolname IN ('itopmed_app','itopmed_platform','itopmed_portal')`);
     for (const row of r.rows) {
       expect(row.rolbypassrls).toBe(false);
       expect(row.rolsuper).toBe(false);

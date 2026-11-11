@@ -11,6 +11,7 @@ const schema = z.object({
   APP_URL: z.url(),
   DATABASE_URL: z.string().startsWith("postgres"),
   PLATFORM_DATABASE_URL: z.string().startsWith("postgres"),
+  PORTAL_DATABASE_URL: z.string().startsWith("postgres"),
   APP_ENCRYPTION_KEY: base64Key,
   AUDIT_HMAC_KEY: base64Key,
   EMAIL_TRANSPORT: z.enum(["dev-mailbox", "smtp"]).default("dev-mailbox"),
