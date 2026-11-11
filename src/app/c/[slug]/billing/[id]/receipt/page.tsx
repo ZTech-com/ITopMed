@@ -43,13 +43,27 @@ export default async function ReceiptPage({ params }: { params: Promise<{ slug: 
         </div>
         <ul className="space-y-1 border-b border-dashed border-border py-3">
           {inv.lines.map((l) => (
-            <li key={l.id} className="flex justify-between gap-3">
-              <span>{l.description}{l.quantity > 1 ? ` × ${l.quantity}` : ""}</span>
-              <span className="tabular-nums">{money(l.totalMinor, inv.currency)}</span>
+            <li key={l.id} className="space-y-0.5">
+              <p className="flex justify-between gap-3">
+                <span>{l.description}{l.quantity > 1 ? ` × ${l.quantity}` : ""}</span>
+                <span className="tabular-nums">{money(l.unitPriceMinor * BigInt(l.quantity), inv.currency)}</span>
+              </p>
+              {l.discountMinor > 0n ? (
+                <p className="flex justify-between gap-3 text-[13px] text-text-2">
+                  <span className="pl-3">{t("clinic.billing.discount")}</span>
+                  <span className="tabular-nums">−{money(l.discountMinor, inv.currency)}</span>
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>
         <div className="space-y-1 border-b border-dashed border-border py-3">
+          {inv.discountMinor > 0n ? (
+            <>
+              <p className="flex justify-between text-text-2"><span>{t("clinic.billing.subtotal")}</span><span className="tabular-nums">{money(inv.subtotalMinor, inv.currency)}</span></p>
+              <p className="flex justify-between text-text-2"><span>{t("clinic.billing.discount")}</span><span className="tabular-nums">−{money(inv.discountMinor, inv.currency)}</span></p>
+            </>
+          ) : null}
           <p className="flex justify-between font-semibold"><span>{t("clinic.billing.total")}</span><span className="tabular-nums">{money(inv.totalMinor, inv.currency)}</span></p>
           {inv.payments.map((p) => (
             <p key={p.id} className="flex justify-between text-text-2">

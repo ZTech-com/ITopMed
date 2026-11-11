@@ -1170,5 +1170,11 @@
     "TAXES": "Taxes",
     "MARKETING": "Marketing",
     "OTHER": "Other"
+  },
+  "auditActor": {
+    "USER": "Former or unknown user",
+    "PLATFORM_USER": "ITop Med support",
+    "SYSTEM": "System",
+    "ANONYMOUS": "Not signed in"
   }
 }

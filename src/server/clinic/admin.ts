@@ -123,5 +123,13 @@ export async function inviteStaff(ctx: ClinicContext, raw: unknown, meta: Reques
 
 export async function listClinicAudit(ctx: ClinicContext, take = 100) {
   require(ctx, "audit.read");
-  return inClinic(ctx, (tx) => tx.auditEvent.findMany({ orderBy: { seq: "desc" }, take }));
+  return inClinic(ctx, async (tx) => {
+    const events = await tx.auditEvent.findMany({ orderBy: { seq: "desc" }, take });
+    // Names of this clinic's own users (RLS exposes only co-members, incl. former ones).
+    // ITop Med staff are never named to clinics: they appear as "ITop Med".
+    const userIds = [...new Set(events.filter((e) => e.actorType === "USER" && e.actorId).map((e) => e.actorId!))];
+    const users = userIds.length ? await tx.user.findMany({ where: { id: { in: userIds } }, select: { id: true, fullName: true } }) : [];
+    const names = new Map(users.map((u) => [u.id, u.fullName]));
+    return events.map((e) => ({ ...e, actorName: e.actorType === "USER" && e.actorId ? (names.get(e.actorId) ?? null) : null }));
+  });
 }

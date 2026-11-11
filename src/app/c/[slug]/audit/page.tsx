@@ -28,7 +28,7 @@ export default async function ClinicAuditPage({ params }: { params: Promise<{ sl
                 <tr key={e.id}>
                   <Td className="whitespace-nowrap text-text-2 tabular-nums">{format.dateTime(e.createdAt, { dateStyle: "short", timeStyle: "medium", timeZone: ctx.tenant.timezone })}</Td>
                   <Td className="font-mono text-[13px]">{e.action}</Td>
-                  <Td className="font-mono text-[12px] text-text-2">{e.actorType === "PLATFORM_USER" ? "ITop Med" : e.actorType}</Td>
+                  <Td className="text-text-2">{e.actorName ?? t(`auditActor.${e.actorType}` as never)}</Td>
                   <Td>
                     <Badge tone={STATUS_TONE[e.outcome]}>{t(`status.${e.outcome}`)}</Badge>
                   </Td>

@@ -1170,5 +1170,11 @@
     "TAXES": "Soliqlar",
     "MARKETING": "Marketing",
     "OTHER": "Boshqa"
+  },
+  "auditActor": {
+    "USER": "Sobiq yoki nomaʼlum foydalanuvchi",
+    "PLATFORM_USER": "ITop Med qoʻllab-quvvatlash",
+    "SYSTEM": "Tizim",
+    "ANONYMOUS": "Tizimga kirmagan"
   }
 }

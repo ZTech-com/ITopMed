@@ -5,7 +5,7 @@ import { registerWalkIn } from "@/server/appointments/appointments";
 import { addInvoiceLine, createInvoice, getInvoice, issueInvoice, listInvoices, recordPayment, refundPayment, uninvoicedVisits, voidInvoice } from "@/server/billing/billing";
 import { closeShift, createExpense, myShifts, openShift } from "@/server/billing/cash";
 import { financialReport, operationalReport } from "@/server/billing/reports";
-import { inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
+import { inviteStaff, listBranches, listClinicAudit, listStaff } from "@/server/clinic/admin";
 import { saveDoctorProfile } from "@/server/clinic/doctors";
 import { createService } from "@/server/clinic/resources";
 import { registerPatient } from "@/server/patients/patients";
@@ -167,6 +167,12 @@ describe("permissions, reports and isolation", () => {
     await expect(financialReport(s.cashier.ctx, todayIn(TZ), todayIn(TZ))).rejects.toThrow("errors.forbidden");
     await expect(createExpense(s.cashier.ctx, { category: "RENT", amount: "1", currency: "UZS", spentOn: todayIn(TZ) }, META)).rejects.toThrow("errors.forbidden");
     expect((await listInvoices(s.a.ctx)).length).toBe(1); // owner: billing.read
+
+    // The activity log names the clinic user who acted (not just "USER").
+    const audit = await listClinicAudit(s.a.ctx, 50);
+    const issued = audit.find((e) => e.action === "invoice.issued")!;
+    expect(issued.actorName).toBe("Synthetic cashier");
+    expect(audit.find((e) => e.action === "tenant.created")!.actorName).toBeNull(); // ITop Med staff are not named to clinics
   });
 
   it("financial and operational reports add up", async () => {
