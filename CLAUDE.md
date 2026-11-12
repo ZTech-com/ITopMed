@@ -13,6 +13,7 @@ Next.js 16 App Router · React 19 · TypeScript strict · Tailwind v4 · Postgre
 | Apply migrations / seed plans | `npm run db:migrate` · `npm run db:seed` |
 | Create a platform admin | `npm run admin:create -- --email x@y --name "Name" --role SUPER_ADMIN` |
 | Dev server | `npm run dev` → http://localhost:3000/admin/login and /login |
+| Notification worker | `npm run worker` (or `-- --once`); clinics can also "Send due messages now" |
 | Checks (run all after every change) | `npm run lint` · `npm run typecheck` · `npm test` · `npm run i18n:check` · `npm run build` |
 
 Tests boot their own throw-away PostgreSQL on port 54339 and apply the real migrations.
@@ -32,7 +33,7 @@ Tests boot their own throw-away PostgreSQL on port 54339 and apply the real migr
 9. **Never** store plaintext passwords/tokens, email passwords, commit secrets, or use real patient data (tests, screenshots, prompts). Synthetic data only (`*.test` domains).
 10. **Timestamps are UTC** (`timestamp(3)` columns; DB timezone pinned to UTC). Use `now() AT TIME ZONE 'UTC'` in raw SQL.
 11. **One transaction = one connection.** Never `Promise.all` queries on the same `tx`; use `sequential([...])` from `src/server/db.ts` (Prisma queries are lazy, so they run in order).
-12. **Be honest about status.** Mark simulated/prototype functionality as such (e.g. `dev-mailbox` email transport, modules with `status: "planned"`). Don't call a feature done without tests.
+12. **Be honest about status.** Mark simulated/prototype functionality as such (e.g. `dev-mailbox` email and `dev-outbox` SMS transports, the Integrations status page, modules with `status: "planned"`). Don't call a feature done without tests.
 
 ## Layout
 - `prisma/schema.prisma`, `prisma/migrations/*` (RLS/grants/audit SQL lives in migrations)

@@ -8,6 +8,7 @@ import type { Tx } from "../db";
 import { addDays, instantToLocalDate, isLocalDate, isoWeekday, localDateToDbDate, localToInstant, type LocalDate } from "../scheduling/time";
 import { uuidv7 } from "../security/crypto";
 import { DomainError } from "../tenancy/provisioning";
+import { notifyAppointmentBooked, notifyAppointmentCancelled } from "../notifications/notifications";
 
 const uuid = z.uuid();
 export const CANCELLATION_REASONS = ["PATIENT_REQUEST", "CLINIC_RESCHEDULE", "DOCTOR_UNAVAILABLE", "DUPLICATE", "OTHER"] as const;
@@ -106,6 +107,7 @@ export async function bookAppointment(ctx: ClinicContext, raw: unknown, meta: Re
       },
     });
     await auditClinic(tx, ctx, meta, { action: "appointment.booked", entityType: "Appointment", entityId: id, metadata: { source: input.source } });
+    await notifyAppointmentBooked(tx, ctx.tenant.id, { id, patientId: input.patientId, startsAt });
   }).catch(translateConflict);
   return id;
 }
@@ -210,6 +212,7 @@ export async function cancelAppointment(ctx: ClinicContext, appointmentId: strin
     if (!TRANSITIONS.cancel.includes(a.status)) throw new DomainError("errors.invalidTransition");
     await tx.appointment.update({ where: { id: a.id }, data: { status: "CANCELLED", cancelledAt: new Date(), cancellationReason: r } });
     await auditClinic(tx, ctx, meta, { action: "appointment.cancelled", entityType: "Appointment", entityId: a.id, metadata: { reason: r } });
+    await notifyAppointmentCancelled(tx, ctx.tenant.id, { id: a.id, patientId: a.patientId, startsAt: a.startsAt });
   });
 }
 

@@ -11,4 +11,5 @@ Object.assign(process.env, {
   APP_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
   AUDIT_HMAC_KEY: Buffer.alloc(32, 9).toString("base64"),
   EMAIL_TRANSPORT: "dev-mailbox",
+  SMS_TRANSPORT: "dev-outbox",
 });

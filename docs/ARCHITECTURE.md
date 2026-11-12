@@ -12,7 +12,8 @@ Browser / PWA ──HTTPS──▶ Reverse proxy (TLS, X-Forwarded-For) ──�
                                                                           ├─ platformDb → role itopmed_platform  (no clinical grants)
                                                                           └─ portalDb   → role itopmed_portal    (patient: own released data only)
                                                                    PostgreSQL ◀── migrations as itopmed_owner
-Future: Redis (rate limits, jobs), object storage (documents), job worker, native apps via the same service layer exposed as a versioned API.
+Worker: `npm run worker` (scripts/worker.ts) delivers the notification outbox per clinic under the clinic role.
+Future: Redis (rate limits, jobs), object storage (documents), native apps via the same service layer exposed as a versioned API.
 ```
 
 ### Layers

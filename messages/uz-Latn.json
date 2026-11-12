@@ -60,7 +60,8 @@
     "labTests": "Tahlillarni sozlash",
     "nurse": "Hamshira posti",
     "inventory": "Dorixona va ombor",
-    "hr": "Kadrlar"
+    "hr": "Kadrlar",
+    "integrations": "Integratsiyalar"
   },
   "auth": {
     "adminTitle": "ITop Med boshqaruvi",
@@ -623,7 +624,9 @@
       "breakGlassBody": "Tibbiy karta bemorni davolovchi mutaxassislarga ochiq. Asosli hollarda favqulodda kirish mumkin. U qayd etiladi va tekshiriladi.",
       "breakGlassReason": "Sabab",
       "breakGlassSubmit": "Favqulodda kirish bilan ochish",
-      "noClinicalAccess": "Rolingiz tibbiy kartalarga kirishni nazarda tutmaydi."
+      "noClinicalAccess": "Rolingiz tibbiy kartalarga kirishni nazarda tutmaydi.",
+      "fhirExport": "Eksport (FHIR)",
+      "fhirHint": "Kartani HL7 FHIR R4 formatida yuklab olish. Eksport audit jurnalida qayd etiladi."
     },
     "billing": {
       "title": "Hisob va toʻlovlar",
@@ -992,6 +995,28 @@
       "leaveCancelled": "Taʼtil bekor qilindi; kunlar yana yozilish uchun ochiq.",
       "cancelLeave": "Bekor qilish",
       "doctorLeaveNote": "Bu xodim shifokor: qayd etilgan taʼtil uning qabul kunlarini avtomatik yopadi."
+    },
+    "integrations": {
+      "title": "Integratsiyalar",
+      "subtitle": "Nima ulangan, nima sinov (simulyatsiya) rejimida ishlaydi va nima uchun yetkazib beruvchi bilan shartnoma kerak.",
+      "statusTitle": "Ulanishlar",
+      "statusHint": "«Simulyatsiya» — xabarlar faqat mahalliy sinov papkasiga yoziladi, bemorlarga yetib bormaydi.",
+      "notifications": "Bemorlarga xabarnomalar",
+      "notificationsHint": "Faqat bemor rozilik bergan kanallar orqali yuboriladi. Xabarlarda tashxis, natijalar va boshqa tibbiy maʼlumotlar boʻlmaydi.",
+      "reminderHours": "Eslatma, qabuldan necha soat oldin",
+      "saved": "Saqlandi.",
+      "dispatched": "Yuborildi: {sent}. Xato yoki qayta urinish: {failed}. Oʻtkazib yuborildi: {skipped}.",
+      "log": "Yuborish jurnali",
+      "logHint": "Jurnalda matn va manzillar saqlanmaydi: matn yuborish paytida tuziladi.",
+      "sendNow": "Hozir yuborish",
+      "all": "Hammasi",
+      "empty": "Hozircha xabarnomalar yoʻq.",
+      "kind": "Xabar",
+      "patient": "Bemor",
+      "channel": "Kanal",
+      "when": "Qachon",
+      "status": "Holat",
+      "attempts": "{count} ta urinish"
     }
   },
   "status": {
@@ -1111,7 +1136,8 @@
     "money": "Summani kiriting, masalan 12 500.",
     "positive": "Kamida 1 boʻlishi kerak.",
     "tooLarge": "Juda katta son.",
-    "wholeNumber": "Butun son kiriting."
+    "wholeNumber": "Butun son kiriting.",
+    "range": "1 dan 72 gacha qiymat kiriting."
   },
   "errors": {
     "generic": "Nimadir notoʻgʻri ketdi. Qayta urinib koʻring.",
@@ -1613,5 +1639,97 @@
     "TRAINING": "Oʻqish",
     "UNPAID": "Haq toʻlanmaydigan taʼtil",
     "OTHER": "Boshqa"
+  },
+  "integration": {
+    "email": {
+      "name": "Elektron pochta",
+      "note": "Sozlangan SMTP server orqali. Ishlab chiqishda — simulyatsiya qilingan pochta qutisi."
+    },
+    "sms": {
+      "name": "SMS",
+      "note": "SMS provayder hali ulanmagan (shartnoma va joʻnatuvchi nomini roʻyxatdan oʻtkazish kerak). Sinov rejimi xabarlarni mahalliy papkaga yozadi."
+    },
+    "telegram": {
+      "name": "Telegram",
+      "note": "Rejalashtirilgan: bemor oʻz chatini bogʻlagach, klinika Telegram-boti orqali xabarnomalar."
+    },
+    "payme": {
+      "name": "Payme",
+      "note": "Rejalashtirilgan: hisoblarni onlayn toʻlash. Payme bilan shartnoma va rasmiy API hujjatlari kerak. Payme orqali toʻlovlarni hozir kassada qayd etish mumkin."
+    },
+    "click": {
+      "name": "Click",
+      "note": "Rejalashtirilgan: hisoblarni onlayn toʻlash. Shartnoma va Click rasmiy API hujjatlari kerak."
+    },
+    "uzum": {
+      "name": "Uzum",
+      "note": "Rejalashtirilgan: onlayn toʻlov. Shartnoma va rasmiy API hujjatlari kerak."
+    },
+    "dmed": {
+      "name": "DMED (milliy elektron sogʻliqni saqlash)",
+      "note": "Qisman tayyor: kartani HL7 FHIR R4 formatida eksport qilish mumkin. DMED ga yuborish uchun SSV ruxsati va rasmiy spetsifikatsiya kerak."
+    },
+    "fiscal": {
+      "name": "Fiskal cheklar (OFD)",
+      "note": "Rejalashtirilgan: akkreditatsiyalangan provayder orqali fiskal cheklar. Hozirgi cheklar fiskal emas."
+    }
+  },
+  "integrationStatus": {
+    "connected": "Ulangan",
+    "simulated": "Simulyatsiya",
+    "off": "Oʻchirilgan",
+    "partial": "Qisman tayyor",
+    "planned": "Rejalashtirilgan"
+  },
+  "notificationKind": {
+    "appointmentBooked": "Yozilish tasdigʻi",
+    "appointmentReminder": "Qabul eslatmasi",
+    "appointmentCancelled": "Bekor qilish xabari",
+    "resultsReady": "Natijalar portalda"
+  },
+  "notificationStatus": {
+    "PENDING": "Kutilmoqda",
+    "SENT": "Yuborildi",
+    "FAILED": "Xato",
+    "SKIPPED": "Oʻtkazib yuborildi"
+  },
+  "notificationChannel": {
+    "SMS": "SMS",
+    "EMAIL": "E-pochta"
+  },
+  "notificationReason": {
+    "no_consent": "Rozilik qaytarib olingan",
+    "no_address": "Telefon yoki e-pochta yoʻq",
+    "sms_off": "SMS oʻchirilgan",
+    "stale": "Dolzarb emas (qabul oʻzgargan)",
+    "subject_missing": "Qabul endi mavjud emas",
+    "portal_inactive": "Portalga kirish oʻchirilgan",
+    "patient_inactive": "Bemor kartasi arxivda",
+    "clinic_inactive": "Klinika faol emas",
+    "delivery_failed": "Yetkazib boʻlmadi"
+  },
+  "notifications": {
+    "contact": "Savollar boʻyicha: {phone}.",
+    "footer": "{clinic} · ITop Med orqali yuborildi. Xabarda tibbiy maʼlumotlar yoʻq.",
+    "APPOINTMENT_BOOKED": {
+      "sms": "{clinic}: siz {date}, soat {time} ga yozildingiz, {branch}.",
+      "subject": "{clinic}: {date} ga yozilish",
+      "body": "Siz {clinic} klinikasiga {date}, soat {time} ga yozildingiz ({branch})."
+    },
+    "APPOINTMENT_REMINDER": {
+      "sms": "{clinic}: eslatma — qabulingiz {date}, soat {time} da, {branch}.",
+      "subject": "{clinic}: {date} dagi qabul eslatmasi",
+      "body": "{clinic} klinikasidagi qabulingiz haqida eslatma: {date}, soat {time} ({branch})."
+    },
+    "APPOINTMENT_CANCELLED": {
+      "sms": "{clinic}: {date}, soat {time} dagi yozilishingiz bekor qilindi.",
+      "subject": "{clinic}: yozilish bekor qilindi",
+      "body": "{clinic} klinikasiga {date}, soat {time} dagi yozilishingiz bekor qilindi."
+    },
+    "RESULTS_READY": {
+      "sms": "{clinic}: bemor portalingizda yangi natijalar bor: {link}",
+      "subject": "{clinic}: bemor portalida yangi natijalar",
+      "body": "Bemor portalingizda yangi natijalar paydo boʻldi: {link}"
+    }
   }
 }

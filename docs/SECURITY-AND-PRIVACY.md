@@ -44,6 +44,8 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 | Results released to patients only by a doctor in a care relationship (not break-the-glass), one-way and audited | ✅ | `lab/lab.ts` `releaseLabOrder` |
 | Stock integrity: quantities changed only through an append-only ledger; negative stock, expired issue and ledger edits refused by the database; clinic role has no UPDATE on batches; every movement attributed and audited | ✅ | migration `inventory_hr`; `tests/inventory-hr.test.ts` |
 | Staff privacy in HR: minimal fields, leave by category only, sick leave never shown to colleagues (generic absence in schedules) and kept out of audit metadata; HR and inventory tables not granted to the platform role | ✅ | `hr/hr.ts` |
+| Notifications: consent per channel checked when queuing and again when sending; outbox stores no text, addresses or clinical content; messages limited to clinic, time, branch and portal links; simulated SMS/email transports refused in production | ✅ | `notifications/*`, `env.ts`; tested |
+| FHIR export: care relationship or oversight only, never break-the-glass, POST + Origin check, no-store, audited without content | ✅ | `emr/fhir.ts`, `record/fhir/route.ts`; tested |
 | Patient MFA / SMS one-time codes | ⏳ | needs the SMS provider (Phase 8d) |
 | Protected document storage + short-lived URLs | ⏳ | Phase 6 |
 | Encrypted backups, PITR, tested restores | ⏳ | infrastructure, Phase 9 |

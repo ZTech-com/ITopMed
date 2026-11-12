@@ -60,7 +60,8 @@
     "labTests": "Lab test setup",
     "nurse": "Nurse station",
     "inventory": "Pharmacy & stock",
-    "hr": "HR"
+    "hr": "HR",
+    "integrations": "Integrations"
   },
   "auth": {
     "adminTitle": "ITop Med Administration",
@@ -623,7 +624,9 @@
       "breakGlassBody": "Medical records are available to the patient’s treating clinicians. In justified cases you may request emergency access. It is recorded and reviewed.",
       "breakGlassReason": "Reason",
       "breakGlassSubmit": "Open with emergency access",
-      "noClinicalAccess": "Your role does not include access to medical records."
+      "noClinicalAccess": "Your role does not include access to medical records.",
+      "fhirExport": "Export (FHIR)",
+      "fhirHint": "Download this record as an HL7 FHIR R4 bundle. The export is recorded in the audit log."
     },
     "billing": {
       "title": "Billing",
@@ -992,6 +995,28 @@
       "leaveCancelled": "Leave cancelled; the days are bookable again.",
       "cancelLeave": "Cancel",
       "doctorLeaveNote": "This person is a doctor: recorded leave blocks their bookable days automatically."
+    },
+    "integrations": {
+      "title": "Integrations",
+      "subtitle": "What is connected, what is simulated for testing, and what still needs an agreement with the provider.",
+      "statusTitle": "Connections",
+      "statusHint": "Simulated means messages are only written to a local test folder — nothing reaches patients.",
+      "notifications": "Patient notifications",
+      "notificationsHint": "Sent only on channels the patient has consented to. Messages never contain diagnoses, results or other clinical details.",
+      "reminderHours": "Reminder, hours before the visit",
+      "saved": "Saved.",
+      "dispatched": "Sent: {sent}. Failed or retrying: {failed}. Skipped: {skipped}.",
+      "log": "Delivery log",
+      "logHint": "The log holds no message text or addresses. Messages are created when the text is sent.",
+      "sendNow": "Send due messages now",
+      "all": "All",
+      "empty": "No notifications yet.",
+      "kind": "Message",
+      "patient": "Patient",
+      "channel": "Channel",
+      "when": "When",
+      "status": "Status",
+      "attempts": "{count, plural, one {# attempt} other {# attempts}}"
     }
   },
   "status": {
@@ -1111,7 +1136,8 @@
     "money": "Enter an amount, e.g. 12 500.",
     "positive": "Must be at least 1.",
     "tooLarge": "This number is too large.",
-    "wholeNumber": "Enter a whole number."
+    "wholeNumber": "Enter a whole number.",
+    "range": "Enter a value between 1 and 72."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -1613,5 +1639,97 @@
     "TRAINING": "Training",
     "UNPAID": "Unpaid leave",
     "OTHER": "Other"
+  },
+  "integration": {
+    "email": {
+      "name": "Email",
+      "note": "Through the configured SMTP server. In development: the simulated dev mailbox."
+    },
+    "sms": {
+      "name": "SMS",
+      "note": "No SMS provider is connected yet (needs a contract and sender-name registration). Test mode writes messages to a local folder."
+    },
+    "telegram": {
+      "name": "Telegram",
+      "note": "Planned: notifications through the clinic's Telegram bot after the patient links their chat."
+    },
+    "payme": {
+      "name": "Payme",
+      "note": "Planned: online payment of invoices. Needs a merchant agreement and Payme's official API documentation. Payments made via Payme can be recorded at the cash desk today."
+    },
+    "click": {
+      "name": "Click",
+      "note": "Planned: online payment of invoices. Needs a merchant agreement and Click's official API documentation."
+    },
+    "uzum": {
+      "name": "Uzum",
+      "note": "Planned: online payment. Needs a merchant agreement and official API documentation."
+    },
+    "dmed": {
+      "name": "DMED (national e-health)",
+      "note": "Partly ready: records can be exported as HL7 FHIR R4. Sending to DMED needs Ministry of Health access and the official specification."
+    },
+    "fiscal": {
+      "name": "Fiscal receipts (OFD)",
+      "note": "Planned: fiscal receipts through an approved provider. Receipts printed today are not fiscal."
+    }
+  },
+  "integrationStatus": {
+    "connected": "Connected",
+    "simulated": "Simulated",
+    "off": "Off",
+    "partial": "Partly ready",
+    "planned": "Planned"
+  },
+  "notificationKind": {
+    "appointmentBooked": "Booking confirmation",
+    "appointmentReminder": "Visit reminder",
+    "appointmentCancelled": "Cancellation notice",
+    "resultsReady": "Results ready in the portal"
+  },
+  "notificationStatus": {
+    "PENDING": "Waiting",
+    "SENT": "Sent",
+    "FAILED": "Failed",
+    "SKIPPED": "Skipped"
+  },
+  "notificationChannel": {
+    "SMS": "SMS",
+    "EMAIL": "Email"
+  },
+  "notificationReason": {
+    "no_consent": "Consent was withdrawn",
+    "no_address": "No phone or email on file",
+    "sms_off": "SMS is off",
+    "stale": "No longer relevant (visit changed)",
+    "subject_missing": "Visit no longer exists",
+    "portal_inactive": "Portal access is off",
+    "patient_inactive": "Patient record archived",
+    "clinic_inactive": "Clinic inactive",
+    "delivery_failed": "Delivery failed"
+  },
+  "notifications": {
+    "contact": "Questions: {phone}.",
+    "footer": "{clinic} · sent via ITop Med. This message contains no medical details.",
+    "APPOINTMENT_BOOKED": {
+      "sms": "{clinic}: you are booked for {date} at {time}, {branch}.",
+      "subject": "{clinic}: appointment on {date}",
+      "body": "You are booked at {clinic} for {date} at {time} ({branch})."
+    },
+    "APPOINTMENT_REMINDER": {
+      "sms": "{clinic}: reminder — your visit is on {date} at {time}, {branch}.",
+      "subject": "{clinic}: reminder for {date}",
+      "body": "A reminder of your visit to {clinic} on {date} at {time} ({branch})."
+    },
+    "APPOINTMENT_CANCELLED": {
+      "sms": "{clinic}: your appointment on {date} at {time} has been cancelled.",
+      "subject": "{clinic}: appointment cancelled",
+      "body": "Your appointment at {clinic} on {date} at {time} has been cancelled."
+    },
+    "RESULTS_READY": {
+      "sms": "{clinic}: new results are available in your patient portal: {link}",
+      "subject": "{clinic}: new results in your patient portal",
+      "body": "New results are available in your patient portal: {link}"
+    }
   }
 }

@@ -1,5 +1,5 @@
 import "server-only";
-import { createTranslator } from "next-intl";
+import { createTranslator } from "use-intl/core";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/config";
 import { escapeHtml, type EmailMessage } from "./index";
 

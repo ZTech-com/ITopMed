@@ -81,7 +81,18 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
         eyebrow={`${t("clinic.record.title")} · ${patient.mrn}`}
         title={patientName(patient)}
         description={`${await formatBirthDate(patient.birthDate)} · ${t(`sex.${patient.sex}`)}`}
-        action={<Badge tone={access.mode === "break_glass" ? "danger" : "neutral"}>{t("clinic.record.accessAs", { mode: t(`accessMode.${access.mode}`) })}</Badge>}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone={access.mode === "break_glass" ? "danger" : "neutral"}>{t("clinic.record.accessAs", { mode: t(`accessMode.${access.mode}`) })}</Badge>
+            {access.mode === "care" || access.mode === "oversight" ? (
+              <form method="post" action={`/c/${s}/patients/${patient.id}/record/fhir`}>
+                <button type="submit" className={buttonClass("ghost", "sm")} title={t("clinic.record.fhirHint")}>
+                  {t("clinic.record.fhirExport")}
+                </button>
+              </form>
+            ) : null}
+          </div>
+        }
       />
       <AllergyBanner allergies={allergies.filter((a) => a.status === "ACTIVE")} />
 

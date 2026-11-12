@@ -21,7 +21,8 @@
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "admin:create": "tsx --conditions=react-server scripts/create-platform-admin.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "worker": "tsx --conditions=react-server scripts/worker.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",
@@ -39,6 +40,7 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "server-only": "^0.0.1",
+    "use-intl": "^4.14.10",
     "zod": "^4.6.7"
   },
   "devDependencies": {

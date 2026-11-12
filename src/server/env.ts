@@ -17,6 +17,8 @@ const schema = z.object({
   EMAIL_TRANSPORT: z.enum(["dev-mailbox", "smtp"]).default("dev-mailbox"),
   SMTP_URL: z.string().optional(),
   EMAIL_FROM: z.string().default("ITop Med <no-reply@itopmed.example>"),
+  /** "none" = SMS channel off. "dev-outbox" = SIMULATED (writes files locally). No real SMS provider is connected yet. */
+  SMS_TRANSPORT: z.enum(["none", "dev-outbox"]).default("none"),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -33,6 +35,9 @@ export function env(): Env {
   }
   if (parsed.data.NODE_ENV === "production" && parsed.data.EMAIL_TRANSPORT === "dev-mailbox") {
     throw new Error("EMAIL_TRANSPORT=dev-mailbox is not allowed in production");
+  }
+  if (parsed.data.NODE_ENV === "production" && parsed.data.SMS_TRANSPORT === "dev-outbox") {
+    throw new Error("SMS_TRANSPORT=dev-outbox is not allowed in production");
   }
   cached = parsed.data;
   return cached;

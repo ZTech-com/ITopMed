@@ -37,6 +37,7 @@ export default async function ClinicLayout({ children, params }: { children: Rea
     ...(can("roles.manage") ? [{ href: `${base}/roles`, label: t("nav.roles"), icon: "roles" as const }] : []),
     ...(can("clinic.settings.read") ? [{ href: `${base}/facilities`, label: t("nav.facilities"), icon: "facilities" as const }] : []),
     ...(can("clinic.settings.read") ? [{ href: `${base}/branches`, label: t("nav.branches"), icon: "branches" as const }] : []),
+    ...(can("clinic.settings.read") ? [{ href: `${base}/integrations`, label: t("nav.integrations"), icon: "integrations" as const }] : []),
     ...(can("clinic.settings.read") ? [{ href: `${base}/settings`, label: t("nav.settings"), icon: "settings" as const }] : []),
     ...(can("support_access.decide") ? [{ href: `${base}/support-access`, label: t("nav.supportAccess"), icon: "support" as const }] : []),
     ...(can("audit.read") ? [{ href: `${base}/audit`, label: t("nav.clinicAudit"), icon: "audit" as const }] : []),

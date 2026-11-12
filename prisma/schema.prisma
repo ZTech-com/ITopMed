@@ -127,50 +127,52 @@ model Tenant {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
-  createdBy          PlatformUser?           @relation(fields: [createdById], references: [id])
-  branches           Branch[]
-  departments        Department[]
-  memberships        Membership[]
-  roles              Role[]
-  invitations        Invitation[]
-  modules            TenantModule[]
-  subscription       Subscription?
-  supportGrants      SupportAccessGrant[]
-  rooms              Room[]
-  services           Service[]
-  doctorProfiles     DoctorProfile[]
-  workSchedules      WorkSchedule[]
-  scheduleExceptions ScheduleException[]
-  doctorServices     DoctorService[]
-  patients           Patient[]
-  patientIdentifiers PatientIdentifier[]
-  patientConsents    PatientConsent[]
-  appointments       Appointment[]
-  encounters         Encounter[]
-  clinicalNotes      ClinicalNote[]
-  noteAmendments     ClinicalNoteAmendment[]
-  diagnoses          Diagnosis[]
-  allergies          Allergy[]
-  vitalSigns         VitalSign[]
-  invoices           Invoice[]
-  invoiceLines       InvoiceLine[]
-  payments           Payment[]
-  refunds            Refund[]
-  cashShifts         CashShift[]
-  expenses           Expense[]
-  labAnalytes        LabAnalyte[]
-  labOrders          LabOrder[]
-  labOrderItems      LabOrderItem[]
-  labResults         LabResult[]
-  patientAccounts    PatientAccount[]
-  patientSessions    PatientSession[]
-  inventoryItems     InventoryItem[]
-  suppliers          Supplier[]
-  stockBatches       StockBatch[]
-  stockMovements     StockMovement[]
-  staffProfiles      StaffProfile[]
-  staffCredentials   StaffCredential[]
-  staffLeaves        StaffLeave[]
+  createdBy            PlatformUser?           @relation(fields: [createdById], references: [id])
+  branches             Branch[]
+  departments          Department[]
+  memberships          Membership[]
+  roles                Role[]
+  invitations          Invitation[]
+  modules              TenantModule[]
+  subscription         Subscription?
+  supportGrants        SupportAccessGrant[]
+  rooms                Room[]
+  services             Service[]
+  doctorProfiles       DoctorProfile[]
+  workSchedules        WorkSchedule[]
+  scheduleExceptions   ScheduleException[]
+  doctorServices       DoctorService[]
+  patients             Patient[]
+  patientIdentifiers   PatientIdentifier[]
+  patientConsents      PatientConsent[]
+  appointments         Appointment[]
+  encounters           Encounter[]
+  clinicalNotes        ClinicalNote[]
+  noteAmendments       ClinicalNoteAmendment[]
+  diagnoses            Diagnosis[]
+  allergies            Allergy[]
+  vitalSigns           VitalSign[]
+  invoices             Invoice[]
+  invoiceLines         InvoiceLine[]
+  payments             Payment[]
+  refunds              Refund[]
+  cashShifts           CashShift[]
+  expenses             Expense[]
+  labAnalytes          LabAnalyte[]
+  labOrders            LabOrder[]
+  labOrderItems        LabOrderItem[]
+  labResults           LabResult[]
+  patientAccounts      PatientAccount[]
+  patientSessions      PatientSession[]
+  inventoryItems       InventoryItem[]
+  suppliers            Supplier[]
+  stockBatches         StockBatch[]
+  stockMovements       StockMovement[]
+  staffProfiles        StaffProfile[]
+  staffCredentials     StaffCredential[]
+  staffLeaves          StaffLeave[]
+  notifications        Notification[]
+  notificationSettings NotificationSettings?
 
   @@index([status])
 }
@@ -744,6 +746,7 @@ model Patient {
   labOrders     LabOrder[]
   portalAccount PatientAccount?
   dispenses     StockMovement[]
+  notifications Notification[]
 
   @@unique([tenantId, mrn])
   @@index([tenantId, lastName, firstName])
@@ -1641,4 +1644,71 @@ model StaffLeave {
 
   @@index([tenantId, startsOn])
   @@index([tenantId, membershipId])
+}
+
+// ───────────── Notifications (Phase 8d) ─────────────
+
+enum NotificationChannel {
+  SMS
+  EMAIL
+}
+
+enum NotificationKind {
+  APPOINTMENT_BOOKED
+  APPOINTMENT_REMINDER
+  APPOINTMENT_CANCELLED
+  RESULTS_READY
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+/// Outbox. Stores WHAT to tell WHOM and WHEN — never the text, the address or
+/// clinical content. Text is rendered at send time from templates; recipient
+/// and consent are re-checked at send time.
+model Notification {
+  id        String              @id @db.Uuid
+  tenantId  String              @db.Uuid
+  patientId String              @db.Uuid
+  channel   NotificationChannel
+  kind      NotificationKind
+  status    NotificationStatus  @default(PENDING)
+  /// The appointment or lab order the message is about.
+  subjectId String?             @db.Uuid
+  dueAt     DateTime
+  attempts  Int                 @default(0)
+  /// Short machine code only (e.g. "no_consent", "smtp_failed"), never message content.
+  lastError String?
+  /// Transport used: "smtp", "dev-mailbox" (simulated), "sms-dev-outbox" (simulated).
+  transport String?
+  sentAt    DateTime?
+  /// One message per kind, subject and channel.
+  dedupeKey String
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, dedupeKey])
+  @@index([tenantId, status, dueAt])
+  @@index([tenantId, createdAt])
+}
+
+/// Per-clinic notification switches (row created on first save; defaults apply until then).
+model NotificationSettings {
+  tenantId             String   @id @db.Uuid
+  appointmentBooked    Boolean  @default(true)
+  appointmentReminder  Boolean  @default(true)
+  reminderHoursBefore  Int      @default(24)
+  appointmentCancelled Boolean  @default(true)
+  resultsReady         Boolean  @default(true)
+  updatedById          String   @db.Uuid
+  updatedAt            DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 }

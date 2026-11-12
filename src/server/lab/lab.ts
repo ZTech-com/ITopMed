@@ -6,6 +6,7 @@ import type { RequestMeta } from "../auth/platform-auth";
 import { assertBranch, auditClinic, inClinic, requirePermission } from "../clinic/context";
 import type { Tx } from "../db";
 import { withRecordAccess } from "../emr/access";
+import { notifyResultsReady } from "../notifications/notifications";
 import { instantToLocalDate } from "../scheduling/time";
 import { uuidv7 } from "../security/crypto";
 import { DomainError } from "../tenancy/provisioning";
@@ -287,6 +288,7 @@ export async function releaseLabOrder(ctx: ClinicContext, orderId: string, meta:
     if (order.releasedAt) return;
     await tx.labOrder.update({ where: { id: order.id }, data: { releasedAt: new Date(), releasedById: ctx.principal.user.id } });
     await auditClinic(tx, ctx, meta, { action: "lab.released_to_portal", entityType: "LabOrder", entityId: order.id });
+    await notifyResultsReady(tx, ctx.tenant.id, { id: order.id, patientId: order.patientId });
   });
 }
 
