@@ -36,9 +36,12 @@ export interface PortalTenant {
 /** Public clinic info for the portal sign-in pages (only usable clinics). */
 export async function portalTenant(slug: string): Promise<PortalTenant | null> {
   if (!/^[a-z0-9-]{3,48}$/.test(slug)) return null;
-  const t = await withPortal({}, (tx) =>
-    tx.tenant.findFirst({ where: { slug }, select: { id: true, slug: true, name: true, status: true, defaultLocale: true, timezone: true, currency: true } }),
-  );
+  const t = await withPortal({}, async (tx) => {
+    const tenant = await tx.tenant.findFirst({ where: { slug }, select: { id: true, slug: true, name: true, status: true, defaultLocale: true, timezone: true, currency: true } });
+    if (!tenant) return null;
+    const on = await tx.$queryRaw<{ on: boolean }[]>`SELECT portal_module_enabled(${tenant.id}::uuid, 'patient_portal') AS on`;
+    return on[0]?.on ? tenant : null; // clinics without the portal module have no portal at all
+  });
   if (!t || !USABLE.has(t.status)) return null;
   return { id: t.id, slug: t.slug, name: t.name, defaultLocale: t.defaultLocale, timezone: t.timezone, currency: t.currency };
 }
@@ -222,6 +225,8 @@ export async function validatePatientSession(token: string | undefined | null): 
       tx.tenant.findFirst({ where: { id: s.tenantId }, select: { id: true, slug: true, name: true, status: true, defaultLocale: true, timezone: true, currency: true } }),
     ]);
     if (!patient || !tenant || !USABLE.has(tenant.status)) return null;
+    const portalOn = await tx.$queryRaw<{ on: boolean }[]>`SELECT portal_module_enabled(${tenant.id}::uuid, 'patient_portal') AS on`;
+    if (!portalOn[0]?.on) return null; // module switched off: existing sessions stop working
     if (now - s.lastSeenAt.getTime() > 60_000) await tx.patientSession.updateMany({ where: { id: sessionId }, data: { lastSeenAt: new Date(now) } });
     return {
       sessionId,

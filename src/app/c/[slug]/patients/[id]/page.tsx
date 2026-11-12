@@ -18,7 +18,7 @@ export default async function PatientPage({ params, searchParams }: { params: Pr
   const [t, format, sp] = await Promise.all([getTranslations(), getFormatter(), searchParams]);
   const p = await getPatient(ctx, id, await requestMeta());
   if (!p) notFound();
-  const portal = await getPortalAccount(ctx, p.id);
+  const portal = ctx.modules.has("patient_portal") ? await getPortalAccount(ctx, p.id) : null;
   const base = `/c/${ctx.tenant.slug}`;
   const tz = ctx.tenant.timezone;
   const canUpdate = ctx.permissions.has("patients.update");
@@ -134,6 +134,7 @@ export default async function PatientPage({ params, searchParams }: { params: Pr
         </Card>
       </div>
 
+      {ctx.modules.has("patient_portal") ? (
       <PortalAccessCard
         slug={ctx.tenant.slug}
         patientId={p.id}
@@ -143,6 +144,7 @@ export default async function PatientPage({ params, searchParams }: { params: Pr
         action={portalCodeAction}
         timeZone={tz}
       />
+      ) : null}
     </div>
   );
 }

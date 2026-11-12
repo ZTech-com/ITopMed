@@ -63,7 +63,8 @@ export async function createInvoice(ctx: ClinicContext, raw: unknown, meta: Requ
       if (!a || a.patientId !== input.patientId) throw new DomainError("errors.notFound");
       if (a.invoice) throw new DomainError("errors.alreadyInvoiced");
       if (a.status === "CANCELLED" || a.status === "NO_SHOW") throw new DomainError("errors.invalidTransition");
-      service = a.service && !a.service.archivedAt ? a.service : null;
+      // Unpriced (starter) services are not copied automatically; the cashier adds a priced line instead.
+      service = a.service && !a.service.archivedAt && a.service.priceMinor > 0n ? a.service : null;
     }
     await tx.invoice.create({
       data: { id, tenantId: ctx.tenant.id, patientId: input.patientId, branchId: input.branchId, appointmentId: input.appointmentId, currency: service?.currency ?? ctx.tenant.currency, createdById: ctx.principal.user.id },
@@ -96,6 +97,8 @@ export async function addInvoiceLine(ctx: ClinicContext, invoiceId: string, raw:
     const s = await tx.service.findFirst({ where: { id: input.serviceId, archivedAt: null } });
     if (!s) throw new DomainError("errors.notFound");
     if (s.currency !== inv.currency) throw new DomainError("errors.currencyMismatch");
+    // Starter services are created without a price; they cannot be billed until the clinic sets one.
+    if (s.priceMinor === 0n) throw new DomainError("errors.servicePriceNotSet");
     const gross = s.priceMinor * BigInt(input.quantity);
     const discount = input.discount.trim() ? parseMoney(input.discount, inv.currency) : 0n;
     if (discount === null || discount > gross) throw new DomainError("errors.invalidDiscount");

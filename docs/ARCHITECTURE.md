@@ -29,6 +29,7 @@ Future: Redis (rate limits, jobs), object storage (documents), native apps via t
 * **Row-Level Security** is the isolation boundary, not application code. `withAppContext({tenantId,userId,sessionId})` opens a transaction and calls `set_config('app.tenant_id', …, true)`; policies compare rows against `app_current_tenant()`. Transaction-local settings cannot leak across pooled connections (tested).
 * Clinic URL: `/c/{slug}` (path-based). Subdomains (`{slug}.itopmed.uz`) can be added at the proxy later without changing the data model.
 * Tenant status (TRIAL/ACTIVE usable; SUSPENDED/ARCHIVED blocked) is checked on every clinic request in `resolveClinic`.
+* Modules: `resolveClinic` loads the clinic's enabled modules and removes the permissions of disabled optional modules (`MODULE_PERMISSIONS` in `src/server/modules/catalog.ts`). Core modules (patients, appointments, queue, EMR) are always on. One codebase serves a solo office, a dental clinic and a multi-branch hospital; the practice type only chooses presets.
 
 ### Database roles
 | Role | Used by | Can do |

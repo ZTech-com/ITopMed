@@ -12,18 +12,21 @@ import { allergyAction, amendAction, clinicalStatusAction, diagnosisAction, fini
 import { labOrderAction } from "../../../../lab-actions";
 import { labReleaseAction } from "../../../../portal-actions";
 import { LabResultsList } from "@/components/lab";
+import { DentalChart, DentalHistory, ToothForm } from "@/components/dental";
+import { toothAction } from "../../../../dental-actions";
 import { listLabTests } from "@/server/lab/lab";
 
 /** The doctor's visit workspace. Every load is an audited record access. */
-export default async function EncounterPage({ params }: { params: Promise<{ slug: string; id: string }> }) {
+export default async function EncounterPage({ params, searchParams }: { params: Promise<{ slug: string; id: string }>; searchParams: Promise<{ tooth?: string; dentition?: string }> }) {
   const { slug, id } = await params;
+  const sp = await searchParams;
   const ctx = await requireClinic(slug, "emr.read");
   const [t, format] = await Promise.all([getTranslations(), getFormatter()]);
   const data = await getEncounter(ctx, id, await requestMeta()).catch((e) => {
     if (e instanceof DomainError) notFound();
     throw e;
   });
-  const { encounter: e, allergies, labOrders, isOwn } = data;
+  const { encounter: e, allergies, labOrders, dental, isOwn } = data;
   const labTests = ctx.permissions.has("orders.create") ? (await listLabTests(ctx)).filter((x) => x.labAnalytes.length > 0) : [];
   const tz = ctx.tenant.timezone;
   const open = e.status === "OPEN";
@@ -118,10 +121,31 @@ export default async function EncounterPage({ params }: { params: Promise<{ slug
         </Card>
       </div>
 
+      {dental ? (
+        <Card id="dental">
+          <CardHeader title={t("dental.title")} description={canWrite ? t("dental.hint") : undefined} />
+          <CardBody className="space-y-5">
+            <DentalChart
+              current={dental.current}
+              dentition={sp.dentition === "primary" ? "primary" : "permanent"}
+              toothHref={canWrite ? (n) => `?tooth=${n}${sp.dentition === "primary" ? "&dentition=primary" : ""}#dental` : undefined}
+              selected={Number(sp.tooth) || undefined}
+              switchHref={`?dentition=${sp.dentition === "primary" ? "permanent" : "primary"}#dental`}
+            />
+            {canWrite ? <ToothForm action={toothAction} slug={s} encounterId={e.id} tooth={Number(sp.tooth) || undefined} /> : null}
+            <details>
+              <summary className="cursor-pointer text-[13px] font-medium text-accent">{t("dental.history")}</summary>
+              <div className="mt-2">
+                <DentalHistory history={dental.history} timeZone={tz} />
+              </div>
+            </details>
+          </CardBody>
+        </Card>
+      ) : null}
       <Card>
         <CardHeader title={t("clinic.labOrder.title")} />
         <CardBody className="space-y-4">
-          <LabResultsList orders={labOrders} timeZone={tz} release={isOwn && ctx.permissions.has("emr.write") ? { slug: s, action: labReleaseAction } : undefined} />
+          <LabResultsList orders={labOrders} timeZone={tz} release={isOwn && ctx.permissions.has("emr.write") && ctx.modules.has("patient_portal") ? { slug: s, action: labReleaseAction } : undefined} />
           {canWrite && ctx.permissions.has("orders.create") ? (
             labTests.length === 0 ? (
               <p className="text-[13px] text-text-3">{t("clinic.labOrder.noLabTests")}</p>

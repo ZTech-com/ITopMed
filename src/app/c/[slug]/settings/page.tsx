@@ -5,17 +5,25 @@ import { LOCALES, LOCALE_NATIVE_NAMES, TIMEZONES } from "@/i18n/config";
 import { requireClinic } from "@/server/auth/guards";
 import { getClinicSettings } from "@/server/clinic/admin";
 import { clinicSettingsAction } from "../../../clinic-actions";
+import { moduleAction } from "../../../practice-actions";
+import { listClinicModules } from "@/server/clinic/practice";
+import { Badge, ButtonLink } from "@/components/ui/primitives";
 
 export default async function ClinicSettingsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const ctx = await requireClinic(slug, "clinic.settings.read");
-  const [t, s] = await Promise.all([getTranslations(), getClinicSettings(ctx)]);
+  const [t, s, modules] = await Promise.all([getTranslations(), getClinicSettings(ctx), listClinicModules(ctx)]);
+  const isOwner = ctx.roleKeys.includes("clinic_owner");
   const canEdit = ctx.permissions.has("clinic.settings.manage");
   const optional = t("common.optional");
 
   return (
     <div className="max-w-3xl">
-      <PageHeader title={t("clinic.settings.title")} description={t("clinic.settings.subtitle")} />
+      <PageHeader
+        title={t("clinic.settings.title")}
+        description={t("clinic.settings.subtitle")}
+        action={canEdit && isOwner ? <ButtonLink href={`/c/${ctx.tenant.slug}/setup`} variant="secondary">{t("setup.open")}</ButtonLink> : null}
+      />
       <Form action={clinicSettingsAction} className="space-y-6">
         <input type="hidden" name="$slug" value={ctx.tenant.slug} />
         <fieldset disabled={!canEdit} className="space-y-6">
@@ -43,6 +51,33 @@ export default async function ClinicSettingsPage({ params }: { params: Promise<{
           </div>
         ) : null}
       </Form>
+
+      <Card className="mt-6">
+        <CardHeader title={t("clinic.modules.title")} description={t("clinic.modules.hint")} />
+        <ul className="divide-y divide-border">
+          {modules.map((m) => (
+            <li key={m.key} className="flex flex-wrap items-center justify-between gap-3 px-6 py-3">
+              <div className="min-w-0">
+                <p className="text-[14.5px] font-medium">{t(`modules.${m.key}` as never)}</p>
+                <p className="text-[13px] text-text-2">{t(`moduleHint.${m.key}` as never)}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {!m.inPlan && !m.enabled ? <Badge>{t("clinic.modules.notInPlan")}</Badge> : <Badge tone={m.enabled ? "success" : "neutral"}>{t(m.enabled ? "clinic.modules.on" : "clinic.modules.off")}</Badge>}
+                {canEdit && (m.enabled || m.inPlan) ? (
+                  <Form action={moduleAction} className="space-y-1">
+                    <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+                    <input type="hidden" name="module" value={m.key} />
+                    <input type="hidden" name="op" value={m.enabled ? "off" : "on"} />
+                    <SubmitButton variant="secondary" className="h-9 px-3 text-[13px]">
+                      {t(m.enabled ? "clinic.modules.turnOff" : "clinic.modules.turnOn")}
+                    </SubmitButton>
+                  </Form>
+                ) : null}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Card>
     </div>
   );
 }

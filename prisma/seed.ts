@@ -16,7 +16,7 @@ const plans = [
     maxUsers: 10,
     maxBranches: 1,
     maxStorageMb: 5_000,
-    modules: ["patients", "appointments", "queue", "emr", "billing"],
+    modules: ["patients", "appointments", "queue", "emr", "billing", "dental"],
   },
   {
     code: "professional",
@@ -24,7 +24,7 @@ const plans = [
     maxUsers: 50,
     maxBranches: 5,
     maxStorageMb: 50_000,
-    modules: ["patients", "appointments", "queue", "emr", "laboratory", "billing", "inventory", "reports"],
+    modules: ["patients", "appointments", "queue", "emr", "laboratory", "billing", "inventory", "reports", "dental"],
   },
   {
     code: "enterprise",
@@ -32,7 +32,7 @@ const plans = [
     maxUsers: null,
     maxBranches: null,
     maxStorageMb: null,
-    modules: ["patients", "appointments", "queue", "emr", "laboratory", "billing", "inventory", "hr", "patient_portal", "reports", "integrations"],
+    modules: ["patients", "appointments", "queue", "emr", "laboratory", "billing", "inventory", "hr", "patient_portal", "reports", "integrations", "dental"],
   },
 ];
 

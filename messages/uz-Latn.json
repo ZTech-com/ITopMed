@@ -399,7 +399,8 @@
       "colPrice": "Narx",
       "colDoctors": "Shifokorlar",
       "minutes": "{count} daq",
-      "back": "Barcha xizmatlar"
+      "back": "Barcha xizmatlar",
+      "priceNotSet": "Narx belgilanmagan"
     },
     "facilities": {
       "title": "Boʻlimlar va xonalar",
@@ -1017,6 +1018,17 @@
       "when": "Qachon",
       "status": "Holat",
       "attempts": "{count} ta urinish"
+    },
+    "modules": {
+      "title": "Boʻlimlar (modullar)",
+      "hint": "Klinika ishlatmaydigan boʻlimni oʻchiring — u menyusi va huquqlari bilan birga hamma uchun yashiriladi.",
+      "on": "Yoqilgan",
+      "off": "Oʻchirilgan",
+      "notInPlan": "Tarifda yoʻq",
+      "turnOn": "Yoqish",
+      "turnOff": "Oʻchirish",
+      "enabled": "Boʻlim yoqildi.",
+      "disabled": "Boʻlim oʻchirildi."
     }
   },
   "status": {
@@ -1094,7 +1106,8 @@
     "hr": "Kadrlar",
     "patient_portal": "Bemor portali",
     "reports": "Hisobotlar",
-    "integrations": "Integratsiyalar"
+    "integrations": "Integratsiyalar",
+    "dental": "Stomatologiya"
   },
   "validation": {
     "required": "Bu maydon toʻldirilishi shart.",
@@ -1137,7 +1150,8 @@
     "positive": "Kamida 1 boʻlishi kerak.",
     "tooLarge": "Juda katta son.",
     "wholeNumber": "Butun son kiriting.",
-    "range": "1 dan 72 gacha qiymat kiriting."
+    "range": "1 dan 72 gacha qiymat kiriting.",
+    "tooth": "Toʻgʻri tish raqamini tanlang (FDI)."
   },
   "errors": {
     "generic": "Nimadir notoʻgʻri ketdi. Qayta urinib koʻring.",
@@ -1226,7 +1240,10 @@
     "personnelNumberTaken": "Bu tabel raqami allaqachon ishlatilgan.",
     "receiveExpired": "Muddati oʻtgan tovarni qabul qilib boʻlmaydi.",
     "stockExpired": "Bu partiyaning yaroqlilik muddati tugagan, uni berib boʻlmaydi.",
-    "supplierExists": "Bunday nomli yetkazib beruvchi allaqachon bor."
+    "supplierExists": "Bunday nomli yetkazib beruvchi allaqachon bor.",
+    "moduleDisabled": "Bu boʻlim klinikada oʻchirilgan.",
+    "moduleNotInPlan": "Bu boʻlim klinika tarifiga kirmaydi.",
+    "servicePriceNotSet": "Hisob yozishdan oldin xizmat narxini belgilang (Xizmatlar)."
   },
   "email": {
     "invitation": {
@@ -1731,5 +1748,129 @@
       "subject": "{clinic}: bemor portalida yangi natijalar",
       "body": "Bemor portalingizda yangi natijalar paydo boʻldi: {link}"
     }
+  },
+  "moduleHint": {
+    "laboratory": "Tahlil buyurtmalari, namuna olish, ikki kishi tasdiqlaydigan natijalar.",
+    "billing": "Hisoblar, toʻlovlar, kassa va xarajatlar.",
+    "inventory": "Dorixona va ombor — partiya va muddat boʻyicha.",
+    "hr": "Xodimlar maʼlumotlari, litsenziyalar va taʼtillar.",
+    "patient_portal": "Bemorlar oʻz qabullari, ochilgan natijalari va hisoblarini koʻradi.",
+    "reports": "Moliyaviy va operatsion hisobotlar.",
+    "dental": "Qabul va tibbiy kartada tish formulasi (odontogramma)."
+  },
+  "practiceType": {
+    "MULTI_SPECIALTY": {
+      "name": "Koʻp tarmoqli klinika",
+      "hint": "Bir nechta shifokor va boʻlim, ehtimol bir nechta filial."
+    },
+    "SOLO_PRACTICE": {
+      "name": "Xususiy kabinet",
+      "hint": "Bitta shifokor, ehtimol bitta administrator. Faqat kichik kabinetga kerakli narsalar."
+    },
+    "DENTAL": {
+      "name": "Stomatologiya",
+      "hint": "Tish formulasi, stomatologik xizmatlar va materiallar."
+    },
+    "DIAGNOSTIC": {
+      "name": "Diagnostika yoki laboratoriya markazi",
+      "hint": "Avvalo tahlillar, natijalar va tasvirli tekshiruvlar."
+    },
+    "OTHER": {
+      "name": "Boshqa",
+      "hint": "Standart toʻplamdan boshlang va boʻlimlarni keyin sozlang."
+    }
+  },
+  "practice": {
+    "services": {
+      "consultation": "Konsultatsiya",
+      "repeatConsultation": "Takroriy konsultatsiya",
+      "dentalExam": "Stomatologik koʻrik",
+      "dentalCleaning": "Tishlarni professional tozalash",
+      "filling": "Kariesni davolash (plomba)",
+      "rootCanal": "Ildiz kanallarini davolash",
+      "extraction": "Tish sugʻurish",
+      "dentalXray": "Tish rentgeni",
+      "bloodCount": "Umumiy qon tahlili",
+      "bloodGlucose": "Qondagi glyukoza",
+      "urinalysis": "Umumiy siydik tahlili",
+      "ultrasound": "Qorin boʻshligʻi UZI",
+      "ecg": "EKG"
+    }
+  },
+  "setup": {
+    "title": "Klinikani sozlash",
+    "subtitle": "ITop Med klinikangiz hajmi va turiga moslashadi. Hammasini keyin sozlamalarda oʻzgartirish mumkin.",
+    "typeTitle": "Klinikangiz qanday?",
+    "typeHint": "Qaysi boʻlimlarni koʻrishingiz shunga bogʻliq. Oʻzgartirganda hech narsa oʻchirilmaydi.",
+    "modulesOn": "Yoqiladi",
+    "optionsTitle": "Qoʻllash",
+    "applyModules": "Boʻlimlarni shunga mos yoqish va oʻchirish",
+    "applyModulesHint": "Faqat tarif doirasida. Oʻchirilgan boʻlimlar qayta yoqmaguningizcha hamma uchun yashiriladi.",
+    "addServices": "Odatiy xizmatlarni qoʻshish",
+    "addServicesHint": "Nomini oʻzgartirsa boʻladigan boshlangʻich roʻyxat. Narxlar boʻsh — hisob yozishdan oldin «Xizmatlar» boʻlimida belgilang.",
+    "ownerTitle": "Bemorlarni oʻzingiz ham qabul qilasizmi?",
+    "ownerHint": "Kichik klinikada egasi koʻpincha shifokorning oʻzi boʻladi.",
+    "alreadyDoctor": "Sizda bu klinikada shifokor roli allaqachon bor.",
+    "ownerIsDoctor": "Men bu yerda shifokor ham man",
+    "ownerIsDoctorHint": "Hisobingizga shifokor rolini qoʻshadi. Tibbiy kartalar odatdagidek davolash aloqasi qoidasi bilan himoyalanadi, amal audit jurnalida qayd etiladi.",
+    "specialty": "Mutaxassisligingiz",
+    "schedule": "Dushanba–juma 9:00–18:00 jadvalini yaratish",
+    "scheduleHint": "Bemorlarni darhol yozish uchun. Keyin «Shifokorlar» boʻlimida oʻzgartirasiz.",
+    "submit": "Qoʻllash",
+    "done": "Klinika sozlandi. Boʻlimlarni istalgan vaqtda sozlamalarda oʻzgartirasiz.",
+    "promptTitle": "ITop Med ni klinikangizga moslang",
+    "promptBody": "Ikki daqiqa: klinika turini tanlang (bitta shifokor, stomatologiya, koʻp tarmoqli…) — kerakli narsalarni oʻzimiz yoqamiz.",
+    "open": "Sozlash yordamchisi",
+    "frontDeskTitle": "Registratura",
+    "frontDeskHint": "Bemorlarni kim roʻyxatga oladi, qabulga yozadi va toʻlov qabul qiladi?",
+    "ownerFrontDesk": "Buni oʻzim qilaman (registratorsiz)",
+    "ownerFrontDeskHint": "Hisobingizga registrator va kassir rollarini qoʻshadi. Administrator boʻlsa, uni «Xodimlar» boʻlimida shu rollar bilan taklif qiling.",
+    "alreadyFrontDesk": "Sizda registrator va kassir rollari allaqachon bor."
+  },
+  "dental": {
+    "title": "Tish formulasi",
+    "hint": "Tishni tanlash uchun ustiga bosing, soʻng holatini yozing. Har bir yozuv tarixda saqlanadi.",
+    "permanent": "Doimiy tishlar (FDI)",
+    "primary": "Sut tishlari (FDI)",
+    "showPrimary": "Sut tishlarini koʻrsatish",
+    "showPermanent": "Doimiy tishlarni koʻrsatish",
+    "upper": "Yuqori jagʻ",
+    "lower": "Pastki jagʻ",
+    "legend": "Belgilar",
+    "tooth": "Tish",
+    "condition": "Holati",
+    "surfaces": "Yuzalar",
+    "surfacesHint": "Karies va plombalar uchun.",
+    "record": "Yozish",
+    "recorded": "Tish formulasiga yozildi.",
+    "history": "Tarix",
+    "noEntries": "Tish formulasida hali yozuv yoʻq."
+  },
+  "toothCondition": {
+    "HEALTHY": "Sogʻlom",
+    "CARIES": "Karies",
+    "FILLED": "Plomba",
+    "CROWN": "Toj",
+    "ROOT_CANAL": "Kanallari davolangan",
+    "IMPLANT": "Implant",
+    "MISSING": "Yoʻq",
+    "TO_EXTRACT": "Sugʻurilishi kerak"
+  },
+  "toothAbbr": {
+    "HEALTHY": "Sog",
+    "CARIES": "K",
+    "FILLED": "P",
+    "CROWN": "Toj",
+    "ROOT_CANAL": "Kn",
+    "IMPLANT": "Im",
+    "MISSING": "–",
+    "TO_EXTRACT": "Sugʻ"
+  },
+  "toothSurface": {
+    "M": "Medial (M)",
+    "O": "Okklyuzion / kesuvchi (O)",
+    "D": "Distal (D)",
+    "B": "Vestibulyar (B)",
+    "L": "Til / tanglay tomoni (L)"
   }
 }

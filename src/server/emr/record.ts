@@ -11,6 +11,7 @@ import { DomainError } from "../tenancy/provisioning";
 import { withRecordAccess, type BreakGlassReason } from "./access";
 import { labOrdersForRecord } from "../lab/lab";
 import { sequential } from "../db";
+import { dentalChartForRecord } from "./dental";
 
 const uuid = z.uuid();
 const clinicalText = z.string().max(10_000, "validation.tooLong");
@@ -68,6 +69,7 @@ export async function getMedicalRecord(ctx: ClinicContext, patientId: string, me
     ]);
     const authorIds = [...new Set(encounters.flatMap((e) => e.notes.flatMap((n) => [n.authorId, ...n.amendments.map((a) => a.authorId)])))];
     const authors = new Map((await tx.user.findMany({ where: { id: { in: authorIds } }, select: { id: true, fullName: true } })).map((u) => [u.id, u.fullName]));
+    const dental = ctx.modules.has("dental") ? await dentalChartForRecord(tx, patientId) : null;
     return {
       access,
       patient,
@@ -75,6 +77,7 @@ export async function getMedicalRecord(ctx: ClinicContext, patientId: string, me
       diagnoses,
       vitals,
       labOrders,
+      dental,
       encounters: encounters.map((e) => ({
         ...e,
         notes: e.notes.map((n) => ({
@@ -142,7 +145,8 @@ export async function getEncounter(ctx: ClinicContext, encounterId: string, meta
       tx.allergy.findMany({ where: { patientId: enc.patientId, status: "ACTIVE" } }),
       labOrdersForRecord(tx, enc.patientId, enc.id),
     ]);
-    return { encounter, allergies, labOrders, isOwn: access.doctorProfileId === enc.doctorProfileId };
+    const dental = ctx.modules.has("dental") ? await dentalChartForRecord(tx, enc.patientId) : null;
+    return { encounter, allergies, labOrders, dental, isOwn: access.doctorProfileId === enc.doctorProfileId };
   });
 }
 

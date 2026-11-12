@@ -2,6 +2,7 @@ import "server-only";
 import { encodeBase32UpperCaseNoPadding } from "@oslojs/encoding";
 import { recordAudit } from "../audit";
 import { isPermission, type Permission } from "../authz/permissions";
+import { MODULES, applyModules } from "../modules/catalog";
 import { setContext, withAppContext } from "../db";
 import { hashIp, randomToken, sha256Hex } from "../security/crypto";
 import { verifyPassword } from "../security/password";
@@ -138,14 +139,16 @@ export async function resolveClinic(principal: ClinicPrincipal, slug: string): P
     if (!tenant || !membership || membership.status !== "ACTIVE" || !USABLE.has(tenant.status)) return null;
     const permissions = new Set<Permission>();
     for (const mr of membership.roles) for (const p of mr.role.permissions) if (isPermission(p.permission)) permissions.add(p.permission);
-    const modules = await tx.tenantModule.findMany({ where: { tenantId: tenant.id, enabled: true }, select: { moduleKey: true } });
+    const rows = await tx.tenantModule.findMany({ where: { tenantId: tenant.id, enabled: true }, select: { moduleKey: true } });
+    // Core modules are always on; optional ones only when enabled. Disabled modules take their permissions with them.
+    const modules = new Set<string>([...MODULES.filter((m) => m.core).map((m) => m.key), ...rows.map((m) => m.moduleKey)]);
     return {
       principal,
       tenant: { id: tenant.id, slug: tenant.slug, name: tenant.name, status: tenant.status, defaultLocale: tenant.defaultLocale, timezone: tenant.timezone, currency: tenant.currency },
       membershipId: membership.id,
       roleKeys: membership.roles.map((r) => r.role.key),
-      permissions,
-      modules: new Set(modules.map((m) => m.moduleKey)),
+      permissions: applyModules(permissions, modules),
+      modules,
       branchIds: membership.allBranches ? null : membership.branches.map((b) => b.branchId),
     };
   });

@@ -13,6 +13,7 @@ import { DomainError } from "@/server/tenancy/provisioning";
 import { amendAction, breakGlassAction, clinicalStatusAction } from "../../../../../care-actions";
 import { cookies } from "next/headers";
 import { LabResultsList } from "@/components/lab";
+import { DentalChart, DentalHistory } from "@/components/dental";
 import { labReleaseAction } from "../../../../../portal-actions";
 
 /**
@@ -72,7 +73,7 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
     throw e;
   }
 
-  const { patient, allergies, diagnoses, vitals, encounters, access, labOrders } = record;
+  const { patient, allergies, diagnoses, vitals, encounters, access, labOrders, dental } = record;
   const tz = ctx.tenant.timezone;
   const s = ctx.tenant.slug;
   return (
@@ -113,11 +114,20 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
 
       <Card>
         <CardHeader title={t("clinic.labOrder.results")} />
+        {dental ? (
+          <Card>
+            <CardHeader title={t("dental.title")} />
+            <CardBody className="space-y-4">
+              <DentalChart current={dental.current} dentition="permanent" />
+              <DentalHistory history={dental.history} timeZone={tz} />
+            </CardBody>
+          </Card>
+        ) : null}
         <CardBody>
           <LabResultsList
             orders={labOrders}
             timeZone={tz}
-            release={ctx.permissions.has("emr.write") && (access.mode === "care" || access.mode === "oversight") ? { slug: s, action: labReleaseAction } : undefined}
+            release={ctx.permissions.has("emr.write") && ctx.modules.has("patient_portal") && (access.mode === "care" || access.mode === "oversight") ? { slug: s, action: labReleaseAction } : undefined}
           />
         </CardBody>
       </Card>

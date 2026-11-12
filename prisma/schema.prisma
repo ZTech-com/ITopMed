@@ -119,6 +119,10 @@ model Tenant {
   contactEmail     String?
   contactPhone     String?
   address          String?
+  /// Kind of practice (setup presets). Clinics can change it any time.
+  practiceType     PracticeType @default(MULTI_SPECIALTY)
+  /// Set when the owner finished the setup assistant.
+  setupCompletedAt DateTime?
   createdById      String?      @db.Uuid
   activatedAt      DateTime?
   suspendedAt      DateTime?
@@ -173,6 +177,7 @@ model Tenant {
   staffLeaves          StaffLeave[]
   notifications        Notification[]
   notificationSettings NotificationSettings?
+  dentalChart          DentalChartEntry[]
 
   @@index([status])
 }
@@ -747,6 +752,7 @@ model Patient {
   portalAccount PatientAccount?
   dispenses     StockMovement[]
   notifications Notification[]
+  dentalChart   DentalChartEntry[]
 
   @@unique([tenantId, mrn])
   @@index([tenantId, lastName, firstName])
@@ -896,14 +902,15 @@ model Encounter {
   closedAt        DateTime?
   createdAt       DateTime        @default(now())
 
-  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  patient     Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict)
-  doctor      DoctorProfile  @relation(fields: [doctorProfileId], references: [id], onDelete: Restrict)
-  appointment Appointment?   @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient     Patient            @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor      DoctorProfile      @relation(fields: [doctorProfileId], references: [id], onDelete: Restrict)
+  appointment Appointment?       @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
   notes       ClinicalNote[]
   diagnoses   Diagnosis[]
   vitals      VitalSign[]
   labOrders   LabOrder[]
+  dentalChart DentalChartEntry[]
 
   @@index([tenantId, patientId, startedAt])
 }
@@ -1711,4 +1718,48 @@ model NotificationSettings {
   updatedAt            DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+}
+
+// ───────────── Practice profiles & dentistry (Phase 8e) ─────────────
+
+/// What kind of practice the clinic is; drives the setup presets (modules, starter services).
+enum PracticeType {
+  MULTI_SPECIALTY
+  SOLO_PRACTICE
+  DENTAL
+  DIAGNOSTIC
+  OTHER
+}
+
+enum ToothCondition {
+  HEALTHY
+  CARIES
+  FILLED
+  CROWN
+  ROOT_CANAL
+  IMPLANT
+  MISSING
+  TO_EXTRACT
+}
+
+/// Dental chart (odontogram). Append-only: the latest entry per tooth is the
+/// current state; corrections are new entries. Teeth use FDI numbering.
+model DentalChartEntry {
+  id           String         @id @db.Uuid
+  tenantId     String         @db.Uuid
+  patientId    String         @db.Uuid
+  encounterId  String?        @db.Uuid
+  /// FDI two-digit tooth number: 11–48 permanent teeth, 51–85 primary teeth.
+  tooth        Int
+  /// Affected surfaces: M mesial, O occlusal/incisal, D distal, B buccal/labial, L lingual/palatal.
+  surfaces     String[]
+  condition    ToothCondition
+  recordedById String         @db.Uuid
+  recordedAt   DateTime       @default(now())
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  encounter Encounter? @relation(fields: [encounterId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, patientId, tooth, recordedAt])
 }

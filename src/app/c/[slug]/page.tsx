@@ -8,6 +8,7 @@ import { doctorsWorkingOn, getDoctorDetail, getMyDoctorProfileId, listDoctors } 
 import { listRooms, listServices } from "@/server/clinic/resources";
 import { withAppContext } from "@/server/db";
 import { MODULES } from "@/server/modules/catalog";
+import { practiceProfile } from "@/server/clinic/practice";
 import { formatHm, isoWeekday, todayIn } from "@/server/scheduling/time";
 
 /**
@@ -16,7 +17,7 @@ import { formatHm, isoWeekday, todayIn } from "@/server/scheduling/time";
  *  - Front desk: who works today (receptionists, managers — schedules.read)
  *  - My day (anyone with a practitioner profile)
  */
-export default async function ClinicDashboard({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ClinicDashboard({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ setup?: string }> }) {
   const { slug } = await params;
   const ctx = await requireClinic(slug);
   const [t, format] = await Promise.all([getTranslations(), getFormatter()]);
@@ -56,9 +57,25 @@ export default async function ClinicDashboard({ params }: { params: Promise<{ sl
       ]
     : [];
 
+  const isOwner = ctx.roleKeys.includes("clinic_owner") && ctx.permissions.has("clinic.settings.manage");
+  const setupDone = (await searchParams).setup === "done";
+  const showSetup = isOwner && !setupDone && !(await practiceProfile(ctx))?.setupCompletedAt;
+
   return (
     <>
       <PageHeader eyebrow={`${ctx.tenant.name} · ${todayLabel}`} title={t("clinic.dashboard.welcome", { name: ctx.principal.user.fullName })} />
+      {setupDone ? <Alert tone="success">{t("setup.done")}</Alert> : null}
+      {showSetup ? (
+        <Card>
+          <CardBody className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0 max-w-xl">
+              <p className="text-[15px] font-semibold">{t("setup.promptTitle")}</p>
+              <p className="mt-1 text-[14px] text-text-2">{t("setup.promptBody")}</p>
+            </div>
+            <ButtonLink href={`/c/${ctx.tenant.slug}/setup`}>{t("setup.open")}</ButtonLink>
+          </CardBody>
+        </Card>
+      ) : null}
       {subscription?.status === "TRIALING" && subscription.trialEndsAt ? (
         <div className="mb-6">
           <Alert tone="accent">{t("clinic.dashboard.trial", { date: format.dateTime(subscription.trialEndsAt, { dateStyle: "long" }) })}</Alert>

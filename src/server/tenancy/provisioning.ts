@@ -88,7 +88,7 @@ export async function provisionClinic(actor: PlatformPrincipal, raw: unknown, me
       });
 
       await tx.tenantModule.createMany({
-        data: MODULES.map((m) => ({ tenantId, moduleKey: m.key, enabled: m.core || plan.modules.includes(m.key), updatedById: actor.user.id })),
+        data: MODULES.map((m) => ({ tenantId, moduleKey: m.key, enabled: m.core || (m.defaultOn && plan.modules.includes(m.key)), updatedById: actor.user.id })),
       });
 
       const invitationId = uuidv7();

@@ -39,7 +39,8 @@ export async function clinicWithOwner(actor: PlatformPrincipal) {
       contactEmail: `info@${slug}.test`,
       defaultLocale: "uz-Latn",
       timezone: "Asia/Tashkent",
-      planCode: "professional",
+      // Enterprise includes every module; module limits are tested explicitly.
+      planCode: "enterprise",
       ownerFullName: "Synthetic Owner",
       ownerEmail,
       taxId: "",

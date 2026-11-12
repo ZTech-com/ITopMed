@@ -278,6 +278,7 @@ export async function cancelLabOrder(ctx: ClinicContext, orderId: string, meta: 
  */
 export async function releaseLabOrder(ctx: ClinicContext, orderId: string, meta: RequestMeta) {
   requirePermission(ctx, "emr.write");
+  if (!ctx.modules.has("patient_portal")) throw new DomainError("errors.moduleDisabled");
   const id = uuid.safeParse(orderId);
   if (!id.success) throw new DomainError("errors.notFound");
   const order = await inClinic(ctx, (tx) => tx.labOrder.findUnique({ where: { id: id.data }, select: { id: true, patientId: true, status: true, releasedAt: true } }));

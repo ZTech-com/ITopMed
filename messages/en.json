@@ -399,7 +399,8 @@
       "colPrice": "Price",
       "colDoctors": "Doctors",
       "minutes": "{count} min",
-      "back": "All services"
+      "back": "All services",
+      "priceNotSet": "Price not set"
     },
     "facilities": {
       "title": "Departments and rooms",
@@ -1017,6 +1018,17 @@
       "when": "When",
       "status": "Status",
       "attempts": "{count, plural, one {# attempt} other {# attempts}}"
+    },
+    "modules": {
+      "title": "Sections (modules)",
+      "hint": "Switch off what your practice does not use — it disappears for everyone, including its menu items and permissions.",
+      "on": "On",
+      "off": "Off",
+      "notInPlan": "Not in plan",
+      "turnOn": "Turn on",
+      "turnOff": "Turn off",
+      "enabled": "Section turned on.",
+      "disabled": "Section turned off."
     }
   },
   "status": {
@@ -1094,7 +1106,8 @@
     "hr": "HR",
     "patient_portal": "Patient portal",
     "reports": "Reports",
-    "integrations": "Integrations"
+    "integrations": "Integrations",
+    "dental": "Dentistry"
   },
   "validation": {
     "required": "This field is required.",
@@ -1137,7 +1150,8 @@
     "positive": "Must be at least 1.",
     "tooLarge": "This number is too large.",
     "wholeNumber": "Enter a whole number.",
-    "range": "Enter a value between 1 and 72."
+    "range": "Enter a value between 1 and 72.",
+    "tooth": "Choose a valid tooth number (FDI)."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -1226,7 +1240,10 @@
     "personnelNumberTaken": "This personnel number is already used.",
     "receiveExpired": "Expired stock cannot be received.",
     "stockExpired": "This batch has expired and cannot be issued.",
-    "supplierExists": "A supplier with this name already exists."
+    "supplierExists": "A supplier with this name already exists.",
+    "moduleDisabled": "This module is switched off for the clinic.",
+    "moduleNotInPlan": "This module is not included in the clinic's plan.",
+    "servicePriceNotSet": "Set a price for this service before billing it (Services)."
   },
   "email": {
     "invitation": {
@@ -1731,5 +1748,129 @@
       "subject": "{clinic}: new results in your patient portal",
       "body": "New results are available in your patient portal: {link}"
     }
+  },
+  "moduleHint": {
+    "laboratory": "Lab orders, specimen collection, results with four-eyes verification.",
+    "billing": "Invoices, payments, cash desk and expenses.",
+    "inventory": "Pharmacy and stock by batch and expiry.",
+    "hr": "Staff records, licences and leave.",
+    "patient_portal": "Patients see their appointments, released results and invoices.",
+    "reports": "Financial and operational reports.",
+    "dental": "Dental chart (odontogram) in visits and medical records."
+  },
+  "practiceType": {
+    "MULTI_SPECIALTY": {
+      "name": "Multi-specialty clinic",
+      "hint": "Several doctors and departments, possibly several branches."
+    },
+    "SOLO_PRACTICE": {
+      "name": "Solo practice",
+      "hint": "One doctor, maybe one administrator. Only what a small office needs."
+    },
+    "DENTAL": {
+      "name": "Dental clinic",
+      "hint": "Dental chart, dental services and supplies."
+    },
+    "DIAGNOSTIC": {
+      "name": "Diagnostic or lab centre",
+      "hint": "Tests, results and imaging first."
+    },
+    "OTHER": {
+      "name": "Other",
+      "hint": "Start with the standard set and adjust modules later."
+    }
+  },
+  "practice": {
+    "services": {
+      "consultation": "Consultation",
+      "repeatConsultation": "Repeat consultation",
+      "dentalExam": "Dental examination",
+      "dentalCleaning": "Professional teeth cleaning",
+      "filling": "Caries treatment (filling)",
+      "rootCanal": "Root canal treatment",
+      "extraction": "Tooth extraction",
+      "dentalXray": "Dental X-ray",
+      "bloodCount": "Complete blood count",
+      "bloodGlucose": "Blood glucose",
+      "urinalysis": "Urinalysis",
+      "ultrasound": "Abdominal ultrasound",
+      "ecg": "ECG"
+    }
+  },
+  "setup": {
+    "title": "Set up your practice",
+    "subtitle": "ITop Med adapts to the size and kind of your practice. You can change everything later in Settings.",
+    "typeTitle": "What kind of practice is this?",
+    "typeHint": "This decides which sections you see. Nothing is deleted when you change it.",
+    "modulesOn": "Turned on",
+    "optionsTitle": "Apply",
+    "applyModules": "Turn sections on or off to match",
+    "applyModulesHint": "Only within your plan. Sections that are switched off disappear for everyone until you turn them back on.",
+    "addServices": "Add typical services",
+    "addServicesHint": "A starter list you can rename. Prices are left empty — set them under Services before billing.",
+    "ownerTitle": "Do you see patients yourself?",
+    "ownerHint": "In a small practice the owner is often also the doctor.",
+    "alreadyDoctor": "You already have the doctor role in this clinic.",
+    "ownerIsDoctor": "I am also a doctor here",
+    "ownerIsDoctorHint": "Adds the doctor role to your account. Medical records stay protected by the usual care-relationship rules, and this is recorded in the audit log.",
+    "specialty": "Your specialty",
+    "schedule": "Create a Monday–Friday 9:00–18:00 schedule",
+    "scheduleHint": "So patients can be booked right away. Change it any time under Doctors.",
+    "submit": "Apply",
+    "done": "Your practice is set up. Adjust sections any time under Settings.",
+    "promptTitle": "Set up ITop Med for your practice",
+    "promptBody": "Two minutes: choose your kind of practice (one doctor, dental, multi-specialty…) and we switch on exactly what you need.",
+    "open": "Setup assistant",
+    "frontDeskTitle": "Front desk",
+    "frontDeskHint": "Who registers patients, books visits and takes payments?",
+    "ownerFrontDesk": "I do this myself (no receptionist)",
+    "ownerFrontDeskHint": "Adds the receptionist and cashier roles to your account. With an administrator instead, invite them under Team with the same roles.",
+    "alreadyFrontDesk": "You already have the receptionist and cashier roles."
+  },
+  "dental": {
+    "title": "Dental chart",
+    "hint": "Tap a tooth to select it, then record its condition. Every entry is kept in the history.",
+    "permanent": "Permanent teeth (FDI)",
+    "primary": "Primary teeth (FDI)",
+    "showPrimary": "Show primary teeth",
+    "showPermanent": "Show permanent teeth",
+    "upper": "Upper jaw",
+    "lower": "Lower jaw",
+    "legend": "Legend",
+    "tooth": "Tooth",
+    "condition": "Condition",
+    "surfaces": "Surfaces",
+    "surfacesHint": "For caries and fillings.",
+    "record": "Record",
+    "recorded": "Recorded in the dental chart.",
+    "history": "History",
+    "noEntries": "No dental chart entries yet."
+  },
+  "toothCondition": {
+    "HEALTHY": "Healthy",
+    "CARIES": "Caries",
+    "FILLED": "Filled",
+    "CROWN": "Crown",
+    "ROOT_CANAL": "Root canal treated",
+    "IMPLANT": "Implant",
+    "MISSING": "Missing",
+    "TO_EXTRACT": "To be extracted"
+  },
+  "toothAbbr": {
+    "HEALTHY": "OK",
+    "CARIES": "C",
+    "FILLED": "F",
+    "CROWN": "Cr",
+    "ROOT_CANAL": "RC",
+    "IMPLANT": "Im",
+    "MISSING": "–",
+    "TO_EXTRACT": "Ex"
+  },
+  "toothSurface": {
+    "M": "Mesial (M)",
+    "O": "Occlusal / incisal (O)",
+    "D": "Distal (D)",
+    "B": "Buccal / labial (B)",
+    "L": "Lingual / palatal (L)"
   }
 }

@@ -25,6 +25,9 @@ Order → specimen collected (barcode) → received → processed → result ent
 
 **Implemented (8a):** doctor orders tests from an open visit (routine/urgent, optional indication) → nurse station or lab marks the specimen collected → lab staff enter values (partial saves allowed; flags computed against the reference range snapshot) → a second person verifies → results become read-only and appear on the visit and in the medical record. Not yet: barcode labels, separate "received" step, critical-value notification, portal release.
 
+## 4a. Dentistry (module "dental")
+The treating dentist records each tooth's condition during the open visit on an odontogram (FDI numbering, permanent and primary teeth; surfaces M/O/D/B/L for caries and fillings). Entries are append-only: the latest entry per tooth is its current state, earlier ones its history; the chart appears read-only in the medical record. Not yet: treatment plans, procedures per tooth linked to invoices, periodontal charting, X-ray images.
+
 ## 5. Billing
 Services from appointment/encounter → invoice → payment (cash, card, Payme, Click) with idempotency → fiscal receipt (integration to be decided) → refunds need permission and reason → cash shift open/close with reconciliation.
 

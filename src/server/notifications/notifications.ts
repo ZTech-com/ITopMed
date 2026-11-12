@@ -72,6 +72,8 @@ async function enqueue(tx: Tx, tenantId: string, e: { patientId: string; kind: N
   const s = await settingsIn(tx, tenantId);
   if (!enabled(s, e.kind)) return 0;
   if (e.kind === "RESULTS_READY") {
+    const portal = await tx.tenantModule.findUnique({ where: { tenantId_moduleKey: { tenantId, moduleKey: "patient_portal" } }, select: { enabled: true } });
+    if (!portal?.enabled) return 0;
     const acc = await tx.patientAccount.findFirst({ where: { patientId: e.patientId, tenantId }, select: { status: true } });
     if (acc?.status !== "ACTIVE") return 0; // nothing to point the patient to
   }
