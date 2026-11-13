@@ -168,3 +168,28 @@ describe("dental chart", () => {
     }
   });
 });
+
+describe("specialty presets (e.g. a one-room cardiology office)", () => {
+  it("adds the main specialty's typical services, translated, unpriced and without duplicate codes", async () => {
+    const actor = await platformActor();
+    const a = await clinicWithOwner(actor);
+    const r = await completeSetup(a.ctx, { ...SETUP, practiceType: "SOLO_PRACTICE", focusSpecialty: "cardiology" }, META);
+    const owner = await fresh(a.ownerEmail, a.slug);
+    const codes = (await listServices(owner)).map((s) => s.code);
+    for (const c of ["CONSULT", "CARD-CONSULT", "ECG", "CARD-ECHO", "CARD-HOLTER", "CARD-ABPM", "CARD-STRESS"]) expect(codes).toContain(c);
+    expect(r.servicesAdded).toBe(8);
+    const echo = (await listServices(owner)).find((s) => s.code === "CARD-ECHO")!;
+    expect(echo.name).toBe("Exokardiografiya (yurak UTT)"); // clinic language uz-Latn
+    expect(echo.priceMinor).toBe(0n);
+    // Running it again adds nothing.
+    expect((await completeSetup(owner, { ...SETUP, practiceType: "SOLO_PRACTICE", focusSpecialty: "cardiology" }, META)).servicesAdded).toBe(0);
+  });
+
+  it("every specialty service has a name in all four languages", async () => {
+    const { SPECIALTY_SERVICES } = await import("@/server/clinic/practice");
+    for (const locale of ["uz-Latn", "uz-Cyrl", "ru", "en"]) {
+      const m = (await import(`../messages/${locale}.json`)).default as { practice: { services: Record<string, string> } };
+      for (const list of Object.values(SPECIALTY_SERVICES)) for (const s of list!) expect(m.practice.services[s.key], `${locale}:${s.key}`).toBeTruthy();
+    }
+  });
+});

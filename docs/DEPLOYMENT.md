@@ -12,6 +12,9 @@ SMTP relay (email); SMS provider: not contracted yet (SMS stays off: SMS_TRANSPO
 ```
 Rate limits live in PostgreSQL (`rate_limit_hit()`), so app instances need no shared cache. Health probe: `GET /api/health` (200 `{"status":"ok"}` / 503) — no versions or details.
 
+## 1b. Single-computer installation on a clinic network (`npm run local`)
+For a practice without a hosted server: one Windows/macOS/Linux computer runs the embedded PostgreSQL, the production build (`next start` on 127.0.0.1:3000), the worker and an HTTPS reverse proxy on 0.0.0.0:3443 (`scripts/local.ts`). The proxy overwrites `X-Forwarded-For` with the device address. TLS uses a private CA generated with OpenSSL in `.data/certs` (gitignored; the CA key never leaves the computer); every device trusts `itopmed-local-ca.crt` once. `LOCAL_MODE=1` allows the file mailbox in production when no `SMTP_URL` is set — never set it on an internet-facing deployment. Step-by-step: docs/QOLLANMA.md.
+
 ## 2. Database setup (once)
 1. Create the four roles and the database: `scripts/sql/create-roles.sql` (passwords from the secret manager; see the header of the file).
 2. Apply migrations as the owner: `MIGRATION_DATABASE_URL=… npx prisma migrate deploy`.

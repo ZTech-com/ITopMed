@@ -22,6 +22,7 @@ export async function setupAction(_: FormState, fd: FormData): Promise<FormState
         ownerIsDoctor: on("ownerIsDoctor"),
         ownerFrontDesk: on("ownerFrontDesk"),
         specialty: String(fd.get("specialty") ?? ""),
+        focusSpecialty: String(fd.get("focusSpecialty") ?? ""),
         weekdaySchedule: on("weekdaySchedule"),
       },
       await requestMeta(),

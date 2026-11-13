@@ -1,0 +1,265 @@
+# ITop Med — to'liq qo'llanma (0 dan 100% gacha)
+
+Bu hujjat loyiha egasi uchun: tizimda nima bor, uni qanday o'rnatish, ishga tushirish, boshqarish va kundalik ishlatish. Texnik tafsilotlar `docs/ARCHITECTURE.md`, `docs/SECURITY-AND-PRIVACY.md` va `docs/DEPLOYMENT.md` da.
+
+---
+
+## 1. ITop Med nima
+
+ITop Med — klinikalarni boshqarish tizimi. **Bitta dastur hamma uchun:**
+
+| Kim | Misol | Tizim nimani yoqadi |
+|---|---|---|
+| Xususiy kabinet | 1 kardiolog, ehtimol 1 administrator | Bemorlar, qabul, tibbiy yozuv, to'lov, hisobot, bemor portali |
+| Stomatologiya | tish klinikasi | + tish formulasi, stomatologik xizmatlar, ombor |
+| Diagnostika / laboratoriya | tahlil markazi | + laboratoriya, ombor |
+| Ko'p tarmoqli klinika / shifoxona | ko'p shifokor, bir nechta filial | hamma bo'limlar, kadrlar, filiallar |
+
+Kichik kabinetga keraksiz bo'limlar ko'rinmaydi. Kerak bo'lsa keyin yoqiladi.
+
+### Ikki daraja
+1. **Platforma (siz — ITop Med egasi):** `/admin`. Klinikalarni yaratasiz, tariflar va bo'limlarni boshqarasiz, o'z xodimlaringizni taklif qilasiz va audit jurnalini ko'rasiz. **Bemorlarning tibbiy ma'lumotlarini ko'ra olmaysiz** — bu qonun va xavfsizlik talabi, ma'lumotlar bazasi darajasida bloklangan.
+2. **Klinika:** `/c/<klinika-nomi>`. Klinika egasi va xodimlari ishlaydigan joy. Har bir klinika boshqasidan to'liq ajratilgan.
+3. **Bemor portali:** `/p/<klinika-nomi>`. Bemor o'z qabullarini, chiqarilgan tahlil natijalarini va hisoblarini ko'radi.
+
+---
+
+## 2. Ichida nimalar bor (bo'limlar)
+
+| Bo'lim | Nima qiladi |
+|---|---|
+| **Bemorlar** | Ro'yxatga olish (tibbiy karta raqami, JShShIR/pasport), xatolarga chidamli qidiruv, dublikatlardan himoya, roziliklar |
+| **Qabulga yozish** | Shifokor jadvali bo'yicha bo'sh vaqtlar. Bir vaqtga ikki bemorni yozib bo'lmaydi (baza darajasida) |
+| **Navbat** | Kelganini belgilash, navbat raqami, navbatsiz kelganlar |
+| **Tibbiy yozuvlar (EMR)** | Ko'rik, shikoyat, tashxis (MKB-10), allergiya, hayotiy ko'rsatkichlar (qon bosimi, puls…). Imzolangan yozuvni o'zgartirib bo'lmaydi, faqat qo'shimcha kiritiladi |
+| **Laboratoriya** | Tahlil buyurtmasi, namuna olish, natija, normadan chetga chiqishni belgilash, ikki kishilik tasdiqlash |
+| **Hamshira posti** | Namuna olish, hayotiy ko'rsatkichlar |
+| **Hisob va to'lovlar, Kassa** | Hisob-faktura, chegirma, naqd/karta/Payme to'lovlari (qo'lda belgilanadi), qaytarish, kassa smenasi, chek |
+| **Xarajatlar, Hisobotlar** | Moliya va ish hisobotlari |
+| **Dorixona va ombor** | Partiyalar, yaroqlilik muddati, tarqatish, kam qolganlar haqida ogohlantirish |
+| **Kadrlar** | Xodim profili, litsenziyalar, ta'tillar (shifokor ta'tilda bo'lsa, unga yozib bo'lmaydi) |
+| **Stomatologiya** | Tish formulasi (FDI), har bir tish tarixi |
+| **Bemor portali** | Bemor o'zi kiradi: qabullar, natijalar, hisoblar |
+| **Bildirishnomalar** | Qabulni eslatish, natija tayyorligi (email; SMS hali simulyatsiya) |
+| **Rollar** | Har bir xodimga o'z huquqlari; o'zingiz yangi rol yaratishingiz mumkin |
+| **Audit jurnali** | Kim, qachon, nima qildi — o'zgartirib bo'lmaydigan zanjir |
+| **Xavfsizlik** | Parol, ikki bosqichli tekshiruv (Google Authenticator va h.k.), tiklash kodlari, urinishlar chegarasi |
+
+**Tayyor rollar:** Klinika egasi, Klinika administratori, Filial rahbari, Registrator, Shifokor, Bosh shifokor, Hamshira, Laboratoriya xodimi, Kassir, Buxgalter, Farmatsevt/ombor, Kadrlar mutaxassisi.
+
+**Tillar:** o'zbekcha (lotin), o'zbekcha (kirill), ruscha, inglizcha. Har bir foydalanuvchi o'zi tanlaydi.
+
+---
+
+## 3. Yangi kompyuterga o'rnatish (bir marta)
+
+**Kerak:** Windows 10/11 (yoki macOS/Linux), [Node.js 22+](https://nodejs.org) (LTS), [Git for Windows](https://git-scm.com) (OpenSSL ham shu bilan keladi). Docker shart emas.
+
+Terminalda (PowerShell yoki Git Bash) ketma-ket:
+
+```bash
+git clone https://github.com/ZTech-com/ITopMed.git
+```
+```bash
+cd ITopMed
+```
+```bash
+npm install
+```
+```bash
+npm run setup
+```
+`setup` tasodifiy parollar va shifrlash kalitlari bilan `.env` faylini yaratadi. **`.env` nusxasini xavfsiz joyda saqlang** (masalan, parol menejerida). Kalitlarsiz zaxira nusxalarni tiklab bo'lmaydi.
+
+Ma'lumotlar bazasini birinchi marta tayyorlash (alohida oynada `npm run db:start` ishlab tursin):
+```bash
+npm run db:start
+```
+```bash
+npm run db:migrate
+```
+```bash
+npm run db:seed
+```
+Birinchi platforma administratori (o'zingiz):
+```bash
+npm run admin:create -- --email siz@pochta.uz --name "Ismingiz" --role SUPER_ADMIN
+```
+Parolni so'raydi: kamida 12 belgi, harf va raqam bo'lishi kerak.
+
+Shundan keyin `npm run db:start` oynasini yopishingiz mumkin, chunki `npm run local` bazani o'zi ishga tushiradi.
+
+---
+
+## 4. Ishga tushirish: klinikaning butun tarmog'ida, hamma qurilmada
+
+```bash
+npm run local
+```
+Bu bitta buyruq:
+1. ma'lumotlar bazasini ishga tushiradi;
+2. yangi migratsiyalarni qo'llaydi;
+3. tezkor production versiyasini yig'adi (birinchi marta 1–2 daqiqa);
+4. bildirishnomalar xizmatini ishga tushiradi;
+5. tarmoq uchun **HTTPS** manzilini ochadi va ekranda ko'rsatadi, masalan:
+```
+On this computer:   https://localhost:3443
+Other devices:      https://192.168.0.80:3443
+```
+
+Kodni yangilaganingizdan keyin `npm run local -- --build` bilan qayta yig'ing. To'xtatish uchun Ctrl+C bosing.
+
+Bu kompyuter **server** vazifasini bajaradi: u yoniq va tarmoqqa ulangan bo'lishi kerak. Telefonlar va boshqa kompyuterlar o'sha Wi-Fi/tarmoqda bo'lishi kerak. Windows birinchi marta "Firewall" ruxsatini so'rasa, **Private network** uchun ruxsat bering.
+
+### 4.1. Sertifikatni har bir qurilmaga bir marta o'rnatish
+
+Tarmoqdagi manzil xavfsiz (HTTPS) bo'lishi uchun ITop Med shu kompyuterda o'zining sertifikat markazini yaratadi:
+`.data/certs/itopmed-local-ca.crt`. Bu fayl faqat **ochiq qism**. Maxfiy kalit (`.key`) kompyuterdan hech qachon chiqmasligi kerak, uni hech kimga bermang.
+
+Faylni qurilmaga Telegram (o'zingizga), USB yoki email orqali o'tkazing, keyin:
+
+- **Windows (server kompyuterning o'zi ham):** faylni ikki marta bosing → *Install Certificate* → *Current User* → *Place all certificates in the following store* → **Trusted Root Certification Authorities** → *Finish*. Brauzerni qayta oching.
+- **Android:** *Sozlamalar → Xavfsizlik → Shifrlash va hisob ma'lumotlari → Sertifikat o'rnatish → CA sertifikati* → faylni tanlang.
+- **iPhone/iPad:** faylni oching → *Sozlamalar → Profil yuklandi → O'rnatish*. Keyin **majburiy:** *Sozlamalar → Asosiy → Ma'lumot → Sertifikatlarga ishonch sozlamalari* → "ITop Med Local CA" ni yoqing.
+- **macOS:** faylni oching → Keychain → *Always Trust*.
+
+### 4.2. Ilova sifatida o'rnatish (telefon, planshet, kompyuter)
+Manzilni oching (`https://192.168.0.80:3443` kabi), keyin:
+- **Android / Chrome / Edge:** menyu → **"Ilovani o'rnatish"** yoki "Bosh ekranga qo'shish";
+- **iPhone (Safari):** Ulashish tugmasi → **"Bosh ekranga qo'shish"**.
+
+Ilova alohida oynada, belgisi bilan ochiladi. Internet bo'lmasa, oflayn sahifani ko'rsatadi.
+
+### 4.3. Email
+SMTP sozlanmagan bo'lsa, xatlar (taklif havolalari, parol tiklash) server kompyuterdagi **`.dev-mailbox`** papkasiga fayl bo'lib tushadi. Faylni brauzerda ochib, havolani kerakli odamga yuborasiz.
+Haqiqiy email uchun `.env` ga `SMTP_URL=smtps://login:parol@smtp.server.uz:465` qo'shing, `npm run local` o'zi SMTP ga o'tadi.
+
+### 4.4. IP manzil o'zgarsa
+Sertifikat yangi IP uchun avtomatik qayta chiqariladi. Sertifikat markazi o'zgarmaydi, shuning uchun qurilmalarga qayta o'rnatish shart emas. Doimiy bo'lishi uchun routerda server kompyuterga **doimiy IP** (DHCP reservation) bering.
+
+> **Ishlab chiqish rejimi** (dasturchilar uchun, faqat shu kompyuterda): `npm run db:start` va `npm run dev` → http://localhost:3000.
+
+---
+
+## 5. Birinchi kun: platformadan klinikagacha
+
+### 5.1. Siz (platforma administratori)
+1. `https://…:3443/admin/login` sahifasiga email va parol bilan kiring.
+2. Birinchi kirishda **ikki bosqichli tekshiruv**ni sozlang: telefonda Google Authenticator / Microsoft Authenticator ilovasini o'rnating, QR kodni skanerlang va 6 xonali kodni kiriting.
+3. Darhol **tiklash kodlarini** yarating, yuklab olib xavfsiz joyda saqlang. Telefon yo'qolsa, ular orqali kirasiz.
+4. **Klinikalar → Yangi klinika:** klinika nomi, manzil nomi (masalan `shifo-kardio`), tarif va egasining emaili. Egaga taklif havolasi boradi (yoki `.dev-mailbox` ga tushadi).
+5. **Platforma xodimlari → Xodimni taklif qilish:** o'z jamoangizni rol bilan taklif qiling (Qo'llab-quvvatlash, Hisob-kitob, Faqat ko'rish va h.k.).
+
+### 5.2. Klinika egasi (misol: kichik kardiologiya kabineti)
+1. Taklif havolasini oching, ism va parolni kiriting, keyin `/login` orqali kiring. Ega uchun ikki bosqichli tekshiruv majburiy; sozlagach tiklash kodlarini saqlang.
+2. **Sozlash yordamchisi** (bosh sahifada taklif chiqadi):
+   - Amaliyot turi: **Xususiy kabinet**;
+   - **Amaliyotning asosiy yo'nalishi: Kardiologiya**. Shunda tizim avtomatik ravishda kardiolog konsultatsiyasi, EKG, exokardiografiya, Xolter, qon bosimini 24 soatlik monitoringi va yuklamali sinov xizmatlarini qo'shadi;
+   - "Men shu yerda shifokorman" → mutaxassislik: Kardiologiya, Dushanba–Juma 9:00–18:00 jadval;
+   - Administrator bo'lmasa: "Registratura va kassani o'zim qilaman".
+3. **Xizmatlar va narxlar:** har bir xizmatga narx qo'ying (narxsiz xizmatga hisob chiqarib bo'lmaydi).
+4. Kerak bo'lsa **Xodimlar → Taklif qilish:** hamshira, administrator va h.k.
+5. Tayyor: bemorni ro'yxatga olish → qabulga yozish → kelganini belgilash → ko'rik → hisob → to'lov.
+
+Boshqa yo'nalishlar uchun ham tayyor xizmatlar to'plami bor: pediatriya, ginekologiya, oftalmologiya, LOR, nevrologiya, dermatologiya, urologiya, endokrinologiya, fizioterapiya, stomatologiya va diagnostika.
+
+---
+
+## 6. Kundalik ish (rollar bo'yicha)
+
+| Rol | Kundalik ish |
+|---|---|
+| **Registrator** | Bemorni topish yoki ro'yxatga olish → Qabulga yozish → Navbatda "Keldi" deb belgilash. Portal uchun bemorga faollashtirish kodi berish |
+| **Shifokor** | "Bugungi bemorlarim" → bemorni chaqirish → ko'rik (shikoyat, ko'rik, tashxis, tavsiya) → kerak bo'lsa tahlil buyurish → **imzolash** |
+| **Hamshira** | Hamshira posti: qon bosimi, puls, harorat; tahlil namunasini olish |
+| **Laborant** | Natijani kiritish → boshqa xodim tasdiqlaydi → shifokor bemorga chiqaradi |
+| **Kassir** | Smenani ochish → to'lov qabul qilish → chek → kun oxirida smenani yopish (pul hisobi mos kelishi kerak) |
+| **Ega / buxgalter** | Hisobotlar, xarajatlar, xodimlar, sozlamalar, faoliyat jurnali |
+| **Bemor** | `/p/<klinika>` ga telefon raqami va parol bilan kiradi: qabullar (2 soat oldin onlayn bekor qilish mumkin), natijalar, hisoblar |
+
+---
+
+## 7. Siz qanday qilib 100% boshqarasiz
+
+| Vazifa | Qayerda |
+|---|---|
+| Klinikani yaratish, to'xtatish, qayta yoqish, arxivlash | `/admin/clinics` → klinika |
+| Tarifni o'zgartirish, bo'limlarni yoqish/o'chirish | Klinika sahifasi → Tarif / Modullar |
+| Egaga taklifni qayta yuborish yoki bekor qilish | Klinika sahifasi → Takliflar |
+| Klinikaga yordam berish uchun kirish | Klinika sahifasi → Qo'llab-quvvatlash so'rovi (klinika tasdiqlaydi, vaqt cheklangan, auditda yoziladi) |
+| O'z jamoangiz | `/admin/staff`: taklif qilish, telefonini yo'qotgan xodimning MFA'sini qayta o'rnatish (avval shaxsini tasdiqlang!) |
+| Kim nima qildi | `/admin/audit` → "Zanjirni tekshirish" (jurnal o'zgartirilmaganini isbotlaydi) |
+| O'z xavfsizligingiz | Pastki chapdagi qalqon belgisi → tiklash kodlari |
+
+**Klinika egasi o'z klinikasida:** Xodimlar (rol, filial, to'xtatish, MFA'ni qayta o'rnatish), Rollar va huquqlar, Filiallar, Bo'limlar va xonalar, Shifokorlar va jadval, Xizmatlar va narxlar, Sozlamalar (bo'limlar), Faoliyat jurnali, Qo'llab-quvvatlash kirishi (ITop Med so'rovlarini tasdiqlash yoki rad etish).
+
+---
+
+## 8. Zaxira nusxa (har kuni!)
+
+```bash
+npm run backup
+```
+Shifrlangan nusxa `backups/` papkasiga tushadi. **Nusxani boshqa joyga ham ko'chiring** (tashqi disk yoki boshqa kompyuter). Kalit (`BACKUP_ENCRYPTION_KEY`) nusxa bilan birga saqlanmasin.
+
+Nusxa haqiqatan tiklanishini tekshirish:
+```bash
+npm run backup:verify -- backups/<fayl>.itmbk
+```
+Windows "Task Scheduler" orqali `npm run backup` buyrug'ini har kuni avtomatik ishga tushirish tavsiya etiladi.
+
+---
+
+## 9. Yangilash
+
+```bash
+git pull
+```
+```bash
+npm install
+```
+```bash
+npm run local -- --build
+```
+Migratsiyalar `npm run local` ichida avtomatik qo'llanadi. Yangilashdan oldin `npm run backup` qiling.
+
+---
+
+## 10. Muammolar va yechimlar
+
+| Belgi | Sabab va yechim |
+|---|---|
+| "Your connection is not private" / sertifikat xatosi | Shu qurilmaga sertifikat o'rnatilmagan (4.1) |
+| Telefonda sahifa ochilmaydi | Telefon boshqa Wi-Fi'da; server kompyuter o'chiq; Firewall Private network ruxsati yo'q |
+| "Too many attempts" | 5–15 daqiqa kuting (xavfsizlik chegarasi) |
+| Hisob bloklangan | 5 marta noto'g'ri parol: 15 daqiqa kuting yoki "Parolni unutdingizmi" (klinika xodimlari). Platforma xodimlari parolini Super administrator yoki `admin:create` buyrug'i bilan tiklaydi |
+| Telefon (Authenticator) yo'qolgan | Tiklash kodi bilan kiring; kod yo'q bo'lsa administrator MFA'ni qayta o'rnatadi |
+| Taklif xati kelmadi | SMTP yo'q: `.dev-mailbox` papkasini oching (4.3) |
+| Xizmatga hisob chiqmaydi | Xizmatga narx qo'yilmagan |
+| Shifokorga qabul yozib bo'lmaydi | Jadval yo'q, ta'tilda yoki vaqt band |
+| `npm run local` "OpenSSL was not found" | Git for Windows'ni o'rnating |
+
+---
+
+## 11. Halol holat: nima tayyor, nima hali yo'q
+
+**Tayyor va testlangan** (120+ avtomatik test, brauzerda tekshirilgan): yuqoridagi barcha bo'limlar, 4 til, kirish imkoniyati (WCAG 2.1 AA), xavfsizlik, shifrlangan zaxira, mahalliy tarmoqda HTTPS va ilova sifatida o'rnatish.
+
+**Hali yo'q — tashqi shartnoma yoki rasmiy hujjat kerak:**
+- DMED / Raqamli sog'liqni saqlash platformasiga ma'lumot yuborish (rasmiy spetsifikatsiya va kirish kerak);
+- Payme / Click / Uzum orqali onlayn to'lov (merchant shartnomasi); hozir to'lov turi qo'lda belgilanadi;
+- Haqiqiy SMS (provayder shartnomasi); hozir SMS o'chiq;
+- Fiskal chek (OFD); hozirgi chek fiskal emas;
+- Rasmiy MKB-10 katalogi (litsenziyalangan ro'yxat); hozir kod formati tekshiriladi.
+
+**Hali qilinmagan funksiyalar:** dublikat bemor kartalarini birlashtirish, qabulni ko'chirish oynasi, chop etiladigan tibbiy hujjatlar, onlayn qabulga yozilish (portal), stomatologik davolash rejasi, bir nechta klinikada ishlaydigan hisoblar uchun qo'llab-quvvatlash ekrani.
+
+**Mutaxassis ko'rigi kerak:** tarjimalar (ona tilida so'zlashuvchi tibbiy muharrir), klinik jarayonlar (shifokor-maslahatchi), shaxsiy ma'lumotlar qonuni (huquqshunos: ma'lumotlarni O'zbekistonda saqlash, ro'yxatdan o'tkazish).
+
+**Muhim:** haqiqiy bemorlar bilan ishlashdan oldin:
+1. `npm run setup` bilan yaratilgan yangi kalitlardan foydalaning (sinov ma'lumotlari bo'lgan bazani ishlatmang);
+2. har kuni zaxira nusxa oling;
+3. server kompyuterni parol bilan himoyalang va disk shifrlashni (BitLocker) yoqing;
+4. huquqshunos bilan maslahatlashing.
+
+Internetdan (klinikadan tashqarida) ishlash uchun haqiqiy server, domen va TLS kerak; bu `docs/DEPLOYMENT.md` da yozilgan.

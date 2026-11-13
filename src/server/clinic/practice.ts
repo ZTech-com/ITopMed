@@ -57,6 +57,74 @@ const STARTER_SERVICES: Record<PracticeType, { code: string; key: string; kind: 
   OTHER: [{ code: "CONSULT", key: "consultation", kind: "CONSULTATION", minutes: 20 }],
 };
 
+type Starter = { code: string; key: string; kind: ServiceKind; minutes: number };
+
+/**
+ * Typical services per specialty, added on top of the practice-type list —
+ * so a one-room cardiology office starts with ECG, echo and Holter, an eye
+ * practice with refraction and tonometry, and so on. Names are translated,
+ * prices are left for the clinic.
+ */
+export const SPECIALTY_SERVICES: Partial<Record<(typeof SPECIALTIES)[number], Starter[]>> = {
+  cardiology: [
+    { code: "CARD-CONSULT", key: "cardioConsult", kind: "CONSULTATION", minutes: 30 },
+    { code: "ECG", key: "ecg", kind: "PROCEDURE", minutes: 15 },
+    { code: "CARD-ECHO", key: "echocardiography", kind: "IMAGING", minutes: 30 },
+    { code: "CARD-HOLTER", key: "holter", kind: "PROCEDURE", minutes: 20 },
+    { code: "CARD-ABPM", key: "abpm", kind: "PROCEDURE", minutes: 20 },
+    { code: "CARD-STRESS", key: "stressTest", kind: "PROCEDURE", minutes: 45 },
+  ],
+  pediatrics: [
+    { code: "PED-CONSULT", key: "pediatricConsult", kind: "CONSULTATION", minutes: 20 },
+    { code: "PED-NEWBORN", key: "newbornCheck", kind: "CONSULTATION", minutes: 30 },
+    { code: "PED-VACC", key: "vaccination", kind: "PROCEDURE", minutes: 15 },
+  ],
+  obstetrics_gynecology: [
+    { code: "GYN-CONSULT", key: "gynConsult", kind: "CONSULTATION", minutes: 30 },
+    { code: "GYN-US", key: "pelvicUltrasound", kind: "IMAGING", minutes: 20 },
+    { code: "OB-US", key: "pregnancyUltrasound", kind: "IMAGING", minutes: 30 },
+    { code: "GYN-SMEAR", key: "papSmear", kind: "LAB_TEST", minutes: 10 },
+  ],
+  ophthalmology: [
+    { code: "EYE-EXAM", key: "eyeExam", kind: "CONSULTATION", minutes: 30 },
+    { code: "EYE-REFR", key: "refraction", kind: "PROCEDURE", minutes: 15 },
+    { code: "EYE-IOP", key: "tonometry", kind: "PROCEDURE", minutes: 10 },
+    { code: "EYE-FUNDUS", key: "fundusExam", kind: "PROCEDURE", minutes: 15 },
+  ],
+  otorhinolaryngology: [
+    { code: "ENT-EXAM", key: "entExam", kind: "CONSULTATION", minutes: 20 },
+    { code: "ENT-AUDIO", key: "audiometry", kind: "PROCEDURE", minutes: 20 },
+    { code: "ENT-LAVAGE", key: "earLavage", kind: "PROCEDURE", minutes: 15 },
+  ],
+  neurology: [
+    { code: "NEURO-CONSULT", key: "neuroConsult", kind: "CONSULTATION", minutes: 30 },
+    { code: "NEURO-EEG", key: "eeg", kind: "PROCEDURE", minutes: 40 },
+  ],
+  dermatology: [
+    { code: "DERM-CONSULT", key: "dermConsult", kind: "CONSULTATION", minutes: 20 },
+    { code: "DERM-SCOPY", key: "dermatoscopy", kind: "PROCEDURE", minutes: 15 },
+  ],
+  urology: [
+    { code: "URO-CONSULT", key: "uroConsult", kind: "CONSULTATION", minutes: 20 },
+    { code: "URO-US", key: "prostateUltrasound", kind: "IMAGING", minutes: 20 },
+  ],
+  endocrinology: [
+    { code: "ENDO-CONSULT", key: "endoConsult", kind: "CONSULTATION", minutes: 30 },
+    { code: "ENDO-THYROID-US", key: "thyroidUltrasound", kind: "IMAGING", minutes: 20 },
+  ],
+  physiotherapy: [
+    { code: "PT-SESSION", key: "physioSession", kind: "PROCEDURE", minutes: 45 },
+    { code: "PT-MASSAGE", key: "massage", kind: "PROCEDURE", minutes: 30 },
+  ],
+};
+
+/** Starter list for a practice: practice-type services plus the main specialty's, without duplicate codes. */
+export function starterServices(practiceType: PracticeType, specialty?: string): Starter[] {
+  const list = [...STARTER_SERVICES[practiceType], ...((specialty && SPECIALTY_SERVICES[specialty as keyof typeof SPECIALTY_SERVICES]) || [])];
+  const seen = new Set<string>();
+  return list.filter((s) => (seen.has(s.code) ? false : (seen.add(s.code), true)));
+}
+
 async function planModules(tx: Tx, tenantId: string): Promise<Set<string>> {
   const sub = await tx.subscription.findUnique({ where: { tenantId }, select: { planId: true } });
   const plan = sub ? await tx.plan.findUnique({ where: { id: sub.planId }, select: { modules: true } }) : null;
@@ -103,6 +171,8 @@ export const setupSchema = z
     /** Small practices without a receptionist: the owner also registers, books and takes payments. */
     ownerFrontDesk: z.boolean().default(false),
     specialty: z.union([z.literal("").transform(() => undefined), z.enum(SPECIALTIES)]).optional(),
+    /** Main specialty of the practice (e.g. a cardiology office); adds its typical services. */
+    focusSpecialty: z.union([z.literal("").transform(() => undefined), z.enum(SPECIALTIES)]).optional(),
     weekdaySchedule: z.boolean(),
   })
   .refine((v) => !v.ownerIsDoctor || Boolean(v.specialty), { message: "validation.required", path: ["specialty"] });
@@ -148,7 +218,7 @@ export async function completeSetup(ctx: ClinicContext, raw: unknown, meta: Requ
 
     if (t) {
       const existing = new Set((await tx.service.findMany({ select: { code: true } })).map((s) => s.code));
-      const fresh = STARTER_SERVICES[input.practiceType].filter((s) => !existing.has(s.code));
+      const fresh = starterServices(input.practiceType, input.focusSpecialty ?? input.specialty).filter((s) => !existing.has(s.code));
       if (fresh.length > 0) {
         // Price 0 = "not set yet": invoicing refuses such services until the clinic sets a price.
         await tx.service.createMany({
@@ -188,7 +258,7 @@ export async function completeSetup(ctx: ClinicContext, raw: unknown, meta: Requ
       action: "clinic.setup_completed",
       entityType: "Tenant",
       entityId: ctx.tenant.id,
-      metadata: { practiceType: input.practiceType, modules: result.modulesOn, servicesAdded: result.servicesAdded },
+      metadata: { practiceType: input.practiceType, modules: result.modulesOn, servicesAdded: result.servicesAdded, ...(input.focusSpecialty ? { focusSpecialty: input.focusSpecialty } : {}) },
     });
     return result;
   });

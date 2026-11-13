@@ -24,7 +24,9 @@
     "postinstall": "prisma generate",
     "worker": "tsx --conditions=react-server scripts/worker.ts",
     "backup": "tsx scripts/backup.ts",
-    "backup:verify": "tsx scripts/restore-verify.ts"
+    "backup:verify": "tsx scripts/restore-verify.ts",
+    "local": "tsx scripts/local.ts",
+    "setup": "tsx scripts/setup.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",

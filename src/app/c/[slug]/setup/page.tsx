@@ -66,6 +66,15 @@ export default async function SetupPage({ params }: { params: Promise<{ slug: st
           <CardBody className="space-y-3">
             {check("applyModules", t("setup.applyModules"), t("setup.applyModulesHint"), true)}
             {check("addStarterServices", t("setup.addServices"), t("setup.addServicesHint"), true)}
+            <div className="max-w-sm pt-2">
+              <SelectField
+                name="focusSpecialty"
+                label={t("setup.focusSpecialty")}
+                hint={t("setup.focusSpecialtyHint")}
+                defaultValue=""
+                options={[{ value: "", label: "—" }, ...SPECIALTIES.map((x) => ({ value: x, label: t(`specialties.${x}`) }))]}
+              />
+            </div>
           </CardBody>
         </Card>
 

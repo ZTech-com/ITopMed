@@ -21,6 +21,12 @@ const schema = z.object({
   SMS_TRANSPORT: z.enum(["none", "dev-outbox"]).default("none"),
   /** "database" (default): shared across instances. "memory": per process. */
   RATE_LIMIT_STORE: z.enum(["database", "memory"]).default("database"),
+  /**
+   * "1" = single-computer installation on a clinic's own network (`npm run local`).
+   * Allows the local mailbox (emails saved as files on that computer) when no SMTP
+   * server is configured. Never set this on an internet-facing deployment.
+   */
+  LOCAL_MODE: z.enum(["0", "1"]).default("0"),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -35,7 +41,7 @@ export function env(): Env {
     const fields = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`Invalid environment configuration — ${fields}`);
   }
-  if (parsed.data.NODE_ENV === "production" && parsed.data.EMAIL_TRANSPORT === "dev-mailbox") {
+  if (parsed.data.NODE_ENV === "production" && parsed.data.EMAIL_TRANSPORT === "dev-mailbox" && parsed.data.LOCAL_MODE !== "1") {
     throw new Error("EMAIL_TRANSPORT=dev-mailbox is not allowed in production");
   }
   if (parsed.data.NODE_ENV === "production" && parsed.data.SMS_TRANSPORT === "dev-outbox") {

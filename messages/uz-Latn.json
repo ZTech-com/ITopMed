@@ -1836,7 +1836,36 @@
       "bloodGlucose": "Qondagi glyukoza",
       "urinalysis": "Umumiy siydik tahlili",
       "ultrasound": "Qorin boʻshligʻi UZI",
-      "ecg": "EKG"
+      "ecg": "EKG",
+      "cardioConsult": "Kardiolog konsultatsiyasi",
+      "echocardiography": "Exokardiografiya (yurak UTT)",
+      "holter": "Xolter EKG monitoringi (24 soat)",
+      "abpm": "Qon bosimini 24 soatlik monitoringi",
+      "stressTest": "Yuklamali sinov (stress-test)",
+      "pediatricConsult": "Pediatr konsultatsiyasi",
+      "newbornCheck": "Chaqaloq ko'rigi",
+      "vaccination": "Emlash",
+      "gynConsult": "Ginekolog konsultatsiyasi",
+      "pelvicUltrasound": "Kichik chanoq a'zolari UTT",
+      "pregnancyUltrasound": "Homiladorlik UTT",
+      "papSmear": "Bachadon bo'yni surtmasi (PAP-test)",
+      "eyeExam": "Ko'z tekshiruvi",
+      "refraction": "Ko'rish o'tkirligi va refraksiya",
+      "tonometry": "Ko'z ichi bosimi (tonometriya)",
+      "fundusExam": "Ko'z tubini tekshirish",
+      "entExam": "LOR ko'rigi",
+      "audiometry": "Audiometriya (eshitish tekshiruvi)",
+      "earLavage": "Quloqni yuvish",
+      "neuroConsult": "Nevrolog konsultatsiyasi",
+      "eeg": "EEG",
+      "dermConsult": "Dermatolog konsultatsiyasi",
+      "dermatoscopy": "Dermatoskopiya",
+      "uroConsult": "Urolog konsultatsiyasi",
+      "prostateUltrasound": "Prostata UTT",
+      "endoConsult": "Endokrinolog konsultatsiyasi",
+      "thyroidUltrasound": "Qalqonsimon bez UTT",
+      "physioSession": "Fizioterapiya seansi",
+      "massage": "Davolash massaji"
     }
   },
   "setup": {
@@ -1867,7 +1896,9 @@
     "frontDeskHint": "Bemorlarni kim roʻyxatga oladi, qabulga yozadi va toʻlov qabul qiladi?",
     "ownerFrontDesk": "Buni oʻzim qilaman (registratorsiz)",
     "ownerFrontDeskHint": "Hisobingizga registrator va kassir rollarini qoʻshadi. Administrator boʻlsa, uni «Xodimlar» boʻlimida shu rollar bilan taklif qiling.",
-    "alreadyFrontDesk": "Sizda registrator va kassir rollari allaqachon bor."
+    "alreadyFrontDesk": "Sizda registrator va kassir rollari allaqachon bor.",
+    "focusSpecialty": "Amaliyotning asosiy yo'nalishi (ixtiyoriy)",
+    "focusSpecialtyHint": "Shu yo'nalishning odatiy xizmatlarini qo'shadi — masalan, kardiologiya xonasi uchun EKG, exokardiografiya va Xolter."
   },
   "dental": {
     "title": "Tish formulasi",
