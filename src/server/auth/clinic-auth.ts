@@ -3,10 +3,12 @@ import { encodeBase32UpperCaseNoPadding } from "@oslojs/encoding";
 import { recordAudit } from "../audit";
 import { isPermission, type Permission } from "../authz/permissions";
 import { MODULES, applyModules } from "../modules/catalog";
-import { setContext, withAppContext } from "../db";
-import { hashIp, randomToken, sha256Hex } from "../security/crypto";
+import { setContext, withAppContext, type Tx } from "../db";
+import { DomainError } from "../errors";
+import { hashIp, randomToken, sha256Hex, uuidv7 } from "../security/crypto";
 import { verifyPassword } from "../security/password";
 import { rateLimit } from "../security/rate-limit";
+import { newRecoveryCodes, normalizeRecoveryCode, recoveryCodeHash } from "../security/recovery-codes";
 import { decryptTotpSecret, encryptTotpSecret, newTotpSecret, totpUri, verifyTotp } from "../security/totp";
 import type { RequestMeta } from "./platform-auth";
 
@@ -181,19 +183,69 @@ export async function verifyClinicMfa(token: string, code: string, meta: Request
       await recordAudit(tx, { actorType: "USER", actorId: user.id, action: "clinic.login.mfa", outcome: "FAILURE", ipHash });
       return false;
     }
-    const now = new Date();
     if (!user.mfaEnabledAt) {
-      await tx.user.update({ where: { id: user.id }, data: { mfaEnabledAt: now } });
+      await tx.user.update({ where: { id: user.id }, data: { mfaEnabledAt: new Date() } });
       await recordAudit(tx, { actorType: "USER", actorId: user.id, action: "clinic.mfa.enrolled", ipHash });
     }
-    await tx.session.update({ where: { id: p.sessionId }, data: { revokedAt: now } });
-    await tx.session.create({
-      data: { id: sha256Hex(newToken), userId: user.id, expiresAt: new Date(now.getTime() + CLINIC_SESSION_ABSOLUTE_MS), mfaVerifiedAt: now, ipHash, userAgent: meta.userAgent?.slice(0, 256) },
-    });
+    await rotateVerifiedSession(tx, user.id, p.sessionId, newToken, meta);
     await recordAudit(tx, { actorType: "USER", actorId: user.id, action: "clinic.login.mfa", ipHash });
     return true;
   });
   return ok ? { ok: true, token: newToken } : { ok: false, reason: "invalid" };
+}
+
+/** Replaces the half-signed-in session with a new, MFA-verified one (new token: no session fixation). */
+async function rotateVerifiedSession(tx: Tx, userId: string, oldSessionId: string, newToken: string, meta: RequestMeta) {
+  const now = new Date();
+  await tx.session.update({ where: { id: oldSessionId }, data: { revokedAt: now } });
+  await tx.session.create({
+    data: { id: sha256Hex(newToken), userId, expiresAt: new Date(now.getTime() + CLINIC_SESSION_ABSOLUTE_MS), mfaVerifiedAt: now, ipHash: hashIp(meta.ip), userAgent: meta.userAgent?.slice(0, 256) },
+  });
+}
+
+/** Second factor with a one-time recovery code. Burnt atomically; shares the TOTP attempt limit. */
+export async function verifyClinicRecoveryCode(token: string, codeRaw: string, meta: RequestMeta): Promise<{ ok: true; token: string } | { ok: false; reason: "invalid" | "rate_limited" }> {
+  const p = await validateClinicSession(token);
+  if (!p || !p.user.mfaEnrolled) return { ok: false, reason: "invalid" };
+  if (!(await rateLimit(`cmfa:${p.sessionId}`, 5, 5 * 60_000))) return { ok: false, reason: "rate_limited" };
+  const ipHash = hashIp(meta.ip);
+  const code = normalizeRecoveryCode(codeRaw);
+  const newToken = randomToken();
+  const ok = await withAppContext({ userId: p.user.id, sessionId: p.sessionId }, async (tx) => {
+    const claimed = code
+      ? await tx.mfaRecoveryCode.updateMany({ where: { userId: p.user.id, codeHash: recoveryCodeHash(p.user.id, code), usedAt: null }, data: { usedAt: new Date() } })
+      : { count: 0 };
+    if (claimed.count !== 1) {
+      await recordAudit(tx, { actorType: "USER", actorId: p.user.id, action: "clinic.login.recovery_code", outcome: "FAILURE", ipHash });
+      return false;
+    }
+    const remaining = await tx.mfaRecoveryCode.count({ where: { userId: p.user.id, usedAt: null } });
+    await rotateVerifiedSession(tx, p.user.id, p.sessionId, newToken, meta);
+    await recordAudit(tx, { actorType: "USER", actorId: p.user.id, action: "clinic.login.recovery_code", ipHash, metadata: { remaining } });
+    return true;
+  });
+  return ok ? { ok: true, token: newToken } : { ok: false, reason: "invalid" };
+}
+
+/** Issues a fresh set of recovery codes (the previous set stops working). Returned once, never stored in clear. */
+export async function generateClinicRecoveryCodes(p: ClinicPrincipal, meta: RequestMeta): Promise<string[]> {
+  if (!p.mfaVerified || !p.user.mfaEnrolled) throw new DomainError("errors.mfaRequired");
+  if (!(await rateLimit(`crcgen:${p.user.id}`, 5, 60 * 60_000))) throw new DomainError("errors.rateLimited");
+  const codes = newRecoveryCodes();
+  await withAppContext({ userId: p.user.id, sessionId: p.sessionId }, async (tx) => {
+    await tx.mfaRecoveryCode.deleteMany({ where: { userId: p.user.id } });
+    await tx.mfaRecoveryCode.createMany({ data: codes.map((c) => ({ id: uuidv7(), userId: p.user.id, codeHash: recoveryCodeHash(p.user.id, normalizeRecoveryCode(c)!) })) });
+    await recordAudit(tx, { actorType: "USER", actorId: p.user.id, action: "clinic.mfa.recovery_codes_generated", ipHash: hashIp(meta.ip), metadata: { count: codes.length } });
+  });
+  return codes;
+}
+
+export async function clinicRecoveryCodeStatus(p: ClinicPrincipal) {
+  return withAppContext({ userId: p.user.id, sessionId: p.sessionId }, async (tx) => {
+    const remaining = await tx.mfaRecoveryCode.count({ where: { userId: p.user.id, usedAt: null } });
+    const total = await tx.mfaRecoveryCode.count({ where: { userId: p.user.id } });
+    return { remaining, issued: total > 0 };
+  });
 }
 
 export async function logoutClinic(token: string | undefined | null) {

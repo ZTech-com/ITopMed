@@ -4,7 +4,7 @@ import { MfaPanel } from "@/components/mfa-panel";
 import { AuthLayout } from "@/components/shell/auth-layout";
 import { getPlatformPrincipal } from "@/server/auth/guards";
 import { beginPlatformMfaEnrollment } from "@/server/auth/platform-auth";
-import { adminMfaAction } from "../../actions";
+import { adminMfaAction, adminRecoveryCodeAction } from "../../actions";
 
 export default async function AdminMfaPage() {
   const p = await getPlatformPrincipal();
@@ -18,7 +18,7 @@ export default async function AdminMfaPage() {
       title={enrollment ? t("mfaEnrollTitle") : t("mfaTitle")}
       subtitle={enrollment ? undefined : t("mfaSubtitle")}
     >
-      <MfaPanel enrollment={enrollment} action={adminMfaAction} />
+      <MfaPanel enrollment={enrollment} action={adminMfaAction} recoveryAction={adminRecoveryCodeAction} />
     </AuthLayout>
   );
 }

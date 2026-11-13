@@ -114,3 +114,30 @@ export async function setMemberStatus(ctx: ClinicContext, membershipId: string, 
     await audit(tx, ctx, meta, `membership.${action}`, membershipId, { from: target.status, to: next });
   });
 }
+
+const RESET_ERRORS: Record<string, string> = {
+  forbidden: "errors.forbidden",
+  not_found: "errors.notFound",
+  owner_only: "errors.ownerOnly",
+  other_clinics: "errors.mfaResetOtherClinics",
+};
+
+/**
+ * Resets the two-step verification of a member who lost their authenticator.
+ * The database function re-checks every rule (see migration
+ * mfa_recovery_and_reset); accounts that also belong to other clinics are
+ * refused — ITop Med support handles those after verifying the person.
+ */
+export async function resetMemberMfa(ctx: ClinicContext, membershipId: string, meta: RequestMeta) {
+  await inClinic(ctx, async (tx) => {
+    const target = await loadTarget(tx, ctx, membershipId);
+    assertCanModify(ctx, target);
+    if (target.status === "REMOVED") throw new DomainError("errors.invalidTransition");
+    const user = await tx.user.findUniqueOrThrow({ where: { id: target.userId }, select: { mfaSecretEnc: true, mfaEnabledAt: true } });
+    if (!user.mfaSecretEnc && !user.mfaEnabledAt) throw new DomainError("errors.mfaNotSetUp");
+    const rows = await tx.$queryRaw<{ result: string }[]>`SELECT app_reset_member_mfa(${target.userId}::uuid) AS result`;
+    const result = rows[0]?.result ?? "forbidden";
+    if (result !== "ok") throw new DomainError(RESET_ERRORS[result] ?? "errors.forbidden");
+    await audit(tx, ctx, meta, "membership.mfa_reset", membershipId);
+  });
+}

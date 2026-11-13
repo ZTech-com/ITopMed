@@ -13,7 +13,8 @@ function flatten(tree: Tree, prefix = "", out: Record<string, string> = {}) {
   return out;
 }
 
-const placeholders = (s: string) => [...s.matchAll(/\{(\w+)/g)].map((m) => m[1]).sort().join(",");
+// A placeholder is `{name}` or `{name, plural|select|number …`; plural branch texts such as `{No codes left}` are not.
+const placeholders = (s: string) => [...s.matchAll(/\{(\w+)\s*[,}]/g)].map((m) => m[1]).sort().join(",");
 
 /** Returns a list of human-readable problems; empty means all catalogs are complete. */
 export function checkCatalogs(dir = path.join(process.cwd(), "messages")): string[] {

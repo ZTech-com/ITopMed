@@ -24,7 +24,8 @@
     "yes": "Ha",
     "no": "Yoʻq",
     "never": "Hech qachon",
-    "total": "Jami"
+    "total": "Jami",
+    "accountSecurity": "Hisob xavfsizligi"
   },
   "a11y": {
     "skipToContent": "Asosiy mazmunga oʻtish",
@@ -99,7 +100,13 @@
     "resetDone": "Parolingiz oʻzgartirildi va barcha seanslar yakunlandi. Yangi parol bilan kiring.",
     "resetInvalid": "Tiklash havolasi yaroqsiz yoki muddati oʻtgan. Yangisini soʻrang.",
     "backToSignIn": "Kirish sahifasiga qaytish",
-    "portalInvalid": "Telefon raqami yoki parol notoʻgʻri."
+    "portalInvalid": "Telefon raqami yoki parol notoʻgʻri.",
+    "recoveryUse": "Telefoningizni yo'qotdingizmi? Tiklash kodidan foydalaning",
+    "recoveryHint": "Ikki bosqichli tekshiruvni sozlaganingizda saqlab qo'ygan tiklash kodlaringizdan birini kiriting. Har bir kod faqat bir marta ishlaydi.",
+    "recoveryCode": "Tiklash kodi",
+    "recoveryNoCodes": "Kodlar qolmadimi? Administratordan ikki bosqichli tekshiruvni qayta o'rnatishni so'rang.",
+    "recoveryInvalid": "Bu tiklash kodi noto'g'ri yoki allaqachon ishlatilgan.",
+    "staffActivated": "Hisobingiz faollashtirildi. Tizimga kiring va ikki bosqichli tekshiruvni sozlang."
   },
   "invite": {
     "title": "Hisobni faollashtirish",
@@ -233,7 +240,23 @@
       "colLastLogin": "Soʻnggi kirish",
       "mfaOn": "Yoqilgan",
       "mfaOff": "Sozlanmagan",
-      "cliNote": "Yangi platforma xodimlari hisoblari hozircha himoyalangan buyruq qatori vositasi orqali yaratiladi (npm run admin:create)."
+      "inviteTitle": "Xodimni taklif qilish",
+      "inviteHint": "Xodim 48 soat amal qiladigan bir martalik havola oladi, o'z parolini o'rnatadi va ikki bosqichli tekshiruvni sozlashi shart.",
+      "invite": "Taklif yuborish",
+      "invited": "Taklif yuborildi.",
+      "invitedNoEmail": "Taklif yaratildi, lekin xat yuborilmadi. Pochta sozlamalarini tekshirib, qayta yuboring.",
+      "resent": "Taklif qayta yuborildi. Oldingi havola endi ishlamaydi.",
+      "revoked": "Taklif bekor qilindi.",
+      "pendingTitle": "Kutilayotgan takliflar",
+      "invitedBy": "Taklif qildi: {name}",
+      "expires": "muddati: {when}",
+      "expired": "muddati o'tgan",
+      "mfaReset": "Ikki bosqichli tekshiruvni qayta o'rnatish",
+      "mfaResetHint": "Faqat shaxsni yuzma-yuz yoki video qo'ng'iroq orqali tasdiqlaganingizdan keyin. Uning joriy autentifikatori va tiklash kodlari ishlamay qoladi, barcha seanslari yakunlanadi.",
+      "mfaResetConfirm": "Men bu shaxsning kimligini tasdiqladim.",
+      "mfaResetSubmit": "Qayta o'rnatish",
+      "mfaResetDone": "Ikki bosqichli tekshiruv qayta o'rnatildi. Xodim keyingi kirishda uni qaytadan sozlaydi.",
+      "manageNote": "Xodimlarni taklif qilish yoki ularning ikki bosqichli tekshiruvini qayta o'rnatish faqat super administratorga ruxsat etilgan."
     },
     "support": {
       "title": "Qoʻllab-quvvatlash kirishi",
@@ -351,7 +374,12 @@
       "ownerNote": "Klinika egasining kirishini faqat klinika egasi oʻzgartira oladi.",
       "mfa": "Ikki bosqichli tekshiruv",
       "mfaOn": "Yoqilgan",
-      "mfaOff": "Sozlanmagan"
+      "mfaOff": "Sozlanmagan",
+      "mfaResetTitle": "Ikki bosqichli tekshiruvni qayta o'rnatish",
+      "mfaResetHint": "Xodim telefonini yo'qotgan va tiklash kodlari qolmagan bo'lsa foydalaning. Avval uning shaxsini yuzma-yuz tasdiqlang. Uning seanslari yakunlanadi va keyingi kirishda yangi autentifikatorni sozlaydi.",
+      "mfaResetConfirm": "Men bu xodimning shaxsini yuzma-yuz tasdiqladim.",
+      "mfaResetSubmit": "Ikki bosqichli tekshiruvni qayta o'rnatish",
+      "mfaResetDone": "Ikki bosqichli tekshiruv qayta o'rnatildi."
     },
     "supportAccess": {
       "title": "Qoʻllab-quvvatlash kirishi",
@@ -1151,7 +1179,8 @@
     "tooLarge": "Juda katta son.",
     "wholeNumber": "Butun son kiriting.",
     "range": "1 dan 72 gacha qiymat kiriting.",
-    "tooth": "Toʻgʻri tish raqamini tanlang (FDI)."
+    "tooth": "Toʻgʻri tish raqamini tanlang (FDI).",
+    "confirmRequired": "Davom etishdan oldin tasdiqlang."
   },
   "errors": {
     "generic": "Nimadir notoʻgʻri ketdi. Qayta urinib koʻring.",
@@ -1243,7 +1272,11 @@
     "supplierExists": "Bunday nomli yetkazib beruvchi allaqachon bor.",
     "moduleDisabled": "Bu boʻlim klinikada oʻchirilgan.",
     "moduleNotInPlan": "Bu boʻlim klinika tarifiga kirmaydi.",
-    "servicePriceNotSet": "Hisob yozishdan oldin xizmat narxini belgilang (Xizmatlar)."
+    "servicePriceNotSet": "Hisob yozishdan oldin xizmat narxini belgilang (Xizmatlar).",
+    "mfaResetOtherClinics": "Bu hisob boshqa klinikalarda ham ishlaydi, shuning uchun uning ikki bosqichli tekshiruvini faqat ITop Med qo'llab-quvvatlash xizmati qayta o'rnata oladi.",
+    "mfaNotSetUp": "Bu hisobda ikki bosqichli tekshiruv sozlanmagan.",
+    "staffExists": "Bu elektron pochtali xodim allaqachon mavjud.",
+    "invitationPending": "Bu elektron pochtaga taklif allaqachon yuborilgan. Uni qayta yuboring yoki bekor qiling."
   },
   "email": {
     "invitation": {
@@ -1261,6 +1294,15 @@
       "cta": "Yangi parol oʻrnatish",
       "expiry": "Havola {minutes} daqiqa amal qiladi va faqat bir marta ishlatiladi.",
       "ignore": "Agar siz soʻramagan boʻlsangiz, xatga eʼtibor bermang — parolingiz oʻzgarmaydi."
+    },
+    "platformInvitation": {
+      "subject": "ITop Med konsoliga taklif",
+      "greeting": "Assalomu alaykum, {name}!",
+      "body": "Siz ITop Med platforma konsoliga {role} sifatida taklif qilindingiz. Shaxsiy hisobingizni yaratish uchun quyidagi tugmani bosing.",
+      "mfa": "Birinchi kirishda autentifikator ilovasi orqali ikki bosqichli tekshiruvni sozlaysiz.",
+      "cta": "Hisob yaratish",
+      "expiry": "Havola {hours} soat amal qiladi va bir marta ishlatiladi.",
+      "ignore": "Agar bu taklifni kutmagan bo'lsangiz, xatni e'tiborsiz qoldiring va xavfsizlik bo'yicha mas'ul shaxsga xabar bering."
     }
   },
   "supportScope": {
@@ -1873,5 +1915,33 @@
     "D": "Distal (D)",
     "B": "Vestibulyar (B)",
     "L": "Til / tanglay tomoni (L)"
+  },
+  "security": {
+    "title": "Hisob xavfsizligi",
+    "subtitle": "Shaxsiy hisobingiz uchun ikki bosqichli tekshiruv va tiklash kodlari.",
+    "setupPrompt": "Ikki bosqichli tekshiruv yoqildi. Endi tiklash kodlarini yarating: telefoningizni yo'qotsangiz, hisobga qaytishning yagona yo'li shu.",
+    "usedNotice": "Siz tiklash kodi bilan kirdingiz. {remaining, plural, =0 {Kodlar qolmadi — hozir yangi to'plam yarating.} other {# ta kod qoldi.}} Agar telefoningiz yo'qolgan bo'lsa, administratordan ikki bosqichli tekshiruvni qayta o'rnatishni so'rang.",
+    "mfa": "Ikki bosqichli tekshiruv",
+    "mfaOn": "Yoqilgan",
+    "mfaOffClinic": "Hisobingizda ikki bosqichli tekshiruv yoqilmagan. U klinika egalari, administratorlar va buxgalterlar uchun majburiy va tizimga kirishda sozlanadi.",
+    "recoveryTitle": "Tiklash kodlari",
+    "recoveryIntro": "Har bir tiklash kodi autentifikator ilovasisiz bir marta kirish imkonini beradi. Ularni xavfsiz va internetdan tashqari joyda saqlang, masalan, qulflangan tortmada chop etilgan holda.",
+    "remaining": "{remaining, plural, =0 {Ishlatilmagan kod qolmadi} other {# ta ishlatilmagan kod qoldi}}",
+    "notIssued": "Hali yaratilmagan",
+    "runningLow": "Tiklash kodlari tugab bormoqda. Yangi to'plam yarating.",
+    "regenerateNote": "Yangi to'plam yaratilganda oldingi barcha kodlar ishlamay qoladi.",
+    "recoveryShownOnce": "Bu kodlarni hozir saqlang. Ular faqat bir marta ko'rsatiladi va ITop Med ularni qayta ko'rsata olmaydi.",
+    "copy": "Nusxalash",
+    "copied": "Nusxalandi",
+    "download": ".txt yuklab olish",
+    "generate": "Tiklash kodlarini yaratish",
+    "regenerate": "Yangi to'plam yaratish",
+    "continue": "Davom etish"
+  },
+  "staffInvite": {
+    "title": "ITop Med konsoliga qo'shilish",
+    "subtitle": "Siz {role} sifatida taklif qilindingiz.",
+    "mfaNote": "Birinchi kirishda autentifikator ilovasi orqali ikki bosqichli tekshiruvni sozlaysiz.",
+    "accept": "Hisob yaratish"
   }
 }

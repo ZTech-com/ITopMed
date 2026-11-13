@@ -7,13 +7,14 @@ import { listOperationalBranches } from "@/server/clinic/context";
 import { getMember } from "@/server/clinic/members";
 import { listRoles } from "@/server/clinic/roles";
 import { DomainError } from "@/server/tenancy/provisioning";
-import { memberAccessAction, memberStatusAction } from "../../../../clinic-actions";
+import { memberAccessAction, memberMfaResetAction, memberStatusAction } from "../../../../clinic-actions";
 
 const choice =
   "flex min-h-11 cursor-pointer items-center gap-3 rounded-[var(--radius-control)] border border-border bg-surface-2 px-3 text-[14px] has-[:checked]:border-accent has-[:checked]:bg-accent-soft";
 
-export default async function MemberPage({ params }: { params: Promise<{ slug: string; membershipId: string }> }) {
+export default async function MemberPage({ params, searchParams }: { params: Promise<{ slug: string; membershipId: string }>; searchParams: Promise<{ mfaReset?: string }> }) {
   const { slug, membershipId } = await params;
+  const { mfaReset } = await searchParams;
   const ctx = await requireClinic(slug, "staff.read");
   const member = await getMember(ctx, membershipId).catch((e) => {
     if (e instanceof DomainError) notFound();
@@ -34,6 +35,7 @@ export default async function MemberPage({ params }: { params: Promise<{ slug: s
     <div className="max-w-4xl">
       <PageHeader eyebrow={t("clinic.staff.title")} title={member.user.fullName} description={member.user.email} action={<Badge tone={STATUS_TONE[member.status]}>{t(`status.${member.status}`)}</Badge>} />
 
+      {mfaReset ? <div className="mb-6" role="status"><Alert tone="success">{t("clinic.member.mfaResetDone")}</Alert></div> : null}
       {isSelf ? <div className="mb-6"><Alert tone="neutral">{t("clinic.member.selfNote")}</Alert></div> : null}
       {!isSelf && targetIsOwner && !callerIsOwner ? <div className="mb-6"><Alert tone="neutral">{t("clinic.member.ownerNote")}</Alert></div> : null}
 
@@ -116,6 +118,23 @@ export default async function MemberPage({ params }: { params: Promise<{ slug: s
                   <button name="op" value="remove" className={buttonClass("danger")}>{t("clinic.member.remove")}</button>
                 ) : null}
               </div>
+            </Form>
+          </CardBody>
+        </Card>
+      ) : null}
+
+      {canEdit && member.user.mfaEnabledAt && member.status !== "REMOVED" ? (
+        <Card className="mt-6">
+          <CardHeader title={t("clinic.member.mfaResetTitle")} description={t("clinic.member.mfaResetHint")} />
+          <CardBody>
+            <Form action={memberMfaResetAction}>
+              <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+              <input type="hidden" name="membershipId" value={member.id} />
+              <label className="flex items-start gap-2 text-[14px]">
+                <input type="checkbox" name="confirm" value="yes" required className="mt-0.5 size-4 accent-[var(--accent)]" />
+                <span>{t("clinic.member.mfaResetConfirm")}</span>
+              </label>
+              <SubmitButton variant="danger">{t("clinic.member.mfaResetSubmit")}</SubmitButton>
             </Form>
           </CardBody>
         </Card>

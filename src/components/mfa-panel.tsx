@@ -8,10 +8,13 @@ export async function MfaPanel({
   enrollment,
   action,
   hidden,
+  recoveryAction,
 }: {
   enrollment: { uri: string; secretBase32: string } | null;
   action: (s: FormState, fd: FormData) => Promise<FormState>;
   hidden?: Record<string, string>;
+  /** Sign in with a one-time recovery code instead (enrolled accounts only). */
+  recoveryAction?: (s: FormState, fd: FormData) => Promise<FormState>;
 }) {
   const t = await getTranslations("auth");
   const qr = enrollment ? await QRCode.toDataURL(enrollment.uri, { margin: 1, width: 192, errorCorrectionLevel: "M" }) : null;
@@ -49,6 +52,24 @@ export async function MfaPanel({
         <TextField name="code" label={t("mfaCode")} inputMode="numeric" autoComplete="one-time-code" placeholder="000000" required autoFocus />
         <SubmitButton full>{t("verify")}</SubmitButton>
       </Form>
+      {!enrollment && recoveryAction ? (
+        <details className="border-t border-border pt-4 text-[14px]">
+          <summary className="cursor-pointer text-accent">{t("recoveryUse")}</summary>
+          <div className="mt-4 space-y-4">
+            <p className="text-text-2">{t("recoveryHint")}</p>
+            <Form action={recoveryAction}>
+              {Object.entries(hidden ?? {}).map(([k, v]) => (
+                <input key={k} type="hidden" name={k} value={v} />
+              ))}
+              <TextField name="recoveryCode" label={t("recoveryCode")} autoComplete="off" placeholder="xxxx-xxxx-xxxx-xxxx" required />
+              <SubmitButton variant="secondary" full>
+                {t("verify")}
+              </SubmitButton>
+            </Form>
+            <p className="text-[13px] text-text-3">{t("recoveryNoCodes")}</p>
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }

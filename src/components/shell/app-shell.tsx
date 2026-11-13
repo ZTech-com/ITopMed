@@ -1,4 +1,5 @@
-import { LogOut, Menu } from "lucide-react";
+import { LogOut, Menu, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
@@ -37,6 +38,7 @@ export async function AppShell({
   nav,
   user,
   signOut,
+  securityHref,
   children,
   banner,
   primary,
@@ -45,6 +47,8 @@ export async function AppShell({
   nav: NavItem[];
   user: { name: string; detail: string };
   signOut: () => Promise<void>;
+  /** Account security page (two-step verification, recovery codes). */
+  securityHref?: string;
   children: ReactNode;
   banner?: ReactNode;
   /** Up to 4 primary screens for the phone/tablet bottom bar. */
@@ -62,6 +66,12 @@ export async function AppShell({
           <p className="truncate text-[13px] font-medium">{user.name}</p>
           <p className="truncate text-[12px] text-text-3">{user.detail}</p>
         </div>
+        {securityHref ? (
+          <Link href={securityHref} title={t("common.accountSecurity")} className="ml-auto grid size-9 shrink-0 place-items-center rounded-[10px] text-text-2 hover:bg-sunken hover:text-text">
+            <ShieldCheck aria-hidden className="size-[18px]" />
+            <span className="sr-only">{t("common.accountSecurity")}</span>
+          </Link>
+        ) : null}
         <form action={signOut}>
           <button type="submit" title={t("common.signOut")} className="grid size-9 place-items-center rounded-[10px] text-text-2 hover:bg-sunken hover:text-text">
             <LogOut aria-hidden className="size-[18px]" />

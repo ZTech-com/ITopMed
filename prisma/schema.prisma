@@ -55,6 +55,20 @@ model PlatformUser {
   invitationsSent PlatformInvitation[] @relation("PlatformInviter")
   tenantsCreated  Tenant[]
   supportGrants   SupportAccessGrant[]
+  recoveryCodes   PlatformMfaRecoveryCode[]
+}
+
+/// Single-use MFA recovery codes. Only a SHA-256 of each (80-bit) code is stored.
+model PlatformMfaRecoveryCode {
+  id             String    @id @db.Uuid
+  platformUserId String    @db.Uuid
+  codeHash       String    @unique
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  user PlatformUser @relation(fields: [platformUserId], references: [id], onDelete: Cascade)
+
+  @@index([platformUserId])
 }
 
 model PlatformSession {
@@ -310,6 +324,20 @@ model User {
   sessions       Session[]
   memberships    Membership[]
   passwordResets PasswordReset[]
+  recoveryCodes  MfaRecoveryCode[]
+}
+
+/// Single-use MFA recovery codes of a clinic account. Only a SHA-256 of each (80-bit) code is stored.
+model MfaRecoveryCode {
+  id        String    @id @db.Uuid
+  userId    String    @db.Uuid
+  codeHash  String    @unique
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// Single-use password reset. Only the SHA-256 of the emailed token is stored.

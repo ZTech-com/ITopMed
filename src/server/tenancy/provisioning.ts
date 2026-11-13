@@ -7,6 +7,7 @@ import { platformCan, type PlatformPermission } from "../authz/platform";
 import { ROLE_TEMPLATES, SYSTEM_ROLE_KEYS } from "../authz/permissions";
 import { platformDb, withPlatform, type Tx } from "../db";
 import { sendEmail } from "../email";
+import { DomainError } from "../errors";
 import { invitationEmail } from "../email/templates";
 import { env } from "../env";
 import { MODULES, isModuleKey } from "../modules/catalog";
@@ -14,11 +15,8 @@ import { hashIp, randomToken, sha256Hex, uuidv7 } from "../security/crypto";
 
 export const INVITATION_TTL_HOURS = 72;
 
-export class DomainError extends Error {
-  constructor(public readonly code: string) {
-    super(code);
-  }
-}
+// Kept here as a re-export: most services import it from this module.
+export { DomainError };
 
 function authorize(actor: PlatformPrincipal, permission: PlatformPermission) {
   if (!actor.mfaVerified) throw new DomainError("errors.mfaRequired");

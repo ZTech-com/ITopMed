@@ -2,12 +2,13 @@
 
 All tests use synthetic data only. Integration tests boot an isolated embedded PostgreSQL (port 54339), apply the real migrations and seed plans.
 
-## Automated today (`npm test` — 109 tests, all passing)
+## Automated today (`npm test` — 120 tests, all passing)
 | File | Covers |
 |---|---|
 | `tests/db-security.test.ts` | RLS on every table; runtime roles cannot bypass RLS; role separation (platform cannot read hashes/MFA/sessions, cannot approve support grants); no rows without tenant context; audit append-only for all roles incl. owner; hash chain verifies |
 | `tests/tenant-isolation.test.ts` | Acceptance 12: clinic A cannot resolve B; reads scoped; IDOR by id returns nothing; cross-tenant insert rejected by RLS; cross-tenant update affects 0 rows; no context leak between pooled transactions |
 | `tests/provisioning.test.ts` | Acceptance 1 (password + mandatory TOTP, session rotation, lockout, no account enumeration); 2–5 (atomic provisioning, duplicate/reserved slugs, role checks, MFA requirement, single-use invitation, owner configures clinic, audit trail); token rotation on resend; expired invites; 6 (staff invitation, role-limited permissions, owner role not grantable by admin); suspension/reactivation; module flags |
+| `tests/mfa-recovery.test.ts` | Recovery codes (format, hashed storage, any case/dashes, single use, session rotation, new set replaces old, needs completed MFA, concurrent use succeeds once, shared attempt limit, RLS + no platform grant); platform MFA reset (sessions/codes/secret removed, audited, super admin only, never self); clinic member MFA reset (owner-only for owners, self, no permission, other clinic, accounts in several clinics refused, DB function re-checks each rule); platform staff invitations (hash-only token, duplicate/pending/existing refused, single use, rotation, revoke, expiry, super admin only) |
 | `tests/security-primitives.test.ts` | argon2id, password policy, AES-GCM context binding, tokens, UUIDv7, IP pseudonymisation, audit metadata guard, input validation |
 | `tests/phase4.test.ts` | Existing accounts joining a second clinic (identity proof, wrong-account rejection, per-clinic roles); duplicate-member invite blocked; clinic login lockout (regression); password reset (superseded links, single use, expiry, session revocation); role editor (custom roles, locked owner role, in-use protection, effect on members, permission check); member access (roles, branch scope, suspend/restore/remove, self/owner/last-owner guardrails, cross-clinic IDs); support access (disabled clinical scope, role checks, approval, time box, revocation) |
 | `tests/availability.test.ts` | Time-zone conversion (Tashkent, DST in Berlin), weekdays, HH:MM parsing, slot generation (alignment, block end, exceptions, busy and past slots), overlap detection, money parsing |

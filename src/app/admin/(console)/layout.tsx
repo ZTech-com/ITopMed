@@ -21,6 +21,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
       nav={nav}
       user={{ name: p.user.fullName, detail: t(`platformRole.${role}`) }}
       signOut={adminLogoutAction}
+      securityHref="/admin/security"
     >
       {children}
     </AppShell>

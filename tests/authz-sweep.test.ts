@@ -18,15 +18,24 @@ const rel = (f: string) => path.relative(ROOT, f).split(path.sep).join("/");
 const files = walk(ROOT);
 
 /** Pages anyone may open: sign-in, invitations, password reset, the landing page. */
-const PUBLIC_PAGES = new Set(["page.tsx", "(public)/forgot-password/page.tsx", "(public)/reset-password/[token]/page.tsx"]);
+const PUBLIC_PAGES = new Set([
+  "page.tsx",
+  "(public)/forgot-password/page.tsx",
+  "(public)/reset-password/[token]/page.tsx",
+  // Invited ITop Med employee has no account yet; the single-use token is the credential.
+  "admin/(auth)/invite/[token]/page.tsx",
+]);
 
 /** Actions that run before anyone is signed in (they authenticate instead). */
 const PUBLIC_ACTIONS = new Set([
   "admin/actions.ts:adminLoginAction",
   "admin/actions.ts:adminMfaAction",
+  "admin/actions.ts:adminRecoveryCodeAction", // second factor: authenticates the half-signed-in session
+  "admin/actions.ts:acceptStaffInvitationAction", // token-authenticated account creation
   "admin/actions.ts:adminLogoutAction",
   "clinic-actions.ts:clinicLoginAction",
   "clinic-actions.ts:clinicMfaAction",
+  "clinic-actions.ts:clinicRecoveryCodeAction", // second factor: authenticates the half-signed-in session
   "clinic-actions.ts:clinicLogoutAction",
   "clinic-actions.ts:acceptInvitationAction",
   "clinic-actions.ts:forgotPasswordAction",

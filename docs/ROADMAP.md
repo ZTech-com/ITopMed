@@ -4,9 +4,9 @@
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Foundation, design system, localization, docs | ✅ done (catalogs need native-speaker review) |
-| 2 | Super Admin auth and platform administration | ✅ core done — login, mandatory TOTP, sessions, dashboard, clinics, audit + integrity check, staff list. ⏳ platform-staff invitations UI, announcements, support tickets, global settings |
+| 2 | Super Admin auth and platform administration | ✅ core done — login, mandatory TOTP, sessions, dashboard, clinics, audit + integrity check, staff list, staff invitations from the console with MFA reset (2026-11-13). ⏳ staff disable/role change UI, announcements, support tickets, global settings |
 | 3 | Clinic provisioning, onboarding, secure owner invitations | ✅ done — atomic provisioning, invitations (resend/revoke), lifecycle, modules, plan change, owner activation + clinic settings/branches |
-| 4 | Tenant isolation, users, roles, permissions | ✅ done (2026-11-11) — staff invitations incl. existing accounts joining more clinics, password reset, role editor (custom roles, locked owner role), member access (roles, branch scope, suspend/restore/remove) with owner/self/last-owner guardrails, break-glass request → clinic approval → expiry/revocation. ⏳ MFA recovery codes / admin MFA reset, platform-staff invitation UI |
+| 4 | Tenant isolation, users, roles, permissions | ✅ done (2026-11-11) — staff invitations incl. existing accounts joining more clinics, password reset, role editor (custom roles, locked owner role), member access (roles, branch scope, suspend/restore/remove) with owner/self/last-owner guardrails, break-glass request → clinic approval → expiry/revocation. **2026-11-13:** one-time MFA recovery codes (platform and clinic accounts, hashed, burnt atomically, prompted right after enrolment), administrator MFA reset (super admin for platform staff; clinic owner/admin for members whose account belongs only to their clinic — re-checked inside PostgreSQL), platform-staff invitations (single-use 48 h link, resend/revoke); 11 tests + browser walkthrough. ⏳ ITop Med support procedure for resetting MFA of accounts that work in several clinics |
 | 5 | Admin, receptionist, doctor workspaces | ✅ done (2026-11-11) — role-aware dashboard (operations + setup for admins, front desk "who works today", "My day" for doctors), services & prices (exact money), departments & rooms, doctor profiles, weekly schedules with overlap prevention, absences, services per doctor, availability engine (time-zone/DST-safe slots), branch-scope enforcement. Appointments/queue themselves are Phase 6 |
 | 6 | Patients, appointments, queue, EMR | ✅ done (2026-11-11) — patient registry (MRN, PINFL/passport, smart search incl. typo-tolerant names, duplicate detection with human confirmation, consents per purpose), booking inside working hours with database-enforced no-double-booking, check-in with daily queue tickets, walk-ins, cancellations/no-shows, doctor's day, encounters, structured notes, signing (immutable + hash), amendments, ICD-10 diagnoses, allergies, vital signs, care-relationship access with audited break-the-glass. ⏳ patient merge, rescheduling UI, printable documents, lab orders (Phase 8) |
 | 7 | Billing, payments, reports | ✅ backend + UI + 7 tests (2026-11-11): invoices (draft → issued, frozen by DB trigger, sequential numbers), payments with idempotency and row locks, refunds, voids, cash shifts with reconciliation, expenses, financial and operational reports, printable non-fiscal receipt; browser walkthrough done (walk-in → invoice with discount → cash + Payme payments → receipt → balanced shift close → owner reports). ⏳ fiscal receipts (OFD), Payme/Click/Uzum online integration |
@@ -36,7 +36,7 @@
 
 ## Known limitations
 * Email delivery is simulated in development; production requires SMTP configuration.
-* Platform staff have no self-service password reset (by design: a SUPER_ADMIN or the CLI resets them). Lost-authenticator recovery is not built yet.
+* Platform staff have no self-service password reset (by design: a SUPER_ADMIN or the CLI resets them). A lost authenticator is recovered with a one-time recovery code, or reset by an administrator after verifying the person (see SECURITY-AND-PRIVACY.md). Accounts that work in several clinics can only be reset by ITop Med support, and that support procedure has no screen yet.
 * Approved support grants are recorded and checked by `getActiveGrant`, but no platform screen uses them yet — operational support views will consume them in Phase 6+.
 * ICD-10 codes are validated by format only; an official ICD-10 catalogue (licensed nomenclature as used by the MoH) still has to be imported.
 * Patient merge (for confirmed duplicates) is not implemented yet — duplicates are prevented at registration.
@@ -45,7 +45,6 @@
 * `npm audit` reports advisories in the dependency tree — review and resolve before production.
 * Prisma 7.10 runs some nested-relation queries concurrently inside interactive transactions; node-pg 8 queues them safely but logs a deprecation warning (removed behaviour in pg 9). Our own code awaits queries sequentially inside transactions (`sequential()`); keep `pg` on `^8` until Prisma changes this.
 * Modules are enforced since 8e. Clinics that existed before were grandfathered with every implemented module switched on; if their owner switches off a module their plan does not include, only the platform can switch it back on. Plan contents and prices are placeholders until the commercial model is decided.
-* Project lives in a OneDrive folder; `node_modules` syncing can be slow — consider a non-synced path.
 
 ## External dependencies and decisions needed
 **Legal**

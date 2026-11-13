@@ -45,7 +45,7 @@ Future: object storage (documents), native apps via the same service layer expos
 * Patient portal accounts are created by the front desk with a one-time activation code (12 characters, ~59 bits, 72 h, hash-only, handed over in person). The patient proves identity with the code plus date of birth and chooses their own login phone and password; activation runs atomically in `portal_activate()`. Patient sessions: 8 h absolute / 30 min idle. Lockout after 5 failures; 5 wrong birth dates burn the code.
 * Opaque 160-bit session tokens; only SHA-256 hashes stored. Absolute + idle expiry (platform 8 h / 30 min, clinic 12 h / 60 min), revocation, rotation after MFA.
 * Passwords: argon2id (OWASP parameters). Lockout after 5 failures (15 min) + per-IP/per-email rate limits.
-* MFA: TOTP, mandatory for all platform staff and clinic roles `clinic_owner`, `clinic_admin`, `accountant`. Secrets AES-256-GCM encrypted with context binding.
+* MFA: TOTP, mandatory for all platform staff and clinic roles `clinic_owner`, `clinic_admin`, `accountant`. Secrets AES-256-GCM encrypted with context binding. One-time recovery codes (only hashes stored) cover a lost phone; administrators can reset MFA after verifying the person (clinic admins only for accounts that belong to their clinic alone).
 * Invitations: single-use, 72 h, hash-only storage, rotated on resend. Passwords are chosen by the invitee, never emailed.
 
 *Decision:* sessions are implemented on maintained primitives (Oslo, argon2) following the Lucia v3 reference design, because packaged auth libraries did not fit two realms + RLS context + break-glass. WebAuthn/passkeys or SSO (OIDC) would be added through this same session layer.

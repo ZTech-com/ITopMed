@@ -24,7 +24,8 @@
     "yes": "Yes",
     "no": "No",
     "never": "Never",
-    "total": "Total"
+    "total": "Total",
+    "accountSecurity": "Account security"
   },
   "a11y": {
     "skipToContent": "Skip to main content",
@@ -99,7 +100,13 @@
     "resetDone": "Your password has been changed and all sessions were signed out. Sign in with the new password.",
     "resetInvalid": "This reset link is invalid or has expired. Request a new one.",
     "backToSignIn": "Back to sign in",
-    "portalInvalid": "Incorrect phone number or password."
+    "portalInvalid": "Incorrect phone number or password.",
+    "recoveryUse": "Lost your phone? Use a recovery code",
+    "recoveryHint": "Enter one of the recovery codes you saved when you set up two-step verification. Each code works only once.",
+    "recoveryCode": "Recovery code",
+    "recoveryNoCodes": "No codes left? Ask your administrator to reset your two-step verification.",
+    "recoveryInvalid": "This recovery code is not valid or has already been used.",
+    "staffActivated": "Your account is active. Sign in and set up two-step verification."
   },
   "invite": {
     "title": "Activate your account",
@@ -233,7 +240,23 @@
       "colLastLogin": "Last sign-in",
       "mfaOn": "Enabled",
       "mfaOff": "Not set up",
-      "cliNote": "New platform staff accounts are currently created with the secured command-line tool (npm run admin:create)."
+      "inviteTitle": "Invite an employee",
+      "inviteHint": "The person receives a single-use link valid for 48 hours, sets their own password and must set up two-step verification.",
+      "invite": "Send invitation",
+      "invited": "Invitation sent.",
+      "invitedNoEmail": "The invitation was created, but the email could not be sent. Check the email settings and resend it.",
+      "resent": "Invitation resent. The previous link no longer works.",
+      "revoked": "Invitation revoked.",
+      "pendingTitle": "Pending invitations",
+      "invitedBy": "Invited by {name}",
+      "expires": "expires {when}",
+      "expired": "expired",
+      "mfaReset": "Reset two-step verification",
+      "mfaResetHint": "Only after you have confirmed the person's identity in person or by video call. Their current authenticator and recovery codes stop working and all their sessions end.",
+      "mfaResetConfirm": "I have verified this person's identity.",
+      "mfaResetSubmit": "Reset",
+      "mfaResetDone": "Two-step verification was reset. The employee sets it up again at the next sign-in.",
+      "manageNote": "Only a super administrator can invite employees or reset their two-step verification."
     },
     "support": {
       "title": "Support access",
@@ -351,7 +374,12 @@
       "ownerNote": "Only a clinic owner can change an owner’s access.",
       "mfa": "Two-step verification",
       "mfaOn": "Enabled",
-      "mfaOff": "Not set up"
+      "mfaOff": "Not set up",
+      "mfaResetTitle": "Reset two-step verification",
+      "mfaResetHint": "Use this when the employee has lost their phone and has no recovery codes left. Confirm their identity in person first. Their sessions end and they set up a new authenticator at the next sign-in.",
+      "mfaResetConfirm": "I have verified this employee's identity in person.",
+      "mfaResetSubmit": "Reset two-step verification",
+      "mfaResetDone": "Two-step verification was reset."
     },
     "supportAccess": {
       "title": "Support access",
@@ -1151,7 +1179,8 @@
     "tooLarge": "This number is too large.",
     "wholeNumber": "Enter a whole number.",
     "range": "Enter a value between 1 and 72.",
-    "tooth": "Choose a valid tooth number (FDI)."
+    "tooth": "Choose a valid tooth number (FDI).",
+    "confirmRequired": "Please confirm before continuing."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -1243,7 +1272,11 @@
     "supplierExists": "A supplier with this name already exists.",
     "moduleDisabled": "This module is switched off for the clinic.",
     "moduleNotInPlan": "This module is not included in the clinic's plan.",
-    "servicePriceNotSet": "Set a price for this service before billing it (Services)."
+    "servicePriceNotSet": "Set a price for this service before billing it (Services).",
+    "mfaResetOtherClinics": "This account also works in other clinics, so only ITop Med support can reset its two-step verification.",
+    "mfaNotSetUp": "Two-step verification is not set up for this account.",
+    "staffExists": "An employee with this email already exists.",
+    "invitationPending": "An invitation for this email is already pending. Resend or revoke it instead."
   },
   "email": {
     "invitation": {
@@ -1261,6 +1294,15 @@
       "cta": "Set a new password",
       "expiry": "The link is valid for {minutes} minutes and can be used once.",
       "ignore": "If you did not request this, ignore this email — your password stays the same."
+    },
+    "platformInvitation": {
+      "subject": "Your invitation to the ITop Med console",
+      "greeting": "Hello, {name}!",
+      "body": "You have been invited to the ITop Med platform console as {role}. Use the button below to create your personal account.",
+      "mfa": "At your first sign-in you will set up two-step verification with an authenticator app.",
+      "cta": "Create account",
+      "expiry": "The link is valid for {hours} hours and can be used once.",
+      "ignore": "If you did not expect this invitation, ignore this email and tell your security contact."
     }
   },
   "supportScope": {
@@ -1873,5 +1915,33 @@
     "D": "Distal (D)",
     "B": "Buccal / labial (B)",
     "L": "Lingual / palatal (L)"
+  },
+  "security": {
+    "title": "Account security",
+    "subtitle": "Two-step verification and recovery codes for your personal account.",
+    "setupPrompt": "Two-step verification is on. Now create recovery codes: they are the only way back in if you lose your phone.",
+    "usedNotice": "You signed in with a recovery code. {remaining, plural, =0 {No codes are left — create a new set now.} one {# code is left.} other {# codes are left.}} If your phone is lost, ask an administrator to reset two-step verification.",
+    "mfa": "Two-step verification",
+    "mfaOn": "Enabled",
+    "mfaOffClinic": "Two-step verification is not enabled for your account. It is required for clinic owners, administrators and accountants and is set up at sign-in.",
+    "recoveryTitle": "Recovery codes",
+    "recoveryIntro": "Each recovery code signs you in once without your authenticator app. Keep them somewhere safe and offline, e.g. printed in a locked drawer.",
+    "remaining": "{remaining, plural, =0 {No unused codes left} one {# unused code left} other {# unused codes left}}",
+    "notIssued": "Not created yet",
+    "runningLow": "You are running out of recovery codes. Create a new set.",
+    "regenerateNote": "Creating a new set makes all previous codes stop working.",
+    "recoveryShownOnce": "Save these codes now. They are shown only once and ITop Med cannot show them again.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "download": "Download .txt",
+    "generate": "Create recovery codes",
+    "regenerate": "Create a new set",
+    "continue": "Continue"
+  },
+  "staffInvite": {
+    "title": "Join the ITop Med console",
+    "subtitle": "You have been invited as {role}.",
+    "mfaNote": "At your first sign-in you will set up two-step verification with an authenticator app.",
+    "accept": "Create account"
   }
 }

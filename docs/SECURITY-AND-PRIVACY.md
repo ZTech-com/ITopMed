@@ -13,6 +13,9 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 | Account lockout + rate limiting | ✅ | DB lockout; rate limits shared across instances in PostgreSQL, hashed keys, fail closed (Phase 9) |
 | MFA (TOTP) for platform staff and privileged clinic roles | ✅ | `platform-auth.ts`, `clinic-auth.ts` |
 | Session expiry (absolute + idle), revocation, rotation after MFA | ✅ | |
+| MFA recovery codes (10 × 80-bit, shown once, SHA-256 bound to the account, single use, share the TOTP attempt limit) | ✅ | `security/recovery-codes.ts`; `tests/mfa-recovery.test.ts` |
+| Administrator MFA reset after out-of-band identity check: removes secret + codes and ends every session; clinic resets limited to accounts of that clinic only, re-checked by `app_reset_member_mfa()` in PostgreSQL | ✅ | `platform-auth.ts`, `clinic/members.ts` |
+| Platform staff invitations: single-use 48 h token (hash stored), SUPER_ADMIN only, MFA enrolment forced at first sign-in | ✅ | `platform/staff.ts` |
 | HttpOnly, Secure, SameSite cookies, `__Host-` prefix in production | ✅ | `auth/cookies.ts` |
 | CSRF | ✅ | SameSite cookies + Next.js server-action Origin check |
 | XSS | ✅ | React escaping, nonce CSP with `strict-dynamic`, escaped email HTML |
@@ -65,6 +68,13 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 2. The platform DB role **cannot** approve it (no UPDATE grant — tested). Only a clinic user with `support_access.decide` (owner) approves or denies.
 3. While active, support acts through the clinic path with the grant id in context; every access is audited; automatic expiry.
 4. CLINICAL_READ stays disabled until the legal assessment below is complete.
+
+## Lost authenticator (MFA reset procedure)
+1. The person first uses one of their recovery codes (shown once at enrolment; a new set can be created on the account security page).
+2. Without codes, an administrator resets two-step verification **only after verifying the person in person or by video call** — never on the strength of an email or chat message, which an attacker could send.
+   * Platform staff: a SUPER_ADMIN, from Platform staff. Nobody can reset themself.
+   * Clinic staff: the clinic owner or an administrator with `staff.manage`, from the member's page. Owners can only be reset by an owner. Accounts that also work in another clinic are refused — ITop Med support handles those (procedure and screen still to be defined).
+3. The reset removes the secret and all recovery codes and ends every session; the person enrols a new authenticator at the next sign-in. The action is audited (`platform.staff.mfa_reset` / `membership.mfa_reset`).
 
 ## Data handling rules
 * No real patient data in development, tests, screenshots or AI prompts. Test data uses `*.test` domains.

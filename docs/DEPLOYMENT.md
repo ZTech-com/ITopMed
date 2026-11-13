@@ -16,7 +16,7 @@ Rate limits live in PostgreSQL (`rate_limit_hit()`), so app instances need no sh
 1. Create the four roles and the database: `scripts/sql/create-roles.sql` (passwords from the secret manager; see the header of the file).
 2. Apply migrations as the owner: `MIGRATION_DATABASE_URL=… npx prisma migrate deploy`.
 3. Seed reference data (plans): `npm run db:seed`.
-4. Create the first platform administrator: `npm run admin:create -- --email … --name … --role SUPER_ADMIN` (they enrol TOTP at first sign-in).
+4. Create the first platform administrator: `npm run admin:create -- --email … --name … --role SUPER_ADMIN` (they enrol TOTP at first sign-in and are asked to create recovery codes). Invite every further ITop Med employee from the console (Platform staff → Invite), not with the CLI.
 5. Check: `tests/db-security.test.ts` expectations hold in production too — runtime roles must have `rolsuper = false`, `rolbypassrls = false`.
 
 ## 3. Environment (secrets from the secret manager — never in the repo or images)

@@ -48,6 +48,7 @@ export default async function ClinicLayout({ children, params }: { children: Rea
       nav={nav}
       user={{ name: ctx.principal.user.fullName, detail: ctx.roleKeys.map((r) => roleLabel(t as never, r)).join(", ") }}
       signOut={clinicLogoutAction}
+      securityHref={`/account/security?next=${encodeURIComponent(base)}`}
       primary={nav.slice(0, 4)}
     >
       {children}

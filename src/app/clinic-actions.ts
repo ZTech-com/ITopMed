@@ -7,7 +7,15 @@ import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
 import type { FormState } from "@/lib/form-state";
 import { loginSchema, totpCodeSchema } from "@/lib/validation";
 import { toFormState } from "@/server/actions-util";
-import { loginClinicUser, logoutClinic, validateClinicSession, verifyClinicMfa } from "@/server/auth/clinic-auth";
+import {
+  clinicRecoveryCodeStatus,
+  generateClinicRecoveryCodes,
+  loginClinicUser,
+  logoutClinic,
+  validateClinicSession,
+  verifyClinicMfa,
+  verifyClinicRecoveryCode,
+} from "@/server/auth/clinic-auth";
 import { clearClinicCookie, readClinicToken, setClinicSessionCookie } from "@/server/auth/cookies";
 import { requireClinic } from "@/server/auth/guards";
 import { createBranch, inviteStaff, updateClinicSettings } from "@/server/clinic/admin";
@@ -16,7 +24,7 @@ import { acceptInvitation, acceptInvitationAsExistingUser } from "@/server/tenan
 import { safeNext } from "@/lib/safe-next";
 import { requestPasswordReset, resetPassword } from "@/server/auth/password-reset";
 import { createRole, deleteRole, updateRole } from "@/server/clinic/roles";
-import { setMemberStatus, updateMemberAccess, type MemberStatusAction } from "@/server/clinic/members";
+import { resetMemberMfa, setMemberStatus, updateMemberAccess, type MemberStatusAction } from "@/server/clinic/members";
 import { decideGrant, type GrantDecision } from "@/server/support/access";
 import { getClinicPrincipal, requireClinicUser } from "@/server/auth/guards";
 
@@ -50,7 +58,34 @@ export async function clinicMfaAction(_: FormState, fd: FormData): Promise<FormS
   const r = await verifyClinicMfa(token, code.data, await requestMeta());
   if (!r.ok) return { message: r.reason === "rate_limited" ? "auth.rateLimited" : "auth.mfaInvalid" };
   await setClinicSessionCookie(r.token);
-  redirect(safeNext(fd.get("next")) ?? "/clinics");
+  const next = safeNext(fd.get("next"));
+  // Without recovery codes a lost phone means a locked-out account: ask for them right away.
+  const p = await validateClinicSession(r.token);
+  if (p && !(await clinicRecoveryCodeStatus(p)).issued) redirect(`/account/security?setup=1${next ? `&next=${encodeURIComponent(next)}` : ""}`);
+  redirect(next ?? "/clinics");
+}
+
+/** Second factor with a one-time recovery code (lost authenticator). */
+export async function clinicRecoveryCodeAction(_: FormState, fd: FormData): Promise<FormState> {
+  const token = await readClinicToken();
+  if (!token) redirect("/login");
+  const r = await verifyClinicRecoveryCode(token, String(fd.get("recoveryCode") ?? "").slice(0, 64), await requestMeta());
+  if (!r.ok) return { message: r.reason === "rate_limited" ? "auth.rateLimited" : "auth.recoveryInvalid", nonce: Date.now() };
+  await setClinicSessionCookie(r.token);
+  const next = safeNext(fd.get("next"));
+  redirect(`/account/security?used=1${next ? `&next=${encodeURIComponent(next)}` : ""}`);
+}
+
+export async function generateClinicRecoveryCodesAction(): Promise<FormState> {
+  const p = await requireClinicUser();
+  try {
+    const codes = await generateClinicRecoveryCodes(p, await requestMeta());
+    revalidatePath("/account/security");
+    // Shown once in the browser; never stored in clear and never logged.
+    return { ok: true, data: { codes }, nonce: Date.now() };
+  } catch (e) {
+    return toFormState(e);
+  }
 }
 
 export async function clinicLogoutAction() {
@@ -224,6 +259,20 @@ export async function memberStatusAction(_: FormState, fd: FormData): Promise<Fo
   }
   revalidatePath(`/c/${slug}/staff`, "layout");
   return { ok: true, message: "clinic.member.statusChanged", nonce: Date.now() };
+}
+
+export async function memberMfaResetAction(_: FormState, fd: FormData): Promise<FormState> {
+  const slug = String(fd.get("$slug"));
+  const ctx = await requireClinic(slug, "staff.manage");
+  if (fd.get("confirm") !== "yes") return { message: "validation.confirmRequired", nonce: Date.now() };
+  try {
+    await resetMemberMfa(ctx, String(fd.get("membershipId")), await requestMeta());
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath(`/c/${slug}/staff`, "layout");
+  // The reset card disappears once MFA is off, so the confirmation is shown at page level.
+  redirect(`/c/${ctx.tenant.slug}/staff/${encodeURIComponent(String(fd.get("membershipId")))}?mfaReset=1`);
 }
 
 // ───────────── Support access decisions ─────────────

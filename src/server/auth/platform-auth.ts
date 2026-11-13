@@ -1,9 +1,12 @@
 import "server-only";
 import { recordAudit } from "../audit";
-import { platformDb, withPlatform } from "../db";
+import { platformCan } from "../authz/platform";
+import { platformDb, withPlatform, type Tx } from "../db";
+import { DomainError } from "../errors";
 import { hashIp, randomToken, sha256Hex, uuidv7 } from "../security/crypto";
 import { hashPassword, verifyPassword } from "../security/password";
 import { rateLimit } from "../security/rate-limit";
+import { newRecoveryCodes, normalizeRecoveryCode, recoveryCodeHash } from "../security/recovery-codes";
 import { decryptTotpSecret, encryptTotpSecret, newTotpSecret, totpUri, verifyTotp } from "../security/totp";
 import type { PlatformRole } from "@/generated/prisma/client";
 
@@ -144,27 +147,119 @@ export async function verifyPlatformMfa(token: string, code: string, meta: Reque
   }
 
   const newToken = randomToken();
-  const now = new Date();
   await withPlatform(async (tx) => {
     if (!user.mfaEnabledAt) {
-      await tx.platformUser.update({ where: { id: user.id }, data: { mfaEnabledAt: now } });
+      await tx.platformUser.update({ where: { id: user.id }, data: { mfaEnabledAt: new Date() } });
       await recordAudit(tx, { actorType: "PLATFORM_USER", actorId: user.id, action: "platform.mfa.enrolled", ipHash });
     }
-    await tx.platformSession.update({ where: { id: p.sessionId }, data: { revokedAt: now } });
-    await tx.platformSession.create({
-      data: {
-        id: sha256Hex(newToken),
-        platformUserId: user.id,
-        expiresAt: new Date(now.getTime() + PLATFORM_SESSION_ABSOLUTE_MS),
-        mfaVerifiedAt: now,
-        ipHash,
-        userAgent: meta.userAgent?.slice(0, 256),
-      },
-    });
-    await tx.platformUser.update({ where: { id: user.id }, data: { lastLoginAt: now } });
+    await rotateVerifiedSession(tx, user.id, p.sessionId, newToken, meta);
     await recordAudit(tx, { actorType: "PLATFORM_USER", actorId: user.id, action: "platform.login.mfa", ipHash, userAgent: meta.userAgent });
   });
   return { ok: true, token: newToken };
+}
+
+/** Replaces the half-signed-in session with a new, MFA-verified one (new token: no session fixation). */
+async function rotateVerifiedSession(tx: Tx, userId: string, oldSessionId: string, newToken: string, meta: RequestMeta) {
+  const now = new Date();
+  await tx.platformSession.update({ where: { id: oldSessionId }, data: { revokedAt: now } });
+  await tx.platformSession.create({
+    data: {
+      id: sha256Hex(newToken),
+      platformUserId: userId,
+      expiresAt: new Date(now.getTime() + PLATFORM_SESSION_ABSOLUTE_MS),
+      mfaVerifiedAt: now,
+      ipHash: hashIp(meta.ip),
+      userAgent: meta.userAgent?.slice(0, 256),
+    },
+  });
+  await tx.platformUser.update({ where: { id: userId }, data: { lastLoginAt: now } });
+}
+
+/**
+ * Second factor with a one-time recovery code (lost authenticator). Only for
+ * accounts that finished enrolment. The code is burnt atomically, so two
+ * concurrent attempts with the same code cannot both succeed.
+ */
+export async function verifyPlatformRecoveryCode(token: string, codeRaw: string, meta: RequestMeta): Promise<MfaResult> {
+  const p = await validatePlatformSession(token);
+  if (!p || !p.user.mfaEnrolled) return { ok: false, reason: "invalid" };
+  // Same bucket as TOTP: a recovery code is not a way around the attempt limit.
+  if (!(await rateLimit(`pmfa:${p.sessionId}`, 5, 5 * 60_000))) return { ok: false, reason: "rate_limited" };
+  const ipHash = hashIp(meta.ip);
+  const code = normalizeRecoveryCode(codeRaw);
+  const newToken = randomToken();
+  const ok = await withPlatform(async (tx) => {
+    const claimed = code
+      ? await tx.platformMfaRecoveryCode.updateMany({
+          where: { platformUserId: p.user.id, codeHash: recoveryCodeHash(p.user.id, code), usedAt: null },
+          data: { usedAt: new Date() },
+        })
+      : { count: 0 };
+    if (claimed.count !== 1) {
+      await recordAudit(tx, { actorType: "PLATFORM_USER", actorId: p.user.id, action: "platform.login.recovery_code", outcome: "FAILURE", ipHash, userAgent: meta.userAgent });
+      return false;
+    }
+    const remaining = await tx.platformMfaRecoveryCode.count({ where: { platformUserId: p.user.id, usedAt: null } });
+    await rotateVerifiedSession(tx, p.user.id, p.sessionId, newToken, meta);
+    await recordAudit(tx, { actorType: "PLATFORM_USER", actorId: p.user.id, action: "platform.login.recovery_code", ipHash, userAgent: meta.userAgent, metadata: { remaining } });
+    return true;
+  });
+  return ok ? { ok: true, token: newToken } : { ok: false, reason: "invalid" };
+}
+
+/** Issues a fresh set of recovery codes (the previous set stops working). Returned once, never stored in clear. */
+export async function generatePlatformRecoveryCodes(p: PlatformPrincipal, meta: RequestMeta): Promise<string[]> {
+  if (!p.mfaVerified || !p.user.mfaEnrolled) throw new DomainError("errors.mfaRequired");
+  if (!(await rateLimit(`prcgen:${p.user.id}`, 5, 60 * 60_000))) throw new DomainError("errors.rateLimited");
+  const codes = newRecoveryCodes();
+  await withPlatform(async (tx) => {
+    await tx.platformMfaRecoveryCode.deleteMany({ where: { platformUserId: p.user.id } });
+    await tx.platformMfaRecoveryCode.createMany({
+      data: codes.map((c) => ({ id: uuidv7(), platformUserId: p.user.id, codeHash: recoveryCodeHash(p.user.id, normalizeRecoveryCode(c)!) })),
+    });
+    await recordAudit(tx, { actorType: "PLATFORM_USER", actorId: p.user.id, action: "platform.mfa.recovery_codes_generated", ipHash: hashIp(meta.ip), userAgent: meta.userAgent, metadata: { count: codes.length } });
+  });
+  return codes;
+}
+
+export async function platformRecoveryCodeStatus(userId: string) {
+  const [remaining, total] = await Promise.all([
+    platformDb().platformMfaRecoveryCode.count({ where: { platformUserId: userId, usedAt: null } }),
+    platformDb().platformMfaRecoveryCode.count({ where: { platformUserId: userId } }),
+  ]);
+  return { remaining, issued: total > 0 };
+}
+
+/**
+ * A SUPER_ADMIN resets another staff member's two-step verification (lost
+ * phone and no recovery codes). Secret and codes are removed and every session
+ * of that person ends; they enrol a new authenticator at the next sign-in.
+ * Identity must be verified out of band first (see docs/SECURITY-AND-PRIVACY.md).
+ */
+export async function resetPlatformStaffMfa(actor: PlatformPrincipal, targetId: string, meta: RequestMeta) {
+  if (!actor.mfaVerified) throw new DomainError("errors.mfaRequired");
+  if (!platformCan(actor.user.role, "staff.manage")) throw new DomainError("errors.forbidden");
+  if (!/^[0-9a-f-]{36}$/i.test(targetId)) throw new DomainError("errors.notFound");
+  if (targetId === actor.user.id) throw new DomainError("errors.selfChange");
+  await withPlatform(async (tx) => {
+    const target = await tx.platformUser.findUnique({ where: { id: targetId }, select: { id: true, mfaSecretEnc: true, mfaEnabledAt: true } });
+    if (!target) throw new DomainError("errors.notFound");
+    if (!target.mfaSecretEnc && !target.mfaEnabledAt) throw new DomainError("errors.mfaNotSetUp");
+    const now = new Date();
+    await tx.platformUser.update({ where: { id: target.id }, data: { mfaSecretEnc: null, mfaEnabledAt: null } });
+    await tx.platformMfaRecoveryCode.deleteMany({ where: { platformUserId: target.id } });
+    const revoked = await tx.platformSession.updateMany({ where: { platformUserId: target.id, revokedAt: null }, data: { revokedAt: now } });
+    await recordAudit(tx, {
+      actorType: "PLATFORM_USER",
+      actorId: actor.user.id,
+      action: "platform.staff.mfa_reset",
+      entityType: "PlatformUser",
+      entityId: target.id,
+      ipHash: hashIp(meta.ip),
+      userAgent: meta.userAgent,
+      metadata: { sessionsRevoked: revoked.count },
+    });
+  });
 }
 
 export async function logoutPlatform(token: string | undefined | null) {
