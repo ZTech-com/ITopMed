@@ -13,7 +13,8 @@ Browser / PWA ──HTTPS──▶ Reverse proxy (TLS, X-Forwarded-For) ──�
                                                                           └─ portalDb   → role itopmed_portal    (patient: own released data only)
                                                                    PostgreSQL ◀── migrations as itopmed_owner
 Worker: `npm run worker` (scripts/worker.ts) delivers the notification outbox per clinic under the clinic role.
-Future: Redis (rate limits, jobs), object storage (documents), native apps via the same service layer exposed as a versioned API.
+Health probe: `GET /api/health`. Deployment and operations: docs/DEPLOYMENT.md.
+Future: object storage (documents), native apps via the same service layer exposed as a versioned API.
 ```
 
 ### Layers
@@ -63,8 +64,8 @@ next-intl without a locale in the URL. Resolution: account preference → langua
 ## 7. PWA and devices
 Manifest + service worker that caches **only** hashed static assets — never HTML, actions or documents. All pages send `Cache-Control: no-store`. The PWA is not a native app; native iOS/Android clients will call a versioned API wrapping the same domain services (Phase 8+).
 
-## 8. Rate limiting, jobs, storage (planned)
-* Rate limiter is in-memory (**single instance only**) — move the store to Redis before horizontal scaling.
+## 8. Rate limiting, jobs, storage
+* Rate limiter: counters in PostgreSQL (UNLOGGED `RateLimitBucket`, atomic `rate_limit_hit()`, hashed keys), shared by every app instance; fails closed if the database is unreachable. `RATE_LIMIT_STORE=memory` exists only for special set-ups. The worker sweeps expired buckets.
 * Background jobs (reminders, email retries, integration sync): Redis-backed queue in a separate worker, outbox table for at-least-once delivery.
 * Medical files: S3-compatible storage hosted per the data-residency decision, encryption, short-lived signed URLs, audited access.
 

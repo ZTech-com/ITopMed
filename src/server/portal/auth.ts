@@ -159,7 +159,7 @@ export async function loginPatient(tenant: PortalTenant, phoneRaw: string, passw
   const ipHash = hashIp(meta.ip);
   const phone = loginPhoneSchema.safeParse(phoneRaw);
   const login = phone.success ? phone.data : "";
-  if (!(await rateLimit(`plogin:${ipHash ?? "noip"}`, 30, 15 * 60_000)) || !(await rateLimit(`plogin:${tenant.id}:${login}`, 10, 15 * 60_000))) {
+  if (!(await rateLimit(`ptlogin:${ipHash ?? "noip"}`, 30, 15 * 60_000)) || !(await rateLimit(`ptlogin:${tenant.id}:${login}`, 10, 15 * 60_000))) {
     return { ok: false, reason: "rate_limited" };
   }
   const found = login

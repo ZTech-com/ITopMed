@@ -82,7 +82,7 @@ export default async function IntegrationsPage({ params, searchParams }: { param
             <Link
               key={st || "all"}
               href={st ? `${base}?status=${st}` : base}
-              className={`rounded-full px-3 py-1 text-[13px] ${(sp.status ?? "") === st ? "bg-accent text-white" : "bg-sunken text-text-2"}`}
+              className={`rounded-full px-3 py-1 text-[13px] ${(sp.status ?? "") === st ? "bg-accent-solid text-white" : "bg-sunken text-text-2"}`}
             >
               {st ? `${t(`notificationStatus.${st}`)} · ${log.counts[st] ?? 0}` : t("clinic.integrations.all")}
             </Link>

@@ -1,12 +1,19 @@
 import "server-only";
+import { withAppContext } from "../db";
+import { env } from "../env";
+import { logger } from "../logger";
+import { sha256Hex } from "./crypto";
 
 /**
  * Fixed-window rate limiter.
  *
- * PROTOTYPE LIMITATION: this store is in-process memory, so limits are per
- * application instance. Before running more than one instance, replace the
- * store with Redis (see docs/ARCHITECTURE.md §Rate limiting). Account lockout
- * in the database remains the authoritative brute-force control.
+ *  - database (default): counters live in PostgreSQL (UNLOGGED table,
+ *    atomic rate_limit_hit()), so limits hold across every app instance.
+ *    Keys are SHA-256 hashed before they leave the process.
+ *  - memory: per-process counters, for special set-ups only.
+ *
+ * Fails CLOSED: if the store cannot be reached the attempt is refused.
+ * Account lockout in the database remains the authoritative brute-force control.
  */
 export interface RateLimitStore {
   hit(key: string, windowMs: number): Promise<number>;
@@ -30,10 +37,23 @@ class MemoryStore implements RateLimitStore {
   }
 }
 
-const globalStore = globalThis as unknown as { __itmRateLimit?: RateLimitStore };
-const store: RateLimitStore = (globalStore.__itmRateLimit ??= new MemoryStore());
+class DatabaseStore implements RateLimitStore {
+  async hit(key: string, windowMs: number) {
+    const rows = await withAppContext({}, (tx) => tx.$queryRaw<{ count: number }[]>`SELECT rate_limit_hit(${sha256Hex(key)}, ${windowMs}::int) AS count`);
+    return Number(rows[0]?.count ?? Number.MAX_SAFE_INTEGER);
+  }
+}
+
+const g = globalThis as unknown as { __itmRateLimit?: RateLimitStore };
+function store(): RateLimitStore {
+  return (g.__itmRateLimit ??= env().RATE_LIMIT_STORE === "memory" ? new MemoryStore() : new DatabaseStore());
+}
 
 export async function rateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
-  const count = await store.hit(key, windowMs);
-  return count <= limit;
+  try {
+    return (await store().hit(key, windowMs)) <= limit;
+  } catch (e) {
+    logger.error("rate_limit.store_failed", { error: e instanceof Error ? e.name : "unknown" });
+    return false;
+  }
 }

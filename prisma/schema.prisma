@@ -1763,3 +1763,18 @@ model DentalChartEntry {
 
   @@index([tenantId, patientId, tooth, recordedAt])
 }
+
+// ───────────── Rate limiting (Phase 9) ─────────────
+
+/// Shared fixed-window counters for all app instances. UNLOGGED (see
+/// migration): fast, and losing counters on a crash is acceptable. Keys are
+/// SHA-256 hashes — no emails or IP hashes in clear. Accessed only through
+/// rate_limit_hit(); no table grants.
+model RateLimitBucket {
+  key         String   @id
+  windowEndAt DateTime
+  count       Int
+
+  @@index([windowEndAt])
+  @@ignore
+}

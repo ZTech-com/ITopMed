@@ -14,7 +14,8 @@ Next.js 16 App Router · React 19 · TypeScript strict · Tailwind v4 · Postgre
 | Create a platform admin | `npm run admin:create -- --email x@y --name "Name" --role SUPER_ADMIN` |
 | Dev server | `npm run dev` → http://localhost:3000/admin/login and /login |
 | Notification worker | `npm run worker` (or `-- --once`); clinics can also "Send due messages now" |
-| Checks (run all after every change) | `npm run lint` · `npm run typecheck` · `npm test` · `npm run i18n:check` · `npm run build` |
+| Encrypted backup / restore drill | `npm run backup` · `npm run backup:verify -- <file>` (see docs/DEPLOYMENT.md) |
+| Checks (run all after every change) | `npm run lint` · `npm run typecheck` · `npm test` · `npm run i18n:check` · `npm run build` — read each exit code; never pipe a check into `tail`/`grep` when judging pass/fail |
 
 Tests boot their own throw-away PostgreSQL on port 54339 and apply the real migrations.
 
@@ -26,15 +27,16 @@ Tests boot their own throw-away PostgreSQL on port 54339 and apply the real migr
    - Page loaders must use helpers whose permissions match every role that can open the page (e.g. `listOperationalBranches`, not the admin-only `listBranches`).
 3. **Patient portal data only through `withPortal()`** (role `itopmed_portal`). Its policies derive the patient from the session hash in PostgreSQL; every new table a patient may see needs explicit column grants and `portal_*` policies, and clinical notes/diagnoses are never granted to it. Use explicit `select`s and `updateMany`/`createMany` there (column grants break Prisma's `RETURNING *`).
 4. **Clinical tables are never granted to `itopmed_platform`.** Platform staff do not read medical records. Break-glass access goes through `SupportAccessGrant` (clinic approval, time-limited, audited).
-5. **Authorization on the server, every time:** pages call `requirePlatform()` / `requireClinic(slug, permission)` / `requirePatient(slug)`; services re-check permissions. Deny by default. UI hiding is cosmetic.
+5. **Authorization on the server, every time:** pages call `requirePlatform()` / `requireClinic(slug, permission)` / `requirePatient(slug)`; services re-check permissions. Deny by default. UI hiding is cosmetic. `tests/authz-sweep.test.ts` enforces this for every page, action and route; never widen its public allowlist without a reason.
 6. **Audit** every security-relevant or clinical action with `recordAudit()` inside the same transaction. Audit metadata must never contain clinical content, secrets or tokens.
 7. **No PHI in logs, URLs, emails, notifications, analytics or error trackers.** Use IDs, not content. Use `logger` (redacting), never `console.log` in app code.
-8. **No hard-coded UI text.** Add keys to all four catalogs in `messages/` (`uz-Latn` default, `uz-Cyrl`, `ru`, `en`). Clinical record content is never machine-translated.
-9. **Never** store plaintext passwords/tokens, email passwords, commit secrets, or use real patient data (tests, screenshots, prompts). Synthetic data only (`*.test` domains).
-10. **Timestamps are UTC** (`timestamp(3)` columns; DB timezone pinned to UTC). Use `now() AT TIME ZONE 'UTC'` in raw SQL.
-11. **One transaction = one connection.** Never `Promise.all` queries on the same `tx`; use `sequential([...])` from `src/server/db.ts` (Prisma queries are lazy, so they run in order).
-12. **Modules.** A permission that belongs to an optional module must be listed in `MODULE_PERMISSIONS` (`src/server/modules/catalog.ts`); features without their own permission (e.g. the dental chart) check `ctx.modules.has(...)` in the service.
-13. **Be honest about status.** Mark simulated/prototype functionality as such (e.g. `dev-mailbox` email and `dev-outbox` SMS transports, the Integrations status page, modules with `status: "planned"`). Don't call a feature done without tests.
+8. **Accessible by default (WCAG 2.1 AA).** Text and UI states use the colour tokens (raw hex only for brand artwork such as the logo gradient); white text only on `*-solid` fills; scroll containers must be keyboard-focusable; icon-only controls need accessible names.
+9. **No hard-coded UI text.** Add keys to all four catalogs in `messages/` (`uz-Latn` default, `uz-Cyrl`, `ru`, `en`). Clinical record content is never machine-translated.
+10. **Never** store plaintext passwords/tokens, email passwords, commit secrets, or use real patient data (tests, screenshots, prompts). Synthetic data only (`*.test` domains).
+11. **Timestamps are UTC** (`timestamp(3)` columns; DB timezone pinned to UTC). Use `now() AT TIME ZONE 'UTC'` in raw SQL.
+12. **One transaction = one connection.** Never `Promise.all` queries on the same `tx`; use `sequential([...])` from `src/server/db.ts` (Prisma queries are lazy, so they run in order).
+13. **Modules.** A permission that belongs to an optional module must be listed in `MODULE_PERMISSIONS` (`src/server/modules/catalog.ts`); features without their own permission (e.g. the dental chart) check `ctx.modules.has(...)` in the service.
+14. **Be honest about status.** Mark simulated/prototype functionality as such (e.g. `dev-mailbox` email and `dev-outbox` SMS transports, the Integrations status page, modules with `status: "planned"`). Don't call a feature done without tests.
 
 ## Layout
 - `prisma/schema.prisma`, `prisma/migrations/*` (RLS/grants/audit SQL lives in migrations)

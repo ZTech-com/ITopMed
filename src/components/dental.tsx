@@ -11,13 +11,13 @@ const STYLE: Record<string, string> = {
   CARIES: "border-danger bg-danger-soft text-danger",
   FILLED: "border-accent bg-accent-soft text-accent",
   CROWN: "border-warning bg-warning-soft text-warning",
-  ROOT_CANAL: "border-accent bg-accent text-white",
+  ROOT_CANAL: "border-accent bg-accent-solid text-white",
   IMPLANT: "border-text-2 bg-sunken text-text",
   MISSING: "border-dashed border-border-strong bg-transparent text-text-3 line-through",
-  TO_EXTRACT: "border-danger bg-danger text-white",
+  TO_EXTRACT: "border-danger bg-danger-solid text-white",
 };
 
-function Tooth({ n, state, href, selected }: { n: number; state?: ToothState; href?: string; selected?: boolean }) {
+function Tooth({ n, state, href, selected, description }: { n: number; state?: ToothState; href?: string; selected?: boolean; description?: string }) {
   const cls = cx(
     "flex h-14 w-full min-w-0 flex-col items-center justify-center rounded-[8px] border text-[11px] font-semibold tabular-nums transition-colors",
     state ? STYLE[state.condition] : "border-border bg-surface text-text-2",
@@ -26,11 +26,15 @@ function Tooth({ n, state, href, selected }: { n: number; state?: ToothState; hr
   const body = (
     <>
       <span>{n}</span>
-      <span className="text-[10px] font-medium">{state ? <Abbr c={state.condition} surfaces={state.surfaces} /> : "·"}</span>
+      <span className="text-[10px] font-medium" aria-hidden={!state}>
+        {state ? <Abbr c={state.condition} surfaces={state.surfaces} /> : "·"}
+      </span>
+      {/* Screen readers hear the full condition after the visible code. */}
+      {description ? <span className="sr-only">{description}</span> : null}
     </>
   );
   return href ? (
-    <Link href={href} scroll={false} className={cls} aria-label={String(n)}>
+    <Link href={href} scroll={false} className={cls} aria-current={selected ? "true" : undefined}>
       {body}
     </Link>
   ) : (
@@ -43,7 +47,7 @@ async function Abbr({ c, surfaces }: { c: string; surfaces: string[] }) {
   return (
     <>
       {t(`toothAbbr.${c}` as never)}
-      {surfaces.length ? <span className="ml-0.5 font-normal opacity-80">{surfaces.join("")}</span> : null}
+      {surfaces.length ? <span className="ml-0.5 font-normal">{surfaces.join("")}</span> : null}
     </>
   );
 }
@@ -71,7 +75,14 @@ export async function DentalChart({
   const row = (teeth: readonly number[]) => (
     <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${cols}, minmax(34px, 1fr))` }}>
       {teeth.map((n) => (
-        <Tooth key={n} n={n} state={current[n]} href={toothHref?.(n)} selected={selected === n} />
+        <Tooth
+          key={n}
+          n={n}
+          state={current[n]}
+          href={toothHref?.(n)}
+          selected={selected === n}
+          description={current[n] ? `, ${t(`toothCondition.${current[n].condition}` as never)}${current[n].surfaces.length ? ` (${current[n].surfaces.map((x) => t(`toothSurface.${x}` as never)).join(", ")})` : ""}` : `, ${t("dental.notRecorded")}`}
+        />
       ))}
     </div>
   );
@@ -85,7 +96,8 @@ export async function DentalChart({
           </Link>
         ) : null}
       </div>
-      <div className="overflow-x-auto pb-1">
+      {/* Focusable so keyboard users can scroll the chart on narrow screens. */}
+      <div className="overflow-x-auto pb-1" tabIndex={0} role="group" aria-label={t("dental.title")}>
         <div className="min-w-[560px] space-y-2">
           <p className="text-center text-[11px] uppercase tracking-[0.06em] text-text-3">{t("dental.upper")}</p>
           {row(rows.upper)}

@@ -28,7 +28,8 @@ async function pass() {
       logger.error("worker.tenant_failed", { tenantId: t.id, error: e instanceof Error ? e.name : "unknown" });
     }
   }
-  logger.info("worker.pass", { tenants: tenants.length, sent, failed, skipped });
+  const swept = (await platformDb().$queryRaw<{ n: number }[]>`SELECT rate_limit_sweep() AS n`)[0]?.n ?? 0;
+  logger.info("worker.pass", { tenants: tenants.length, sent, failed, skipped, rateLimitBucketsSwept: swept });
 }
 
 async function main() {

@@ -14,7 +14,7 @@ export function MobileTabBar({ items, label }: { items: NavItem[]; label: string
   const pathname = usePathname();
   if (items.length < 2) return null;
   return (
-    <nav aria-label={label} className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-sidebar pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
+    <nav aria-label={label} className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">
       <ul className="mx-auto grid max-w-xl" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map((item) => {
           const active = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/");

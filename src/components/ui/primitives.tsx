@@ -12,10 +12,10 @@ type Size = "sm" | "md" | "lg";
 const base =
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-control)] font-medium transition-[background,box-shadow,color,transform] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 select-none";
 const variants: Record<Variant, string> = {
-  primary: "bg-accent text-on-accent hover:bg-accent-hover shadow-sm",
+  primary: "bg-accent-solid text-on-accent hover:bg-accent-solid-hover shadow-sm",
   secondary: "bg-surface text-text border border-border-strong hover:bg-surface-2",
   ghost: "text-text-2 hover:bg-sunken hover:text-text",
-  danger: "bg-danger text-white hover:opacity-90",
+  danger: "bg-danger-solid text-white hover:opacity-90",
 };
 const sizes: Record<Size, string> = {
   sm: "h-8 px-3 text-[13px]",
@@ -169,7 +169,8 @@ export function Stat({ label, value, hint, icon }: { label: ReactNode; value: Re
 /** Responsive table: scrolls horizontally inside its card on narrow screens. */
 export function Table({ children, caption }: { children: ReactNode; caption?: string }) {
   return (
-    <div className="overflow-x-auto">
+    // Focusable so keyboard users can scroll wide tables on narrow screens (WCAG 2.1.1).
+    <div className="overflow-x-auto" tabIndex={0} role={caption ? "region" : undefined} aria-label={caption}>
       <table className="w-full min-w-[640px] border-collapse text-left text-[14px]">
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         {children}

@@ -1844,7 +1844,8 @@
     "record": "Ёзиш",
     "recorded": "Тиш формуласига ёзилди.",
     "history": "Тарих",
-    "noEntries": "Тиш формуласида ҳали ёзув йўқ."
+    "noEntries": "Тиш формуласида ҳали ёзув йўқ.",
+    "notRecorded": "ёзув йўқ"
   },
   "toothCondition": {
     "HEALTHY": "Соғлом",

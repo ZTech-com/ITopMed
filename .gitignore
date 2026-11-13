@@ -13,3 +13,6 @@ next-env.d.ts
 .data/
 playwright-report/
 test-results/
+# Encrypted database backups (never commit)
+backups/
+*.itmbk

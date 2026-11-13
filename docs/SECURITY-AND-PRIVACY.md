@@ -10,7 +10,7 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 | Platform role cannot read password hashes, MFA secrets, sessions (and future clinical tables) | ✅ | column-level grants |
 | Server-side authorization on every page/action/service | ✅ | `auth/guards.ts`, service checks |
 | argon2id password hashing, password policy | ✅ | `security/password.ts` |
-| Account lockout + rate limiting | 🟡 | DB lockout ✅; rate limit in-memory (Redis ⏳) |
+| Account lockout + rate limiting | ✅ | DB lockout; rate limits shared across instances in PostgreSQL, hashed keys, fail closed (Phase 9) |
 | MFA (TOTP) for platform staff and privileged clinic roles | ✅ | `platform-auth.ts`, `clinic-auth.ts` |
 | Session expiry (absolute + idle), revocation, rotation after MFA | ✅ | |
 | HttpOnly, Secure, SameSite cookies, `__Host-` prefix in production | ✅ | `auth/cookies.ts` |
@@ -49,6 +49,10 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 | Module enforcement: permissions of a disabled module are removed when the clinic context is resolved, so pages, actions and services deny by default; the patient portal and its sessions stop when its module is off | ✅ | `modules/catalog.ts`, `auth/clinic-auth.ts`; tested |
 | Owner self-assignment of doctor / front-desk roles only through the setup assistant (owner only, explicit choice, audited `clinic.owner_clinical_role` / `clinic.owner_front_desk_role`); clinical access still requires a care relationship | ✅ | `clinic/practice.ts`; tested |
 | Dental chart: append-only, treating doctor in an open visit only, no platform or portal grants | ✅ | migration `practice_profiles_dental`; tested |
+| Automated authorization sweep: every page, server action and route handler must call a server-side guard; public entry points are an explicit, minimal allowlist (negative control verified) | ✅ | `tests/authz-sweep.test.ts` |
+| Security headers tested (nonce CSP per request, frame-ancestors none, nosniff, no-referrer, permissions policy, no-store on pages, no x-powered-by) | ✅ | `tests/security-hardening.test.ts` |
+| Encrypted backups (AES-256-GCM, separate key) with an automated restore drill that re-verifies every audit chain | ✅ | `scripts/lib/backup.ts`, `tests/backup.test.ts` |
+| Dependency audit | 🟡 | production dependencies: 0 known vulnerabilities (2026-11-13). Dev-only: 7 moderate (minimatch ReDoS via typescript-eslint's lint tooling; no fixed release yet; only reachable through our own lint globs) — accepted, re-check monthly |
 | Patient MFA / SMS one-time codes | ⏳ | needs the SMS provider (Phase 8d) |
 | Protected document storage + short-lived URLs | ⏳ | Phase 6 |
 | Encrypted backups, PITR, tested restores | ⏳ | infrastructure, Phase 9 |

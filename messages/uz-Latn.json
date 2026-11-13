@@ -1844,7 +1844,8 @@
     "record": "Yozish",
     "recorded": "Tish formulasiga yozildi.",
     "history": "Tarix",
-    "noEntries": "Tish formulasida hali yozuv yoʻq."
+    "noEntries": "Tish formulasida hali yozuv yoʻq.",
+    "notRecorded": "yozuv yoʻq"
   },
   "toothCondition": {
     "HEALTHY": "Sogʻlom",

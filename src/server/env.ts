@@ -19,6 +19,8 @@ const schema = z.object({
   EMAIL_FROM: z.string().default("ITop Med <no-reply@itopmed.example>"),
   /** "none" = SMS channel off. "dev-outbox" = SIMULATED (writes files locally). No real SMS provider is connected yet. */
   SMS_TRANSPORT: z.enum(["none", "dev-outbox"]).default("none"),
+  /** "database" (default): shared across instances. "memory": per process. */
+  RATE_LIMIT_STORE: z.enum(["database", "memory"]).default("database"),
 });
 
 export type Env = z.infer<typeof schema>;
