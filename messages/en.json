@@ -106,7 +106,9 @@
     "recoveryCode": "Recovery code",
     "recoveryNoCodes": "No codes left? Ask your administrator to reset your two-step verification.",
     "recoveryInvalid": "This recovery code is not valid or has already been used.",
-    "staffActivated": "Your account is active. Sign in and set up two-step verification."
+    "staffActivated": "Your account is active. Sign in and set up two-step verification.",
+    "mfaCodeHint": "Not your password: the 6-digit number shown in the authenticator app. It changes every 30 seconds.",
+    "mfaGetApp": "No app yet? Install Google Authenticator (free):"
   },
   "invite": {
     "title": "Activate your account",
@@ -1967,7 +1969,9 @@
     "download": "Download .txt",
     "generate": "Create recovery codes",
     "regenerate": "Create a new set",
-    "continue": "Continue"
+    "continue": "Continue",
+    "exemptNotice": "Two-step verification is switched off for this account by the owner's setting (MFA_EXEMPT_EMAILS). The password alone opens it, so keep the password secret and long. Every sign-in is recorded in the audit log.",
+    "mfaExempt": "Off (owner exception)"
   },
   "staffInvite": {
     "title": "Join the ITop Med console",

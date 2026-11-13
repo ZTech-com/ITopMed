@@ -4,6 +4,7 @@ import { recordAudit } from "../audit";
 import { isPermission, type Permission } from "../authz/permissions";
 import { MODULES, applyModules } from "../modules/catalog";
 import { setContext, withAppContext, type Tx } from "../db";
+import { isMfaExempt } from "../env";
 import { DomainError } from "../errors";
 import { hashIp, randomToken, sha256Hex, uuidv7 } from "../security/crypto";
 import { verifyPassword } from "../security/password";
@@ -61,6 +62,8 @@ export async function loginClinicUser(emailRaw: string, password: string, meta: 
   }
 
   const token = randomToken();
+  // Owner-made exception (MFA_EXEMPT_EMAILS): the password alone completes sign-in, and the audit says so.
+  const exempt = isMfaExempt(email);
   const locale = await withAppContext({ userId: user.id }, async (tx) => {
     const u = await tx.user.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() } });
     await tx.session.create({
@@ -68,11 +71,12 @@ export async function loginClinicUser(emailRaw: string, password: string, meta: 
         id: sha256Hex(token),
         userId: user.id,
         expiresAt: new Date(Date.now() + CLINIC_SESSION_ABSOLUTE_MS),
+        mfaVerifiedAt: exempt ? new Date() : null,
         ipHash,
         userAgent: meta.userAgent?.slice(0, 256),
       },
     });
-    await recordAudit(tx, { actorType: "USER", actorId: user.id, action: "clinic.login.password", ipHash, userAgent: meta.userAgent });
+    await recordAudit(tx, { actorType: "USER", actorId: user.id, action: "clinic.login.password", ipHash, userAgent: meta.userAgent, ...(exempt ? { metadata: { mfaExempt: true } } : {}) });
     return u.locale;
   });
   return { ok: true, token, locale };

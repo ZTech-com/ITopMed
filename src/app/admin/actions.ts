@@ -46,7 +46,7 @@ export async function adminLoginAction(_: FormState, fd: FormData): Promise<Form
   const r = await loginPlatformUser(parsed.data.email, parsed.data.password, await requestMeta());
   if (!r.ok) return { message: `auth.${r.reason === "rate_limited" ? "rateLimited" : r.reason}`, values: { email: parsed.data.email } };
   await setAdminSessionCookie(r.token);
-  redirect("/admin/mfa");
+  redirect(r.mfaExempt ? "/admin" : "/admin/mfa");
 }
 
 export async function adminMfaAction(_: FormState, fd: FormData): Promise<FormState> {

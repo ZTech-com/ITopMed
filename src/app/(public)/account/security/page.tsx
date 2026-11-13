@@ -5,6 +5,7 @@ import { Alert, ButtonLink } from "@/components/ui/primitives";
 import { safeNext } from "@/lib/safe-next";
 import { clinicRecoveryCodeStatus } from "@/server/auth/clinic-auth";
 import { requireClinicUser } from "@/server/auth/guards";
+import { isMfaExempt } from "@/server/env";
 import { generateClinicRecoveryCodesAction } from "../../../clinic-actions";
 
 /** Account-level security for clinic staff (the account may belong to several clinics). */
@@ -19,7 +20,7 @@ export default async function AccountSecurityPage({ searchParams }: { searchPara
     <AuthLayout title={t("title")} subtitle={p.user.email}>
       <div className="space-y-5">
         {!enrolled ? (
-          <Alert tone="neutral">{t("mfaOffClinic")}</Alert>
+          <Alert tone={isMfaExempt(p.user.email) ? "warning" : "neutral"}>{isMfaExempt(p.user.email) ? t("exemptNotice") : t("mfaOffClinic")}</Alert>
         ) : (
           <>
             {sp.setup && !status!.issued ? <Alert tone="warning">{t("setupPrompt")}</Alert> : null}

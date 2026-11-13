@@ -13,6 +13,7 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 | Account lockout + rate limiting | ✅ | DB lockout; rate limits shared across instances in PostgreSQL, hashed keys, fail closed (Phase 9) |
 | MFA (TOTP) for platform staff and privileged clinic roles | ✅ | `platform-auth.ts`, `clinic-auth.ts` |
 | Session expiry (absolute + idle), revocation, rotation after MFA | ✅ | |
+| Owner exception `MFA_EXEMPT_EMAILS` (password-only sign-in for listed accounts; empty by default; audited with `mfaExempt`, warning on the security page). Weakens those accounts — use only for the owner and never for shared accounts | ⚠️ configurable | `env.ts`, `tests/mfa-exempt.test.ts` |
 | MFA recovery codes (10 × 80-bit, shown once, SHA-256 bound to the account, single use, share the TOTP attempt limit) | ✅ | `security/recovery-codes.ts`; `tests/mfa-recovery.test.ts` |
 | Administrator MFA reset after out-of-band identity check: removes secret + codes and ends every session; clinic resets limited to accounts of that clinic only, re-checked by `app_reset_member_mfa()` in PostgreSQL | ✅ | `platform-auth.ts`, `clinic/members.ts` |
 | Platform staff invitations: single-use 48 h token (hash stored), SUPER_ADMIN only, MFA enrolment forced at first sign-in | ✅ | `platform/staff.ts` |

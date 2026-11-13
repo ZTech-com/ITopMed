@@ -2,6 +2,7 @@ import "server-only";
 import { recordAudit } from "../audit";
 import { platformCan } from "../authz/platform";
 import { platformDb, withPlatform, type Tx } from "../db";
+import { isMfaExempt } from "../env";
 import { DomainError } from "../errors";
 import { hashIp, randomToken, sha256Hex, uuidv7 } from "../security/crypto";
 import { hashPassword, verifyPassword } from "../security/password";
@@ -22,7 +23,7 @@ export interface RequestMeta {
 }
 
 export type LoginResult =
-  | { ok: true; token: string; mfaEnrolled: boolean }
+  | { ok: true; token: string; mfaEnrolled: boolean; mfaExempt: boolean }
   | { ok: false; reason: "invalid" | "locked" | "rate_limited" };
 
 export async function loginPlatformUser(emailRaw: string, password: string, meta: RequestMeta): Promise<LoginResult> {
@@ -66,20 +67,23 @@ export async function loginPlatformUser(emailRaw: string, password: string, meta
   }
 
   const token = randomToken();
+  // Owner-made exception (MFA_EXEMPT_EMAILS): the password alone completes sign-in, and the audit says so.
+  const exempt = isMfaExempt(user.email);
   await withPlatform(async (tx) => {
-    await tx.platformUser.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null } });
+    await tx.platformUser.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null, ...(exempt ? { lastLoginAt: now } : {}) } });
     await tx.platformSession.create({
       data: {
         id: sha256Hex(token),
         platformUserId: user.id,
         expiresAt: new Date(now.getTime() + PLATFORM_SESSION_ABSOLUTE_MS),
+        mfaVerifiedAt: exempt ? now : null,
         ipHash,
         userAgent: meta.userAgent?.slice(0, 256),
       },
     });
-    await recordAudit(tx, { actorType: "PLATFORM_USER", actorId: user.id, action: "platform.login.password", ipHash, userAgent: meta.userAgent });
+    await recordAudit(tx, { actorType: "PLATFORM_USER", actorId: user.id, action: "platform.login.password", ipHash, userAgent: meta.userAgent, ...(exempt ? { metadata: { mfaExempt: true } } : {}) });
   });
-  return { ok: true, token, mfaEnrolled: Boolean(user.mfaEnabledAt) };
+  return { ok: true, token, mfaEnrolled: Boolean(user.mfaEnabledAt), mfaExempt: exempt };
 }
 
 export interface PlatformPrincipal {

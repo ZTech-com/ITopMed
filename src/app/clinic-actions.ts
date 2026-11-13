@@ -46,7 +46,7 @@ export async function clinicLoginAction(_: FormState, fd: FormData): Promise<For
   await setClinicSessionCookie(r.token);
   const p = await applyLocale(r.token);
   const next = safeNext(fd.get("next"));
-  if (p?.mfaRequired) redirect(next ? `/mfa?next=${encodeURIComponent(next)}` : "/mfa");
+  if (p?.mfaRequired && !p.mfaVerified) redirect(next ? `/mfa?next=${encodeURIComponent(next)}` : "/mfa");
   redirect(next ?? "/clinics");
 }
 

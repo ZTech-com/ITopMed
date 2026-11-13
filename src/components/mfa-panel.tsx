@@ -22,8 +22,18 @@ export async function MfaPanel({
     <div className="space-y-6">
       {enrollment && qr ? (
         <ol className="space-y-5 text-[14px] text-text-2">
-          <li>
+          <li className="space-y-2">
             <p>{t("mfaEnrollIntro")}</p>
+            <p>
+              <span className="font-semibold text-text">0.</span> {t("mfaGetApp")}{" "}
+              <a className="text-accent underline-offset-2 hover:underline" href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank" rel="noopener noreferrer">
+                Android
+              </a>
+              {" · "}
+              <a className="text-accent underline-offset-2 hover:underline" href="https://apps.apple.com/app/google-authenticator/id388497605" target="_blank" rel="noopener noreferrer">
+                iPhone
+              </a>
+            </p>
           </li>
           <li className="space-y-3">
             <p>
@@ -49,7 +59,7 @@ export async function MfaPanel({
         {Object.entries(hidden ?? {}).map(([k, v]) => (
           <input key={k} type="hidden" name={k} value={v} />
         ))}
-        <TextField name="code" label={t("mfaCode")} inputMode="numeric" autoComplete="one-time-code" placeholder="000000" required autoFocus />
+        <TextField name="code" label={t("mfaCode")} hint={t("mfaCodeHint")} inputMode="numeric" autoComplete="one-time-code" placeholder="000000" required autoFocus />
         <SubmitButton full>{t("verify")}</SubmitButton>
       </Form>
       {!enrollment && recoveryAction ? (

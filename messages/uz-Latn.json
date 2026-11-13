@@ -106,7 +106,9 @@
     "recoveryCode": "Tiklash kodi",
     "recoveryNoCodes": "Kodlar qolmadimi? Administratordan ikki bosqichli tekshiruvni qayta o'rnatishni so'rang.",
     "recoveryInvalid": "Bu tiklash kodi noto'g'ri yoki allaqachon ishlatilgan.",
-    "staffActivated": "Hisobingiz faollashtirildi. Tizimga kiring va ikki bosqichli tekshiruvni sozlang."
+    "staffActivated": "Hisobingiz faollashtirildi. Tizimga kiring va ikki bosqichli tekshiruvni sozlang.",
+    "mfaCodeHint": "Bu parol emas: autentifikator ilovasida ko'rinadigan 6 xonali raqam. U har 30 soniyada yangilanadi.",
+    "mfaGetApp": "Ilova hali yo'qmi? Google Authenticator'ni o'rnating (bepul):"
   },
   "invite": {
     "title": "Hisobni faollashtirish",
@@ -1967,7 +1969,9 @@
     "download": ".txt yuklab olish",
     "generate": "Tiklash kodlarini yaratish",
     "regenerate": "Yangi to'plam yaratish",
-    "continue": "Davom etish"
+    "continue": "Davom etish",
+    "exemptNotice": "Egasining sozlamasi (MFA_EXEMPT_EMAILS) bilan bu hisob uchun ikki bosqichli tekshiruv o'chirilgan. Hisob faqat parol bilan ochiladi, shuning uchun parolni sir va uzun saqlang. Har bir kirish audit jurnaliga yoziladi.",
+    "mfaExempt": "O'chirilgan (egasi istisnosi)"
   },
   "staffInvite": {
     "title": "ITop Med konsoliga qo'shilish",

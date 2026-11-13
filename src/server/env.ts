@@ -27,6 +27,12 @@ const schema = z.object({
    * server is configured. Never set this on an internet-facing deployment.
    */
   LOCAL_MODE: z.enum(["0", "1"]).default("0"),
+  /**
+   * Comma-separated emails that sign in with the password alone (no TOTP step).
+   * An explicit, owner-made exception — weaker protection for those accounts.
+   * Every such sign-in is audited with `mfaExempt: true`. Empty = nobody.
+   */
+  MFA_EXEMPT_EMAILS: z.string().default(""),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -52,3 +58,12 @@ export function env(): Env {
 }
 
 export const isProduction = () => env().NODE_ENV === "production";
+
+/** True when the owner listed this account in MFA_EXEMPT_EMAILS (see .env.example). */
+export function isMfaExempt(email: string): boolean {
+  const list = env()
+    .MFA_EXEMPT_EMAILS.split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(email.trim().toLowerCase());
+}

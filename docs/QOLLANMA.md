@@ -165,6 +165,9 @@ Boshqa yo'nalishlar uchun ham tayyor xizmatlar to'plami bor: pediatriya, ginekol
 
 ---
 
+### 5.3. Kodsiz kirish (faqat tanlangan hisoblar uchun)
+`.env` faylidagi `MFA_EXEMPT_EMAILS=` qatoriga yozilgan emaillar 6 xonali kodsiz, **faqat parol bilan** kiradi (platforma ham, klinika ham). Bu egasining ongli istisnosi: shu hisoblarning himoyasi kuchsizroq. Shuning uchun parol uzun va sir bo'lsin. Har bir bunday kirish audit jurnalida `mfaExempt` belgisi bilan yoziladi va hisob xavfsizligi sahifasida ogohlantirish ko'rinadi. O'zgartirgandan keyin `npm run local` (yoki `npm run dev`) ni qayta ishga tushiring.
+
 ## 6. Kundalik ish (rollar bo'yicha)
 
 | Rol | Kundalik ish |
