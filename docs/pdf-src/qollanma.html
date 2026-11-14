@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>ITop Med — Egasi uchun to'liq qo'llanma</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<section class="page cover">
+  <div class="brand"><div class="logo">+</div>ITop Med</div>
+  <div>
+    <div class="eyebrow">Loyiha egasi uchun</div>
+    <h1>To'liq qo'llanma:<br>0 dan 100% gacha</h1>
+    <p class="lead">Tizimda nima bor, uni qanday o'rnatish, ishga tushirish, boshqarish, kundalik ishlatish, o'zingizga kerakli narsalarni yaratish va xavfsiz saqlash.</p>
+  </div>
+  <div class="band"><p><strong>Qisqa yo'l:</strong> ish stolidagi "ITop Med" yorlig'ini ikki marta bosing → kiring → chap menyudagi "Nazorat markazi". Qolgani — shu qo'llanmada.</p></div>
+  <p class="small muted">Versiya: 2026-yil noyabr · Skrinshotlar sintetik ma'lumotlar bilan · Texnik tafsilotlar: docs/ARCHITECTURE.md, docs/SECURITY-AND-PRIVACY.md, docs/DEPLOYMENT.md</p>
+</section>
+
+<section class="page">
+  <h2>Mundarija</h2>
+  <ol class="toc">
+    <li><span>1. ITop Med nima va kim uchun</span><span>3</span></li>
+    <li><span>2. Uch daraja: platforma, klinika, bemor portali</span><span>3</span></li>
+    <li><span>3. Bo'limlar va rollar</span><span>4</span></li>
+    <li><span>4. O'rnatish (bir marta)</span><span>5</span></li>
+    <li><span>5. Kompyuterda ilova sifatida ishga tushirish</span><span>6</span></li>
+    <li><span>6. Klinikaning butun tarmog'ida, hamma qurilmada</span><span>7</span></li>
+    <li><span>7. Birinchi kun: platformadan klinikagacha</span><span>8</span></li>
+    <li><span>8. Kundalik ish rollar bo'yicha</span><span>9</span></li>
+    <li><span>9. Bemor yo'li: ro'yxatdan to'lovgacha</span><span>10</span></li>
+    <li><span>10. Nazorat markazi va nazorat qoidalari</span><span>12</span></li>
+    <li><span>11. Shablonlar: keraklisini o'zingiz yarating</span><span>13</span></li>
+    <li><span>12. Bemor portali, onlayn yozilish, Telegram</span><span>15</span></li>
+    <li><span>13. Platformani boshqarish (siz)</span><span>16</span></li>
+    <li><span>14. Xavfsizlik va kirish</span><span>17</span></li>
+    <li><span>15. Zaxira nusxa va yangilash</span><span>18</span></li>
+    <li><span>16. Muammolar va yechimlar</span><span>18</span></li>
+    <li><span>17. Halol holat: nima tayyor, nima hali yo'q</span><span>19</span></li>
+    <li><span>18. Buyruqlar ro'yxati</span><span>20</span></li>
+  </ol>
+</section>
+
+<section class="page">
+  <h2>1. ITop Med nima va kim uchun</h2>
+  <p>ITop Med — klinikalarni boshqarish tizimi. <strong>Bitta dastur hamma uchun:</strong> keraksiz bo'limlar ko'rinmaydi, kerak bo'lsa keyin yoqiladi.</p>
+  <table>
+    <tr><th>Kim</th><th>Misol</th><th>Tizim nimani yoqadi</th></tr>
+    <tr><td>Xususiy kabinet</td><td>1 kardiolog, ehtimol 1 administrator</td><td>Bemorlar, qabul, tibbiy yozuv, retsept, to'lov, hisobot, bemor portali</td></tr>
+    <tr><td>Stomatologiya</td><td>Tish klinikasi</td><td>+ tish formulasi, stomatologik xizmatlar, ombor</td></tr>
+    <tr><td>Diagnostika / laboratoriya</td><td>Tahlil markazi</td><td>+ laboratoriya, ombor</td></tr>
+    <tr><td>Ko'p tarmoqli klinika</td><td>Ko'p shifokor, bir nechta filial</td><td>Hamma bo'limlar, kadrlar, filiallar</td></tr>
+  </table>
+  <p><strong>Tillar:</strong> o'zbekcha (lotin), o'zbekcha (kirill), ruscha, inglizcha — har bir foydalanuvchi o'zi tanlaydi. <strong>Qurilmalar:</strong> kompyuter, planshet, telefon; ilova sifatida o'rnatiladi.</p>
+
+  <h2 style="margin-top:8mm">2. Uch daraja</h2>
+  <div class="grid3">
+    <div class="card accent"><h3>Platforma — siz</h3><p><code>/admin</code><br>Klinikalarni yaratasiz, tariflar va bo'limlarni boshqarasiz, o'z jamoangiz, audit. <strong>Bemorlarning tibbiy ma'lumotini ko'ra olmaysiz</strong> — baza darajasida bloklangan.</p></div>
+    <div class="card accent"><h3>Klinika</h3><p><code>/c/&lt;klinika&gt;</code><br>Klinika egasi va xodimlari ishlaydigan joy. Har bir klinika boshqasidan to'liq ajratilgan.</p></div>
+    <div class="card accent"><h3>Bemor portali</h3><p><code>/p/&lt;klinika&gt;</code><br>Bemor qabullarini, natijalarini, hisoblarini ko'radi va o'zi yoziladi.</p></div>
+  </div>
+  <figure style="margin-top:5mm"><img src="img/dashboard.png" alt="" style="max-height:60mm;object-fit:cover;object-position:top"><figcaption>Klinika bosh sahifasi</figcaption></figure>
+</section>
+
+<section class="page">
+  <h2>3. Bo'limlar va rollar</h2>
+  <table>
+    <tr><th style="width:26%">Bo'lim</th><th>Nima qiladi</th></tr>
+    <tr><td><strong>Bemorlar</strong></td><td>Ro'yxatga olish (karta raqami, JShShIR/pasport), xatolarga chidamli qidiruv, dublikatlardan himoya, roziliklar</td></tr>
+    <tr><td><strong>Qabulga yozish, Navbat</strong></td><td>Shifokor jadvali bo'yicha bo'sh vaqtlar; bir vaqtga ikki bemor yozilmaydi; "Keldi", navbat raqami, navbatsiz kelganlar, ko'chirish</td></tr>
+    <tr><td><strong>Tibbiy yozuvlar</strong></td><td>Shikoyat, anamnez, ko'rik, xulosa, reja; MKB-10 tashxis; allergiya; hayotiy ko'rsatkichlar. Imzolangach o'zgartirilmaydi, faqat qo'shimcha</td></tr>
+    <tr><td><strong>Retseptlar</strong></td><td>Dori, doza, tartib, muddat; allergiya ogohlantirishi; A5 chop etish</td></tr>
+    <tr><td><strong>Shablonlar</strong></td><td>O'zingiz yaratadigan hujjatlar va yozuv shablonlari (11-bo'lim)</td></tr>
+    <tr><td><strong>Laboratoriya, Hamshira posti</strong></td><td>Buyurtma, namuna, natija, norma belgilari, ikki kishilik tasdiq; qon bosimi, puls, harorat</td></tr>
+    <tr><td><strong>Hisob, Kassa, Xarajatlar</strong></td><td>Hisob-faktura, chegirma (qoidalar bilan), to'lov (naqd/karta/o'tkazma — qo'lda), qaytarish, smena, kvitansiya</td></tr>
+    <tr><td><strong>Hisobotlar, Nazorat markazi</strong></td><td>Moliya va ish hisobotlari; egasi uchun bitta sahifada to'liq nazorat</td></tr>
+    <tr><td><strong>Dorixona va ombor</strong></td><td>Partiyalar, yaroqlilik muddati, tarqatish, kam qolganlar</td></tr>
+    <tr><td><strong>Kadrlar</strong></td><td>Xodim profili, litsenziyalar, ta'tillar (ta'tildagi shifokorga yozib bo'lmaydi)</td></tr>
+    <tr><td><strong>Stomatologiya</strong></td><td>Tish formulasi (FDI), har bir tish tarixi</td></tr>
+    <tr><td><strong>Bildirishnomalar</strong></td><td>Eslatma, tasdiq, ko'chirish, natija tayyor — email va Telegram (tibbiy ma'lumotsiz)</td></tr>
+    <tr><td><strong>Rollar, Audit, Xavfsizlik</strong></td><td>O'z rollaringizni yaratish; o'zgartirib bo'lmaydigan jurnal; ikki bosqichli tekshiruv</td></tr>
+  </table>
+  <p><strong>Tayyor rollar:</strong> Klinika egasi, Klinika administratori, Filial rahbari, Registrator, Shifokor, Bosh shifokor, Hamshira, Laboratoriya xodimi, Kassir, Buxgalter, Farmatsevt/ombor, Kadrlar mutaxassisi. Bitta odamga bir nechta rol berish mumkin (masalan, kichik kabinetda ega = shifokor + registrator + kassir).</p>
+</section>
+
+<section class="page">
+  <h2>4. O'rnatish (yangi kompyuterga, bir marta)</h2>
+  <p><strong>Kerak:</strong> Windows 10/11 (yoki macOS/Linux), Node.js 22+ (LTS), Git for Windows (OpenSSL shu bilan keladi). Docker shart emas.</p>
+  <div class="step"><div class="n">1</div><div>Loyihani yuklab olish:<pre>git clone https://github.com/ZTech-com/ITopMed.git
+cd ITopMed
+npm install</pre></div></div>
+  <div class="step"><div class="n">2</div><div>Sozlamalar va kalitlar:<pre>npm run setup</pre><code>.env</code> fayli tasodifiy parollar va shifrlash kalitlari bilan yaratiladi. <strong>Uning nusxasini xavfsiz joyda saqlang</strong> — kalitsiz zaxira nusxani tiklab bo'lmaydi.</div></div>
+  <div class="step"><div class="n">3</div><div>Bazani tayyorlash (birinchi buyruq alohida oynada ishlab tursin):<pre>npm run db:start
+npm run db:migrate
+npm run db:seed</pre></div></div>
+  <div class="step"><div class="n">4</div><div>O'zingizni platforma administratori qilish:<pre>npm run admin:create -- --email siz@pochta.uz --name "Ismingiz" --role SUPER_ADMIN</pre>Parol: kamida 12 belgi, harf va raqam. Keyin <code>db:start</code> oynasini yopishingiz mumkin.</div></div>
+  <div class="step"><div class="n">5</div><div>Ish stoli yorliqlari:<pre>npm run app:shortcut</pre></div></div>
+
+  <h3>Parolsiz-kodsiz kirish (faqat tanlangan hisoblar)</h3>
+  <p><code>.env</code> dagi <code>MFA_EXEMPT_EMAILS=</code> qatoriga yozilgan emaillar 6 xonali kodsiz, faqat parol bilan kiradi. Bu ongli istisno: hisob himoyasi kuchsizroq, shuning uchun parol uzun va sir bo'lsin. Har bir bunday kirish auditda <code>mfaExempt</code> belgisi bilan yoziladi. O'zgartirgandan keyin ilovani qayta ishga tushiring.</p>
+</section>
+
+<section class="page">
+  <h2>5. Kompyuterda ilova sifatida (eng oson yo'l)</h2>
+  <div class="grid2">
+    <div class="card ok"><h3>"ITop Med" yorlig'i</h3><p>Ikki marta bosing: baza, tezkor versiya va bildirishnomalar orqa fonda ishga tushadi va ITop Med alohida oynada ochiladi. Birinchi marta va yangilanishdan keyin 1–3 daqiqa, keyingi safar 20–30 soniya.</p></div>
+    <div class="card"><h3>"ITop Med - to'xtatish"</h3><p>Serverni to'g'ri (bazani buzmasdan) o'chiradi. Terminaldan: <code>npm run app</code> va <code>npm run app:stop</code>. Jurnal: <code>.data/logs/local.log</code>.</p></div>
+  </div>
+  <p style="margin-top:4mm">Kompyuter yoqilganda avtomatik ochilishi uchun: <code>Win + R</code> → <code>shell:startup</code> → shu papkaga "ITop Med" yorlig'ining nusxasini qo'ying.</p>
+
+</section>
+
+<section class="page">
+  <h2>6. Klinikaning butun tarmog'ida, hamma qurilmada</h2>
+  <p>Ilova ishga tushganda tarmoq uchun HTTPS manzili ham ochiladi, masalan:</p>
+  <pre>Shu kompyuterda:     https://localhost:3443
+Boshqa qurilmalar:   https://192.168.0.80:3443</pre>
+  <p>Bu kompyuter <strong>server</strong>: u yoniq va tarmoqqa ulangan bo'lishi kerak; telefonlar o'sha Wi-Fi'da bo'lsin. Windows "Firewall" so'rasa — <strong>Private network</strong> uchun ruxsat bering. Routerda server kompyuterga doimiy IP (DHCP reservation) bering.</p>
+  <h3>6.1. Sertifikatni har bir qurilmaga bir marta o'rnatish</h3>
+  <p>Fayl: <code>.data/certs/itopmed-local-ca.crt</code> (faqat ochiq qism; <code>.key</code> faylini hech kimga bermang). Telegram, USB yoki email orqali qurilmaga o'tkazing:</p>
+  <table>
+    <tr><th style="width:22%">Qurilma</th><th>Qadamlar</th></tr>
+    <tr><td>Windows</td><td>Faylni ikki marta bosing → Install Certificate → Current User → Trusted Root Certification Authorities → Finish → brauzerni qayta oching</td></tr>
+    <tr><td>Android</td><td>Sozlamalar → Xavfsizlik → Shifrlash va hisob ma'lumotlari → Sertifikat o'rnatish → CA sertifikati</td></tr>
+    <tr><td>iPhone / iPad</td><td>Faylni oching → Sozlamalar → Profil yuklandi → O'rnatish → <strong>keyin</strong> Asosiy → Ma'lumot → Sertifikatlarga ishonch → "ITop Med Local CA" ni yoqing</td></tr>
+    <tr><td>macOS</td><td>Faylni oching → Keychain → Always Trust</td></tr>
+  </table>
+  <h3>6.2. Telefonga ilova sifatida o'rnatish</h3>
+  <p>Manzilni oching → Android/Chrome/Edge: menyu → <strong>"Ilovani o'rnatish"</strong>; iPhone (Safari): Ulashish → <strong>"Bosh ekranga qo'shish"</strong>.</p>
+  <h3>6.3. Email</h3>
+  <p>SMTP sozlanmagan bo'lsa xatlar (taklif, parol tiklash) <code>.dev-mailbox</code> papkasiga fayl bo'lib tushadi — ochib havolani kerakli odamga yuborasiz. Haqiqiy email uchun <code>.env</code> ga <code>SMTP_URL=smtps://login:parol@smtp.server.uz:465</code> qo'shing.</p>
+</section>
+
+<section class="page">
+  <h2>7. Birinchi kun: platformadan klinikagacha</h2>
+  <h3>7.1. Siz — platforma administratori</h3>
+  <div class="step"><div class="n">1</div><div><code>/admin/login</code> ga email va parol bilan kiring.</div></div>
+  <div class="step"><div class="n">2</div><div>Ikki bosqichli tekshiruvni sozlang (Google/Microsoft Authenticator) va <strong>tiklash kodlarini</strong> saqlang (agar hisobingiz istisnoda bo'lmasa).</div></div>
+  <div class="step"><div class="n">3</div><div><strong>Klinikalar → Yangi klinika:</strong> nom, manzil nomi (masalan <code>shifo-kardio</code>), tarif, egasining emaili. Egaga taklif havolasi boradi.</div></div>
+  <div class="step"><div class="n">4</div><div><strong>Platforma xodimlari:</strong> o'z jamoangizni rol bilan taklif qiling.</div></div>
+  <figure><img src="img/admin-clinics.png" alt="" style="max-height:80mm;object-fit:cover;object-position:top"><figcaption>Platforma: klinikalar ro'yxati</figcaption></figure>
+  <h3>7.2. Klinika egasi (misol: kichik kardiologiya kabineti)</h3>
+  <div class="step"><div class="n">1</div><div>Taklif havolasini oching, ism va parol → <code>/login</code> orqali kiring.</div></div>
+  <div class="step"><div class="n">2</div><div><strong>Sozlash yordamchisi:</strong> amaliyot turi — Xususiy kabinet; yo'nalish — Kardiologiya (EKG, exokardiografiya, Xolter, QB monitoringi, yuklamali sinov xizmatlari o'zi qo'shiladi); "Men shu yerda shifokorman" va jadval; administrator bo'lmasa "Registratura va kassani o'zim qilaman".</div></div>
+  <div class="step"><div class="n">3</div><div><strong>Xizmatlar va narxlar:</strong> har bir xizmatga narx qo'ying (narxsiz xizmatga hisob chiqmaydi).</div></div>
+  <div class="step"><div class="n">4</div><div><strong>Shablonlar → "Tayyor shablonlarni qo'shish"</strong> (11-bo'lim).</div></div>
+  <div class="step"><div class="n">5</div><div><strong>Sozlamalar → Nazorat qoidalari:</strong> chegirma chegarasi, sabab majburiyligi, onlayn yozilish qoidalari.</div></div>
+  <div class="step"><div class="n">6</div><div>Kerak bo'lsa <strong>Xodimlar → Taklif qilish</strong>.</div></div>
+  <p class="small muted">Boshqa yo'nalishlar uchun ham tayyor xizmatlar bor: pediatriya, ginekologiya, oftalmologiya, LOR, nevrologiya, dermatologiya, urologiya, endokrinologiya, fizioterapiya, stomatologiya, diagnostika.</p>
+</section>
+
+<section class="page">
+  <h2>8. Kundalik ish rollar bo'yicha</h2>
+  <table>
+    <tr><th style="width:18%">Rol</th><th>Kundalik ish</th></tr>
+    <tr><td><strong>Registrator</strong></td><td>Bemorni topish yoki ro'yxatga olish → qabulga yozish yoki navbatsiz qo'yish → "Keldi" → kerak bo'lsa qabulni ko'chirish. Portal uchun bemorga faollashtirish kodi berish</td></tr>
+    <tr><td><strong>Shifokor</strong></td><td>"Bugungi bemorlarim" → qabulni boshlash → shablondan to'ldirish → yozuv → <strong>imzolash</strong> → tashxis → ko'rsatkichlar → tahlil → retsept → hujjat chop etish → qabulni yakunlash</td></tr>
+    <tr><td><strong>Hamshira</strong></td><td>Hamshira posti: qon bosimi, puls, harorat; tahlil namunasini olish</td></tr>
+    <tr><td><strong>Laborant</strong></td><td>Natijani kiritish → boshqa xodim tasdiqlaydi → shifokor bemorga chiqaradi</td></tr>
+    <tr><td><strong>Kassir</strong></td><td>Smenani ochish → qabul uchun hisob → xizmat qo'shish → chiqarish → to'lov → kvitansiya → kun oxirida smenani yopish (naqd hisobi mos kelishi kerak)</td></tr>
+    <tr><td><strong>Ega / buxgalter</strong></td><td>Nazorat markazi, hisobotlar, xarajatlar, xodimlar, sozlamalar, faoliyat jurnali</td></tr>
+    <tr><td><strong>Bemor</strong></td><td>Portalga telefon va parol bilan: qabullar (2 soat oldin bekor qilish), onlayn yozilish, natijalar, hisoblar, Telegram</td></tr>
+  </table>
+  <figure><img src="img/queue.png" alt="" style="max-height:105mm;object-fit:cover;object-position:top"><figcaption>Navbat: kelganlar, navbatsiz qo'shish, ko'chirish</figcaption></figure>
+</section>
+
+<section class="page">
+  <h2>9. Bemor yo'li: ro'yxatdan to'lovgacha</h2>
+  <p>Bu yo'l har bir yangilanishdan keyin avtomatik sinov bilan brauzerda 15 bosqichda tekshiriladi (<code>npm run e2e:walkthrough</code>).</p>
+  <div class="grid2">
+    <figure><img src="img/patients.png" alt=""><figcaption>1. Bemorlar: qidiruv va ro'yxatga olish</figcaption></figure>
+    <figure><img src="img/visit.png" alt="" style="max-height:95mm;object-fit:cover;object-position:top"><figcaption>2. Qabul sahifasi</figcaption></figure>
+  </div>
+  <h3>Qabul sahifasida</h3>
+  <ul class="check">
+    <li><strong>Shablondan to'ldirish</strong> — faqat bo'sh bo'limlar to'ladi, shifokor yozgani o'chmaydi</li>
+    <li><strong>Imzolash</strong> — shundan keyin yozuv o'zgarmaydi; tuzatish faqat qo'shimcha bilan</li>
+    <li><strong>Tashxis</strong> — MKB-10 kodi (masalan I10) va tavsif</li>
+    <li><strong>Ko'rsatkichlar</strong> — sistolik/diastolik bosim, puls, nafas soni, harorat, SpO₂, vazn, bo'y, qondagi glyukoza</li>
+    <li><strong>Retsept</strong> — allergiya bilan mos kelsa tizim to'xtatadi va alohida tasdiq so'raydi; retsept tahrirlanmaydi, faqat bekor qilinadi</li>
+    <li><strong>Hujjatlar</strong> — klinikangiz shablonlaridan istalganini bir bosishda chop etish</li>
+  </ul>
+</section>
+
+<section class="page">
+  <div class="grid2">
+    <figure><img src="img/prescription.png" alt=""><figcaption>3. A5 retsept</figcaption></figure>
+    <figure><img src="img/visit-summary.png" alt=""><figcaption>4. Qabul xulosasi (shablondan)</figcaption></figure>
+  </div>
+  <figure><img src="img/invoice.png" alt="" style="max-height:85mm;object-fit:cover;object-position:top"><figcaption>5. Hisob: xizmatlar, chegirma, to'lov, kvitansiya</figcaption></figure>
+  <div class="phones">
+    <figure><img src="img/phone-billing.png" alt="" style="max-height:78mm"><figcaption>Telefonda: hisoblar</figcaption></figure>
+    <figure><img src="img/phone-invoice.png" alt="" style="max-height:78mm"><figcaption>Telefonda: hisob</figcaption></figure>
+  </div>
+</section>
+
+<section class="page">
+  <h2>10. Nazorat markazi va nazorat qoidalari</h2>
+  <p>Chap menyuda qalqon belgisi. Bitta sahifada:</p>
+  <div class="grid2">
+    <div class="card"><h3>Bugun</h3><p>Qabullar, kutayotganlar, kelmaganlar; bugungi va oylik tushum (o'tgan oyning shu kunlariga nisbatan %); bemorlar qarzi.</p></div>
+    <div class="card"><h3>Kassalar</h3><p>Ochiq smenalar va har bir kassada hozir bo'lishi kerak bo'lgan naqd; smena yopilishidagi kamomad va ortiqchalar.</p></div>
+    <div class="card"><h3>Chegirmalar</h3><p>Kim, necha marta, qancha (30 kun); pul qaytarishlar; bekor qilingan hisoblar.</p></div>
+    <div class="card"><h3>Intizom va xavfsizlik</h3><p>24 soatdan ortiq imzolanmagan yozuvlar, ochiq qabullar, hisobsiz qabullar; ikki bosqichli tekshiruvsiz rahbarlar; favqulodda kirishlar.</p></div>
+  </div>
+  <figure style="margin-top:4mm"><img src="img/control.png" alt="" style="max-height:92mm;object-fit:cover;object-position:top"><figcaption>Nazorat markazi</figcaption></figure>
+  <h3>Nazorat qoidalari (Sozlamalar → Nazorat qoidalari; faqat ega)</h3>
+  <ul class="check">
+    <li>Xodim bera oladigan eng katta chegirma foizi — oshsa tizim rad etadi</li>
+    <li>Har bir chegirma uchun sabab majburiy — sabab hisobda va Nazorat markazida ko'rinadi</li>
+    <li>Onlayn yozilish: necha kun oldindan, eng erta necha soatdan keyin, bitta bemorga nechta onlayn qabul</li>
+  </ul>
+  <p class="small muted">Egaga chegirma cheklovlari tegishli emas.</p>
+</section>
+
+<section class="page">
+  <h2>11. Shablonlar — keraklisini o'zingiz yarating</h2>
+  <p>Bu bo'lim siz xohlagan hujjat va matnlarni <strong>dasturchisiz</strong> yaratish uchun. Chap menyu → <strong>Shablonlar</strong>.</p>
+  <figure><img src="img/templates.png" alt="" style="max-height:90mm;object-fit:cover;object-position:top"><figcaption>Shablonlar ro'yxati</figcaption></figure>
+  <div class="grid2">
+    <div class="card accent"><h3>Hujjatlar</h3><p>Qabul xulosasi, yo'llanma, ma'lumotnoma, shartnoma, tavsiyalar varag'i — klinikangizga kerak bo'lgan har qanday chop etiladigan hujjat. Matnga maydonlar qo'yasiz, chop etishda ular qabul ma'lumotlari bilan to'ladi.</p></div>
+    <div class="card accent"><h3>Yozuv shablonlari</h3><p>Shikoyat, anamnez, ko'rik, xulosa, reja uchun tayyor matn (masalan "Kardiolog konsultatsiyasi"). Kerak bo'lsa faqat bitta mutaxassislik uchun ko'rinadi.</p></div>
+  </div>
+  <h3>Qanday yaratiladi</h3>
+  <div class="step"><div class="n">1</div><div>Birinchi marta <strong>"Tayyor shablonlarni qo'shish"</strong> — klinika tilida 5 ta shablon qo'shiladi.</div></div>
+  <div class="step"><div class="n">2</div><div><strong>"Yangi hujjat"</strong> yoki <strong>"Yangi yozuv shabloni"</strong> → nom → matn → Saqlash.</div></div>
+  <div class="step"><div class="n">3</div><div>Mavjudini o'zgartirish: ro'yxatdan nomini bosing. Keraksizini "Olib tashlash" (arxivlanadi; eski hujjatlar buzilmaydi).</div></div>
+  <div class="step"><div class="n">4</div><div>Shifokor qabul sahifasida ishlatadi: "Shablondan to'ldirish" va "Hujjatlar" kartasi.</div></div>
+  <p class="small muted">Shablon yaratish va o'zgartirish huquqi — klinika egasi va administratorda; shifokorlar ishlatadi.</p>
+</section>
+
+<section class="page">
+  <h2>11.1. Hujjatga qo'yiladigan maydonlar</h2>
+  <p>Maydonni ikki qavs ichida yozing, masalan <code>{{patient.fullName}}</code>. Noma'lum maydon o'zgarmay ko'rinib qoladi — xatoni darrov ko'rasiz.</p>
+  <table>
+    <tr><th style="width:38%">Maydon</th><th>Nima qo'yiladi</th></tr>
+    <tr><td><code>{{patient.fullName}}</code></td><td>Bemorning F.I.Sh.</td></tr>
+    <tr><td><code>{{patient.birthDate}}</code> · <code>{{patient.sex}}</code></td><td>Tug'ilgan sana · jinsi</td></tr>
+    <tr><td><code>{{patient.mrn}}</code></td><td>Tibbiy karta raqami</td></tr>
+    <tr><td><code>{{visit.date}}</code> · <code>{{today}}</code></td><td>Qabul sanasi · bugungi sana</td></tr>
+    <tr><td><code>{{doctor.fullName}}</code> · <code>{{doctor.specialty}}</code></td><td>Shifokor · mutaxassisligi</td></tr>
+    <tr><td><code>{{clinic.name}}</code> · <code>{{clinic.address}}</code> · <code>{{clinic.phone}}</code></td><td>Klinika rekvizitlari</td></tr>
+    <tr><td><code>{{note.complaints}}</code> · <code>{{note.history}}</code></td><td>Shikoyat · anamnez</td></tr>
+    <tr><td><code>{{note.examination}}</code> · <code>{{note.assessment}}</code> · <code>{{note.plan}}</code></td><td>Ko'rik · xulosa · reja</td></tr>
+    <tr><td><code>{{diagnoses}}</code></td><td>Tashxislar ro'yxati (MKB-10 kodi bilan)</td></tr>
+    <tr><td><code>{{prescriptions}}</code></td><td>Faol retseptlar ro'yxati</td></tr>
+  </table>
+  <h3>Misol: tibbiy ma'lumotnoma (klinika ichki shakli, rasmiy blanka emas)</h3>
+  <pre>{{clinic.name}}, {{clinic.address}}, tel. {{clinic.phone}}
+
+MA'LUMOTNOMA
+
+Berildi: {{patient.fullName}}, {{patient.birthDate}} y.t.
+{{visit.date}} kuni {{doctor.specialty}} qabulida bo'lgan.
+Tashxis: {{diagnoses}}
+Tavsiyalar: {{note.plan}}
+
+Shifokor: {{doctor.fullName}} ________   Sana: {{today}}   M.O'.</pre>
+</section>
+
+<section class="page">
+  <h2>12. Bemor portali, onlayn yozilish, Telegram</h2>
+  <div class="phones">
+    <figure><img src="img/portal-home.png" alt=""><figcaption>Portal bosh sahifasi</figcaption></figure>
+    <figure><img src="img/portal-book.png" alt=""><figcaption>Shifokor tanlash</figcaption></figure>
+    <figure><img src="img/portal-slots.png" alt=""><figcaption>Bo'sh vaqtlar</figcaption></figure>
+  </div>
+  <h3>Onlayn yozilishni yoqish</h3>
+  <div class="step"><div class="n">1</div><div><strong>Shifokorlar va jadval</strong> → shifokor profilida "Onlayn yozilishni qabul qiladi" (ish jadvali bo'lishi kerak).</div></div>
+  <div class="step"><div class="n">2</div><div><strong>Sozlamalar → Nazorat qoidalari → Onlayn yozilish:</strong> masalan 30 kun oldindan, kamida 2 soat keyin, bir bemorga 3 ta.</div></div>
+  <div class="step"><div class="n">3</div><div>Bemor portalda "Qabulga yozilish" → shifokor → kun va vaqt → tasdiqlash. Qabul navbatda "portal" manbasi bilan ko'rinadi.</div></div>
+  <h3>Telegram xabarnomalari</h3>
+  <div class="step"><div class="n">1</div><div>Telegramda <strong>@BotFather</strong> → <code>/newbot</code> → nom → "bot" bilan tugaydigan username → token.</div></div>
+  <div class="step"><div class="n">2</div><div><strong>Integratsiyalar → Telegram bot</strong> → tokenni joylang → "Botni ulash" (shifrlanib saqlanadi). <code>.env</code> da <code>TELEGRAM_TRANSPORT=api</code> bo'lsin.</div></div>
+  <div class="step"><div class="n">3</div><div>Bemor portalda <strong>Hisob → Telegramni ulash</strong> → Telegramda Start. ~20 soniyada ulanadi.</div></div>
+  <p>Tasdiq, eslatma, ko'chirish, bekor qilish va natija tayyorligi haqida xabarlar boradi — <strong>tibbiy ma'lumotsiz</strong>. Server kompyuterda internet kerak. Haqiqiy bot token bilan hali sinalmagan — birinchi ulashda tekshirib ko'ring.</p>
+</section>
+
+<section class="page">
+  <h2>13. Platformani boshqarish (siz)</h2>
+  <table>
+    <tr><th style="width:42%">Vazifa</th><th>Qayerda</th></tr>
+    <tr><td>Klinikani yaratish, to'xtatish, qayta yoqish, arxivlash</td><td><code>/admin/clinics</code> → klinika</td></tr>
+    <tr><td>Tarif, bo'limlarni yoqish/o'chirish</td><td>Klinika sahifasi → Tarif / Modullar</td></tr>
+    <tr><td>Egaga taklifni qayta yuborish yoki bekor qilish</td><td>Klinika sahifasi → Takliflar</td></tr>
+    <tr><td>Klinikaga yordam berish uchun kirish</td><td>Qo'llab-quvvatlash so'rovi (klinika tasdiqlaydi, vaqt cheklangan, auditda)</td></tr>
+    <tr><td>O'z jamoangiz, MFA'ni qayta o'rnatish</td><td><code>/admin/staff</code> (avval shaxsni tasdiqlang!)</td></tr>
+    <tr><td>Kim nima qildi</td><td><code>/admin/audit</code> → "Zanjirni tekshirish"</td></tr>
+  </table>
+  <figure><img src="img/admin-dashboard.png" alt="" style="max-height:95mm;object-fit:cover;object-position:top"><figcaption>Platforma boshqaruvi</figcaption></figure>
+  <p><strong>Klinika egasi o'z klinikasida:</strong> Xodimlar (rol, filial, to'xtatish, MFA'ni qayta o'rnatish), Rollar va huquqlar, Filiallar, Bo'limlar va xonalar, Shifokorlar va jadval, Xizmatlar va narxlar, Shablonlar, Sozlamalar, Integratsiyalar, Faoliyat jurnali, Qo'llab-quvvatlash kirishi.</p>
+</section>
+
+<section class="page">
+  <h2>14. Xavfsizlik va kirish</h2>
+  <ul class="check">
+    <li><strong>Klinikalar ajratilgan</strong> — har bir so'rov ma'lumotlar bazasining qatorlar darajasidagi xavfsizligi (RLS) orqali o'tadi; bitta klinika boshqasini ko'ra olmaydi</li>
+    <li><strong>Platforma tibbiy kartani ko'rmaydi</strong> — favqulodda kirish faqat klinika ruxsati bilan, vaqt cheklangan va auditda</li>
+    <li><strong>Audit jurnali</strong> — zanjir shaklida; o'zgartirilsa "Zanjirni tekshirish" aniqlaydi</li>
+    <li><strong>Parollar</strong> argon2id bilan, tokenlar xeshlangan; 5 noto'g'ri urinishdan keyin 15 daqiqa blok</li>
+    <li><strong>Ikki bosqichli tekshiruv</strong> — ega, administrator, buxgalter va platforma uchun majburiy (istisno ro'yxatidagilardan tashqari)</li>
+    <li><strong>Xabarlar, jurnallar, havolalarda tibbiy ma'lumot yo'q</strong> — faqat identifikatorlar</li>
+  </ul>
+  <h3>Haqiqiy bemorlar bilan ishlashdan oldin — majburiy</h3>
+  <div class="card warn">
+    <ol>
+      <li><code>npm run setup</code> bilan yaratilgan yangi kalitlar va toza baza (sinov ma'lumotlari bo'lgan bazani ishlatmang)</li>
+      <li>Har kuni zaxira nusxa va uni boshqa joyga ko'chirish</li>
+      <li>Server kompyuterga Windows paroli va disk shifrlash (BitLocker)</li>
+      <li>Istisno ro'yxatidagi hisoblar parollari uzun va sir</li>
+      <li>Shaxsiy ma'lumotlar qonuni bo'yicha huquqshunos maslahati (O'zbekistonda saqlash, ro'yxatdan o'tish)</li>
+    </ol>
+  </div>
+  <figure style="margin-top:4mm"><img src="img/settings.png" alt="" style="max-height:85mm;object-fit:cover;object-position:top"><figcaption>Klinika sozlamalari</figcaption></figure>
+</section>
+
+<section class="page">
+  <h2>15. Zaxira nusxa va yangilash</h2>
+  <div class="grid2">
+    <div class="card"><h3>Zaxira (har kuni!)</h3><pre>npm run backup</pre><p>Shifrlangan nusxa <code>backups/</code> ga tushadi. Boshqa diskka ham ko'chiring; kalit (<code>BACKUP_ENCRYPTION_KEY</code>) nusxa bilan birga saqlanmasin. Tiklanishini tekshirish:</p><pre>npm run backup:verify -- backups/&lt;fayl&gt;.itmbk</pre><p class="small">Windows Task Scheduler orqali har kuni avtomatik ishga tushiring.</p></div>
+    <div class="card"><h3>Yangilash</h3><pre>npm run backup
+git pull
+npm install
+npm run app</pre><p>Ilova kod yangilanganini o'zi sezadi va qayta yig'adi, migratsiyalarni qo'llaydi (1–3 daqiqa).</p></div>
+  </div>
+
+  <h2 style="margin-top:8mm">16. Muammolar va yechimlar</h2>
+  <table>
+    <tr><th style="width:36%">Belgi</th><th>Sabab va yechim</th></tr>
+    <tr><td>"Your connection is not private"</td><td>Shu qurilmaga sertifikat o'rnatilmagan (6.1)</td></tr>
+    <tr><td>Telefonda sahifa ochilmaydi</td><td>Boshqa Wi-Fi; server o'chiq; Firewall Private network ruxsati yo'q</td></tr>
+    <tr><td>"Too many attempts" / hisob bloklangan</td><td>5–15 daqiqa kuting yoki "Parolni unutdingizmi"</td></tr>
+    <tr><td>Authenticator yo'qolgan</td><td>Tiklash kodi bilan kiring; yo'q bo'lsa administrator MFA'ni qayta o'rnatadi</td></tr>
+    <tr><td>Taklif xati kelmadi</td><td>SMTP yo'q — <code>.dev-mailbox</code> papkasini oching</td></tr>
+    <tr><td>Xizmatga hisob chiqmaydi</td><td>Xizmatga narx qo'yilmagan</td></tr>
+    <tr><td>Shifokorga qabul yozib bo'lmaydi</td><td>Jadval yo'q, ta'tilda yoki vaqt band</td></tr>
+    <tr><td>Chegirma rad etildi</td><td>Nazorat qoidalaridagi chegaradan oshgan yoki sabab yozilmagan</td></tr>
+    <tr><td>Bemor onlayn yozila olmaydi</td><td>Shifokorda "Onlayn yozilish" yoqilmagan, jadval yo'q yoki bemor limitga yetgan</td></tr>
+    <tr><td>Ilova ochilmaydi</td><td>"ITop Med - to'xtatish" → qayta oching; jurnal: <code>.data/logs/local.log</code></td></tr>
+    <tr><td>"OpenSSL was not found"</td><td>Git for Windows'ni o'rnating</td></tr>
+  </table>
+</section>
+
+<section class="page">
+  <h2>17. Halol holat: nima tayyor, nima hali yo'q</h2>
+  <div class="card ok"><h3>Tayyor va tekshirilgan</h3>
+  <p>139 avtomatik test (shu jumladan klinikalar ajratilishi, huquqlar har bir sahifa va amal uchun), 66 ekran telefon/planshet/kompyuterda yorug' va qorong'i rejimda — hech narsa chegaradan chiqmaydi, 15 bosqichli to'liq klinik yo'l brauzerda. Yuqoridagi barcha bo'limlar, 4 til, WCAG 2.1 AA, shifrlangan zaxira, mahalliy tarmoqda HTTPS va ilova sifatida o'rnatish.</p></div>
+  <h3>Hali yo'q — tashqi shartnoma yoki rasmiy hujjat kerak</h3>
+  <ul class="cross">
+    <li>DMED / Raqamli sog'liqni saqlash platformasiga yuborish — rasmiy spetsifikatsiya va kirish kerak</li>
+    <li>Payme / Click / Uzum onlayn to'lov — merchant shartnomasi; hozir to'lov turi qo'lda</li>
+    <li>SMS — provayder shartnomasi; hozir email va Telegram</li>
+    <li>Fiskal chek (OFD) — hozirgi kvitansiya fiskal emas</li>
+    <li>Rasmiy MKB-10 katalogi — hozir kod formati tekshiriladi</li>
+    <li>Milliy elektron retsept tizimi</li>
+  </ul>
+  <h3>Hali qilinmagan funksiyalar</h3>
+  <ul class="cross">
+    <li>Dublikat bemor kartalarini birlashtirish</li>
+    <li>Stomatologik davolash rejasi</li>
+    <li>Rasmiy kasallik varaqasi shakli (hozircha shablon orqali ichki ma'lumotnoma)</li>
+    <li>Telegram haqiqiy bot token bilan sinalmagan (kod tayyor, simulyatsiyada testlangan)</li>
+  </ul>
+  <h3>Mutaxassis ko'rigi kerak</h3>
+  <p>Tarjimalar (tibbiy muharrir), klinik jarayonlar (shifokor-maslahatchi), shaxsiy ma'lumotlar qonuni (huquqshunos). Klinikadan tashqarida, internet orqali ishlash uchun haqiqiy server, domen va TLS kerak — <code>docs/DEPLOYMENT.md</code>.</p>
+</section>
+
+<section class="page">
+  <h2>18. Buyruqlar ro'yxati</h2>
+  <table>
+    <tr><th style="width:44%">Buyruq</th><th>Nima qiladi</th></tr>
+    <tr><td><code>npm run app</code> · <code>npm run app:stop</code></td><td>Ilovani ochish · to'xtatish</td></tr>
+    <tr><td><code>npm run app:shortcut</code></td><td>Ish stoli yorliqlarini yaratish</td></tr>
+    <tr><td><code>npm run local</code></td><td>Server rejimi terminalda (tarmoq manzillarini ko'rsatadi)</td></tr>
+    <tr><td><code>npm run setup</code></td><td>Yangi <code>.env</code> (kalitlar) yaratish</td></tr>
+    <tr><td><code>npm run db:start</code> · <code>db:migrate</code> · <code>db:seed</code></td><td>Baza: ishga tushirish · migratsiya · tariflar</td></tr>
+    <tr><td><code>npm run admin:create -- --email … --name "…" --role SUPER_ADMIN</code></td><td>Platforma administratori yaratish yoki parolini tiklash</td></tr>
+    <tr><td><code>npm run worker</code></td><td>Bildirishnomalar xizmati (ilova o'zi ishga tushiradi)</td></tr>
+    <tr><td><code>npm run backup</code> · <code>backup:verify -- &lt;fayl&gt;</code></td><td>Shifrlangan zaxira · tiklash sinovi</td></tr>
+    <tr><td><code>npm run docs:pdf</code></td><td>Shu PDF hujjatlarni qayta yaratish</td></tr>
+    <tr><td><code>npm test</code> · <code>lint</code> · <code>typecheck</code> · <code>i18n:check</code> · <code>build</code></td><td>Dasturchi tekshiruvlari (har o'zgarishdan keyin)</td></tr>
+    <tr><td><code>npm run ui:audit -- --slug &lt;klinika&gt;</code></td><td>Barcha ekranlarni telefon/planshet/kompyuterda tekshirish</td></tr>
+    <tr><td><code>npm run e2e:walkthrough -- --slug &lt;klinika&gt;</code></td><td>To'liq klinik yo'lni brauzerda sinash (faqat sinov bazasida)</td></tr>
+  </table>
+  <h3>Muhim fayllar</h3>
+  <table>
+    <tr><td style="width:32%"><code>.env</code></td><td>Kalitlar va sozlamalar — <strong>hech kimga bermang, GitHub'ga yuklanmaydi</strong>, nusxasini xavfsiz saqlang</td></tr>
+    <tr><td><code>.data/</code></td><td>Baza, sertifikatlar, jurnallar</td></tr>
+    <tr><td><code>backups/</code></td><td>Shifrlangan zaxira nusxalar</td></tr>
+    <tr><td><code>.dev-mailbox/</code></td><td>SMTP bo'lmaganda xatlar va Telegram simulyatsiyasi</td></tr>
+    <tr><td><code>docs/</code></td><td>Arxitektura, xavfsizlik, joylashtirish, yo'l xaritasi, bu qo'llanma</td></tr>
+  </table>
+  <p class="foot">ITop Med · Loyiha manzili: github.com/ZTech-com/ITopMed. Bu hujjat <code>docs/pdf-src/</code> dan <code>npm run docs:pdf</code> bilan yaratiladi.</p>
+</section>
+
+</body>
+</html>

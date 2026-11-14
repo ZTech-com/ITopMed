@@ -302,7 +302,7 @@ Migratsiyalar `npm run local` ichida avtomatik qo'llanadi. Yangilashdan oldin `n
 
 ## 11. Halol holat: nima tayyor, nima hali yo'q
 
-**Tayyor va testlangan** (120+ avtomatik test, brauzerda tekshirilgan): yuqoridagi barcha bo'limlar, 4 til, kirish imkoniyati (WCAG 2.1 AA), xavfsizlik, shifrlangan zaxira, mahalliy tarmoqda HTTPS va ilova sifatida o'rnatish.
+**Tayyor va testlangan** (139 avtomatik test, 66 ekran telefon/planshet/kompyuterda tekshirilgan, 15 bosqichli to'liq klinik yo'l brauzerda sinovdan o'tgan): yuqoridagi barcha bo'limlar, 4 til, kirish imkoniyati (WCAG 2.1 AA), xavfsizlik, shifrlangan zaxira, mahalliy tarmoqda HTTPS va ilova sifatida o'rnatish.
 
 **Hali yo'q — tashqi shartnoma yoki rasmiy hujjat kerak:**
 - DMED / Raqamli sog'liqni saqlash platformasiga ma'lumot yuborish (rasmiy spetsifikatsiya va kirish kerak);
@@ -311,7 +311,7 @@ Migratsiyalar `npm run local` ichida avtomatik qo'llanadi. Yangilashdan oldin `n
 - Fiskal chek (OFD); hozirgi chek fiskal emas;
 - Rasmiy MKB-10 katalogi (litsenziyalangan ro'yxat); hozir kod formati tekshiriladi.
 
-**Hali qilinmagan funksiyalar:** dublikat bemor kartalarini birlashtirish, qabulni ko'chirish oynasi, chop etiladigan tibbiy hujjatlar, onlayn qabulga yozilish (portal), stomatologik davolash rejasi, bir nechta klinikada ishlaydigan hisoblar uchun qo'llab-quvvatlash ekrani.
+**Hali qilinmagan funksiyalar:** dublikat bemor kartalarini birlashtirish, stomatologik davolash rejasi, bir nechta klinikada ishlaydigan hisoblar uchun qo'llab-quvvatlash ekrani, rasmiy kasallik varaqasi shakli.
 
 **Mutaxassis ko'rigi kerak:** tarjimalar (ona tilida so'zlashuvchi tibbiy muharrir), klinik jarayonlar (shifokor-maslahatchi), shaxsiy ma'lumotlar qonuni (huquqshunos: ma'lumotlarni O'zbekistonda saqlash, ro'yxatdan o'tkazish).
 
