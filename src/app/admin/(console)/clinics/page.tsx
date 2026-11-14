@@ -89,8 +89,8 @@ export default async function ClinicsPage({ searchParams }: { searchParams: Prom
                     <Badge tone={STATUS_TONE[x.status]}>{t(`status.${x.status}`)}</Badge>
                   </Td>
                   <Td className="text-text-2">{x.subscription ? localizedName(x.subscription.plan.name, locale) : "—"}</Td>
-                  <Td className="text-right tabular-nums">{format.number(x._count.memberships)}</Td>
-                  <Td className="text-right tabular-nums">{format.number(x._count.branches)}</Td>
+                  <Td label={t("admin.clinics.colUsers")} className="text-right tabular-nums">{format.number(x._count.memberships)}</Td>
+                  <Td label={t("admin.clinics.colBranches")} className="text-right tabular-nums">{format.number(x._count.branches)}</Td>
                   <Td className="text-text-2">{format.dateTime(x.createdAt, { dateStyle: "medium" })}</Td>
                 </tr>
               ))}

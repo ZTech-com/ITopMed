@@ -92,8 +92,8 @@ export default async function BillingPage({ params, searchParams }: { params: Pr
                     <p className="text-[12px] text-text-3">{i.patient.mrn}</p>
                   </Td>
                   <Td className="whitespace-nowrap text-text-2">{format.dateTime(i.issuedAt ?? i.createdAt, { dateStyle: "medium", timeZone: tz })}</Td>
-                  <Td className="text-right font-medium tabular-nums">{money(i.totalMinor, i.currency)}</Td>
-                  <Td className="text-right tabular-nums text-text-2">{money(i.paidMinor, i.currency)}</Td>
+                  <Td label={t("clinic.billing.colTotal")} className="text-right font-medium tabular-nums">{money(i.totalMinor, i.currency)}</Td>
+                  <Td label={t("clinic.billing.colPaid")} className="text-right tabular-nums text-text-2">{money(i.paidMinor, i.currency)}</Td>
                   <Td>
                     <Badge tone={STATUS_TONE[i.status] ?? "neutral"}>{t(`status.${i.status}`)}</Badge>
                   </Td>

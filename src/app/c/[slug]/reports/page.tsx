@@ -50,10 +50,10 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
           </form>
         }
       />
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {presets.map((p) => (
           <Link key={p.label} href={`?from=${p.from}&to=${today}`} className={buttonClass(from === p.from && to === today ? "primary" : "secondary", "sm")}>
-            {p.label} d
+            {t("clinic.reports.lastDays", { days: Number(p.label) })}
           </Link>
         ))}
       </div>
@@ -65,7 +65,7 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
           {fin.totals.map((c) => {
             const net = c.received - c.refunded;
             return (
-              <div key={c.currency} className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+              <div key={c.currency} className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-5">
                 <Stat label={`${t("clinic.reports.net")} · ${c.currency}`} value={money(net, c.currency)} />
                 <Stat label={t("clinic.reports.invoiced")} value={money(c.invoiced, c.currency)} />
                 <Stat label={t("clinic.reports.refunded")} value={money(c.refunded, c.currency)} />

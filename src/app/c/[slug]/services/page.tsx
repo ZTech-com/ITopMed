@@ -4,7 +4,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { ServiceFields } from "@/components/service-form";
 import { Form, SubmitButton } from "@/components/ui/form";
 import { Badge, Card, CardBody, CardHeader, EmptyState, PageHeader, Table, Td, Th } from "@/components/ui/primitives";
-import { minorToNumber } from "@/lib/money";
+import { minorToNumber, wrapCurrency } from "@/lib/money";
 import { requireClinic } from "@/server/auth/guards";
 import { listDepartments, listServices } from "@/server/clinic/resources";
 import { createServiceAction } from "../../../workspace-actions";
@@ -51,8 +51,8 @@ export default async function ServicesPage({ params }: { params: Promise<{ slug:
                   </Td>
                   <Td className="text-text-2">{t(`serviceKind.${s.kind}`)}</Td>
                   <Td className="text-right tabular-nums text-text-2">{t("clinic.services.minutes", { count: s.durationMinutes })}</Td>
-                  <Td className="text-right font-medium tabular-nums">{s.priceMinor === 0n ? <Badge tone="warning">{t("clinic.services.priceNotSet")}</Badge> : format.number(minorToNumber(s.priceMinor, s.currency), { style: "currency", currency: s.currency, minimumFractionDigits: 0, maximumFractionDigits: 2 })}</Td>
-                  <Td className="text-right tabular-nums">{s._count.doctors}</Td>
+                  <Td className="text-right font-medium tabular-nums">{s.priceMinor === 0n ? <Badge tone="warning">{t("clinic.services.priceNotSet")}</Badge> : wrapCurrency(format.number(minorToNumber(s.priceMinor, s.currency), { style: "currency", currency: s.currency, minimumFractionDigits: 0, maximumFractionDigits: 2 }))}</Td>
+                  <Td label={t("clinic.services.colDoctors")} className="text-right tabular-nums">{s._count.doctors}</Td>
                 </tr>
               ))}
             </tbody>

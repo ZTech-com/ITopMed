@@ -10,6 +10,7 @@
  * On this computer the window opens http://127.0.0.1:3000 — loopback is a secure
  * context, so no certificate is needed here (other devices use HTTPS, see QOLLANMA).
  */
+import "dotenv/config";
 import { execFileSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import http from "node:http";
@@ -95,16 +96,33 @@ async function start() {
   console.log(`ITop Med ochildi: ${URL}`);
 }
 
+/** Shuts PostgreSQL down cleanly (no stale lock, no crash recovery on the next start). */
+function stopDatabase() {
+  const dataDir = process.env.DEV_PG_DIR ?? path.join(os.homedir(), ".itopmed-dev", "pg");
+  const bin = path.join(ROOT, "node_modules", "@embedded-postgres", `${process.platform === "win32" ? "windows" : process.platform}-${process.arch}`, "native", "bin", isWin ? "pg_ctl.exe" : "pg_ctl");
+  if (!fs.existsSync(bin) || !fs.existsSync(path.join(dataDir, "postmaster.pid"))) return;
+  try {
+    execFileSync(bin, ["stop", "-D", dataDir, "-m", "fast", "-w", "-t", "30"], { stdio: "ignore" });
+  } catch {
+    /* already stopped */
+  }
+}
+
 function stop() {
   const pid = runningPid();
-  if (!pid) {
-    console.log("ITop Med ishlamayapti.");
-    return;
+  // The database may also have been started separately (npm run db:start); it is stopped either way.
+  stopDatabase();
+  if (pid) {
+    if (isWin) {
+      try {
+        execFileSync("taskkill", ["/pid", String(pid), "/T", "/F"], { stdio: "ignore" });
+      } catch {
+        /* already gone */
+      }
+    } else process.kill(-pid, "SIGINT");
   }
-  if (isWin) execFileSync("taskkill", ["/pid", String(pid), "/T", "/F"], { stdio: "ignore" });
-  else process.kill(-pid, "SIGINT");
   fs.rmSync(PID_FILE, { force: true });
-  console.log("ITop Med to'xtatildi.");
+  console.log(pid ? "ITop Med to'xtatildi." : "ITop Med ishlamayapti.");
 }
 
 /** Windows: Desktop shortcuts with the ITop Med icon. */

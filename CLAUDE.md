@@ -15,6 +15,7 @@ Next.js 16 App Router · React 19 · TypeScript strict · Tailwind v4 · Postgre
 | Dev server | `npm run dev` → http://localhost:3000/admin/login and /login |
 | Notification worker | `npm run worker` (or `-- --once`); clinics can also "Send due messages now" |
 | Encrypted backup / restore drill | `npm run backup` · `npm run backup:verify -- <file>` (see docs/DEPLOYMENT.md) |
+| Layout audit (every screen at phone/tablet/desktop, light+dark) | `npm run app` then `ITM_AUDIT_EMAIL=… ITM_AUDIT_PASSWORD=… npm run ui:audit -- --slug <clinic>` (owner + SUPER_ADMIN account listed in `MFA_EXEMPT_EMAILS`); must report no problems after any UI change |
 | Checks (run all after every change) | `npm run lint` · `npm run typecheck` · `npm test` · `npm run i18n:check` · `npm run build` — read each exit code; never pipe a check into `tail`/`grep` when judging pass/fail |
 
 Tests boot their own throw-away PostgreSQL on port 54339 and apply the real migrations.
@@ -36,7 +37,8 @@ Tests boot their own throw-away PostgreSQL on port 54339 and apply the real migr
 11. **Timestamps are UTC** (`timestamp(3)` columns; DB timezone pinned to UTC). Use `now() AT TIME ZONE 'UTC'` in raw SQL.
 12. **One transaction = one connection.** Never `Promise.all` queries on the same `tx`; use `sequential([...])` from `src/server/db.ts` (Prisma queries are lazy, so they run in order).
 13. **Modules.** A permission that belongs to an optional module must be listed in `MODULE_PERMISSIONS` (`src/server/modules/catalog.ts`); features without their own permission (e.g. the dental chart) check `ctx.modules.has(...)` in the service.
-14. **Be honest about status.** Mark simulated/prototype functionality as such (e.g. `dev-mailbox` email and `dev-outbox` SMS transports, the Integrations status page, modules with `status: "planned"`). Don't call a feature done without tests.
+14. **Nothing may leave its box, on any screen.** Money only through `moneyFormatter()` (it lets the currency, never the digits, wrap); lists of records use `<Table>` (phone = cards; give ambiguous numeric cells a `label`); no fixed widths on text; grid/flex children that hold tables must be able to shrink (`min-w-0`, already global for `.grid > *`). Verify with `npm run ui:audit` and real large sums (tens of millions of so'm).
+15. **Be honest about status.** Mark simulated/prototype functionality as such (e.g. `dev-mailbox` email and `dev-outbox` SMS transports, the Integrations status page, modules with `status: "planned"`). Don't call a feature done without tests.
 
 ## Layout
 - `prisma/schema.prisma`, `prisma/migrations/*` (RLS/grants/audit SQL lives in migrations)

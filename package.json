@@ -29,7 +29,8 @@
     "setup": "tsx scripts/setup.ts",
     "app": "tsx scripts/app.ts start",
     "app:stop": "tsx scripts/app.ts stop",
-    "app:shortcut": "tsx scripts/app.ts shortcut"
+    "app:shortcut": "tsx scripts/app.ts shortcut",
+    "ui:audit": "tsx scripts/ui-audit.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",
@@ -63,6 +64,7 @@
     "embedded-postgres": "^18.6.0-beta.19",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.6",
+    "playwright-core": "^1.56.1",
     "prisma": "^7.10.1",
     "tailwindcss": "^4.3.5",
     "tsx": "^4.23.15",

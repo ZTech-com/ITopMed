@@ -66,7 +66,29 @@ export default async function InvoicePage({ params }: { params: Promise<{ slug: 
 
       <Card className="overflow-hidden">
         <CardHeader title={t("clinic.billing.lines")} description={draft ? t("clinic.billing.issueHint") : undefined} />
-        <div className="overflow-x-auto">
+        {/* Phone: one card per line — nothing to scroll sideways, every sum fully visible. */}
+        <ul className="divide-y divide-border border-y border-border sm:hidden">
+          {inv.lines.map((l) => (
+            <li key={l.id} className="px-5 py-3 text-[14px]">
+              <div className="flex items-start justify-between gap-3">
+                <p className="min-w-0 font-medium">{l.description}</p>
+                <p className="whitespace-nowrap text-right font-semibold tabular-nums">{money(l.totalMinor, inv.currency)}</p>
+              </div>
+              <p className="mt-0.5 text-[13px] tabular-nums text-text-2">
+                {l.quantity} × {money(l.unitPriceMinor, inv.currency)}
+                {l.discountMinor > 0n ? ` · ${t("clinic.billing.discount")} −${money(l.discountMinor, inv.currency)}` : ""}
+              </p>
+              {draft && can("billing.invoice") ? (
+                <Form action={invoiceLineAction} className="mt-1 space-y-0">
+                  {hidden}
+                  <input type="hidden" name="lineId" value={l.id} />
+                  <button name="op" value="remove" className="min-h-8 text-[13px] text-text-3 hover:text-danger">{t("clinic.billing.remove")}</button>
+                </Form>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[560px] text-[14px]">
             <thead>
               <tr className="text-left text-[12px] uppercase tracking-[0.04em] text-text-3">
@@ -100,12 +122,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ slug: 
           </table>
         </div>
         {inv.lines.length === 0 ? <p className="px-6 py-3 text-[14px] text-text-2">{t("clinic.billing.noLines")}</p> : null}
-        <dl className="ml-auto max-w-sm space-y-1 px-6 py-4 text-[14px]">
-          <div className="flex justify-between"><dt className="text-text-2">{t("clinic.billing.subtotal")}</dt><dd className="tabular-nums">{money(inv.subtotalMinor, inv.currency)}</dd></div>
-          {inv.discountMinor > 0n ? <div className="flex justify-between"><dt className="text-text-2">{t("clinic.billing.discount")}</dt><dd className="tabular-nums">−{money(inv.discountMinor, inv.currency)}</dd></div> : null}
-          <div className="flex justify-between text-[16px] font-semibold"><dt>{t("clinic.billing.total")}</dt><dd className="tabular-nums">{money(inv.totalMinor, inv.currency)}</dd></div>
-          <div className="flex justify-between"><dt className="text-text-2">{t("clinic.billing.paid")}</dt><dd className="tabular-nums">{money(inv.paidMinor, inv.currency)}</dd></div>
-          {payable ? <div className="flex justify-between font-semibold text-accent"><dt>{t("clinic.billing.outstanding")}</dt><dd className="tabular-nums">{money(outstanding, inv.currency)}</dd></div> : null}
+        <dl className="ml-auto max-w-sm space-y-1 px-5 py-4 text-[14px] sm:px-6">
+          <div className="flex justify-between gap-3"><dt className="text-text-2">{t("clinic.billing.subtotal")}</dt><dd className="text-right tabular-nums">{money(inv.subtotalMinor, inv.currency)}</dd></div>
+          {inv.discountMinor > 0n ? <div className="flex justify-between gap-3"><dt className="text-text-2">{t("clinic.billing.discount")}</dt><dd className="text-right tabular-nums">−{money(inv.discountMinor, inv.currency)}</dd></div> : null}
+          <div className="flex justify-between gap-3 text-[16px] font-semibold"><dt>{t("clinic.billing.total")}</dt><dd className="text-right tabular-nums">{money(inv.totalMinor, inv.currency)}</dd></div>
+          <div className="flex justify-between gap-3"><dt className="text-text-2">{t("clinic.billing.paid")}</dt><dd className="text-right tabular-nums">{money(inv.paidMinor, inv.currency)}</dd></div>
+          {payable ? <div className="flex justify-between gap-3 font-semibold text-accent"><dt>{t("clinic.billing.outstanding")}</dt><dd className="text-right tabular-nums">{money(outstanding, inv.currency)}</dd></div> : null}
         </dl>
 
         {draft && can("billing.invoice") ? (

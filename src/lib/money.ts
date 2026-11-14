@@ -29,3 +29,12 @@ export function minorToNumber(minor: bigint, currency = "UZS"): number {
   const digits = CURRENCY_MINOR_DIGITS[currency] ?? 2;
   return Number(minor) / 10 ** digits;
 }
+
+/**
+ * Lets a formatted amount wrap only between the number and the currency
+ * ("125 400 000" / "soʻm"), never inside the digits: the no-break space next
+ * to the currency becomes a normal space; digit-group spaces stay unbreakable.
+ */
+export function wrapCurrency(formatted: string): string {
+  return formatted.replace(/[  ](?=[^\d  ]+$)/, " ").replace(/^([^\d\s  -]+)[  ]/, "$1 ");
+}

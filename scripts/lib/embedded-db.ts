@@ -4,6 +4,7 @@
  * Production uses a managed PostgreSQL cluster provisioned by infrastructure.
  */
 import EmbeddedPostgres from "embedded-postgres";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import pg from "pg";
 
@@ -21,6 +22,30 @@ export interface EmbeddedDbOptions {
   postgresFlags?: string[];
 }
 
+/**
+ * After a hard stop (power loss, killed process) postmaster.pid stays behind.
+ * If the PID in it now belongs to another program, PostgreSQL refuses to start.
+ * Remove the lock only when that PID is not a running postgres process.
+ */
+function removeStaleLock(dataDir: string) {
+  const lock = `${dataDir}/postmaster.pid`;
+  if (!fs.existsSync(lock)) return;
+  const pid = Number(fs.readFileSync(lock, "utf8").split(/\r?\n/)[0]);
+  let isPostgres = false;
+  if (Number.isInteger(pid) && pid > 0) {
+    try {
+      const out =
+        process.platform === "win32"
+          ? execFileSync("tasklist", ["/FI", `PID eq ${pid}`, "/FO", "CSV", "/NH"], { encoding: "utf8" })
+          : execFileSync("ps", ["-p", String(pid), "-o", "comm="], { encoding: "utf8" });
+      isPostgres = /postgres/i.test(out);
+    } catch {
+      isPostgres = false;
+    }
+  }
+  if (!isPostgres) fs.rmSync(lock, { force: true });
+}
+
 export async function startEmbeddedDb(o: EmbeddedDbOptions) {
   const database = o.database ?? "itopmed";
   const fresh = !fs.existsSync(`${o.dataDir}/PG_VERSION`);
@@ -36,6 +61,7 @@ export async function startEmbeddedDb(o: EmbeddedDbOptions) {
     onLog: () => {},
   });
   if (fresh) await server.initialise();
+  removeStaleLock(o.dataDir);
   await server.start();
 
   const admin = new pg.Client({

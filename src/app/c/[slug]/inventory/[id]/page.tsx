@@ -123,7 +123,7 @@ export default async function InventoryItemPage({ params, searchParams }: { para
                         {expired && b.quantity > 0 ? <Badge tone="danger">{t("clinic.inventory.expired")}</Badge> : !expired && b.expiresOn && b.expiresOn <= soon && b.quantity > 0 ? <Badge tone="warning">{t("clinic.inventory.soon")}</Badge> : null}
                       </span>
                     </Td>
-                    <Td className="text-right font-semibold tabular-nums">{b.quantity}</Td>
+                    <Td label={t("clinic.inventory.quantity")} className="text-right font-semibold tabular-nums">{b.quantity}</Td>
                     <Td className="text-[13px] text-text-2">
                       {d(b.receivedAt)}
                       {b.supplier ? ` · ${b.supplier.name}` : ""}

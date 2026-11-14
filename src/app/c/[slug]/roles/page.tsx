@@ -38,7 +38,7 @@ export default async function RolesPage({ params, searchParams }: { params: Prom
                   </span>
                 </Td>
                 <Td className="text-text-2">{t("clinic.roles.permissionsCount", { count: r.permissions.length })}</Td>
-                <Td className="text-right tabular-nums">{r._count.members}</Td>
+                <Td label={t("clinic.roles.colMembers")} className="text-right tabular-nums">{r._count.members}</Td>
                 <Td className="text-right">
                   <Link href={`${base}/${r.id}`} className="text-[14px] font-medium text-accent hover:underline">
                     {t("clinic.roles.edit")}

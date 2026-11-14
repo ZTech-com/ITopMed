@@ -775,7 +775,8 @@
       "qty": "Soni",
       "invoices": "Hisoblar",
       "expensesByCategory": "Toifalar boʻyicha xarajatlar",
-      "dayTableCaption": "Kunlik toʻlovlar jadvali"
+      "dayTableCaption": "Kunlik toʻlovlar jadvali",
+      "lastDays": "Oxirgi {days} kun"
     },
     "expenses": {
       "title": "Xarajatlar",
@@ -1101,7 +1102,8 @@
     "ORDERED": "Tayinlangan",
     "COLLECTED": "Namuna olingan",
     "RESULTED": "Tasdiq kutilmoqda",
-    "VERIFIED": "Tasdiqlangan"
+    "VERIFIED": "Tasdiqlangan",
+    "MERGED": "Birlashtirilgan"
   },
   "platformRole": {
     "SUPER_ADMIN": "Super administrator",
@@ -1534,7 +1536,8 @@
     "USER": "Sobiq yoki nomaʼlum foydalanuvchi",
     "PLATFORM_USER": "ITop Med qoʻllab-quvvatlash",
     "SYSTEM": "Tizim",
-    "ANONYMOUS": "Tizimga kirmagan"
+    "ANONYMOUS": "Tizimga kirmagan",
+    "PATIENT": "Bemor"
   },
   "priority": {
     "ROUTINE": "Rejali",

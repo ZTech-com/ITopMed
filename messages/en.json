@@ -775,7 +775,8 @@
       "qty": "Qty",
       "invoices": "Invoices",
       "expensesByCategory": "Expenses by category",
-      "dayTableCaption": "Daily payments table"
+      "dayTableCaption": "Daily payments table",
+      "lastDays": "Last {days} days"
     },
     "expenses": {
       "title": "Expenses",
@@ -1101,7 +1102,8 @@
     "ORDERED": "Ordered",
     "COLLECTED": "Specimen collected",
     "RESULTED": "Awaiting verification",
-    "VERIFIED": "Verified"
+    "VERIFIED": "Verified",
+    "MERGED": "Merged"
   },
   "platformRole": {
     "SUPER_ADMIN": "Super administrator",
@@ -1534,7 +1536,8 @@
     "USER": "Former or unknown user",
     "PLATFORM_USER": "ITop Med support",
     "SYSTEM": "System",
-    "ANONYMOUS": "Not signed in"
+    "ANONYMOUS": "Not signed in",
+    "PATIENT": "Patient"
   },
   "priority": {
     "ROUTINE": "Routine",

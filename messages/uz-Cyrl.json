@@ -775,7 +775,8 @@
       "qty": "Сони",
       "invoices": "Ҳисоблар",
       "expensesByCategory": "Тоифалар бўйича харажатлар",
-      "dayTableCaption": "Кунлик тўловлар жадвали"
+      "dayTableCaption": "Кунлик тўловлар жадвали",
+      "lastDays": "Охирги {days} кун"
     },
     "expenses": {
       "title": "Харажатлар",
@@ -1101,7 +1102,8 @@
     "ORDERED": "Тайинланган",
     "COLLECTED": "Намуна олинган",
     "RESULTED": "Тасдиқ кутилмоқда",
-    "VERIFIED": "Тасдиқланган"
+    "VERIFIED": "Тасдиқланган",
+    "MERGED": "Бирлаштирилган"
   },
   "platformRole": {
     "SUPER_ADMIN": "Супер администратор",
@@ -1534,7 +1536,8 @@
     "USER": "Собиқ ёки номаълум фойдаланувчи",
     "PLATFORM_USER": "ITop Med қўллаб-қувватлаш",
     "SYSTEM": "Тизим",
-    "ANONYMOUS": "Тизимга кирмаган"
+    "ANONYMOUS": "Тизимга кирмаган",
+    "PATIENT": "Бемор"
   },
   "priority": {
     "ROUTINE": "Режали",

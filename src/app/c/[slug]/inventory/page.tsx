@@ -119,13 +119,13 @@ export default async function InventoryPage({ params, searchParams }: { params: 
                     </p>
                   </Td>
                   <Td className="text-text-2">{t(`inventoryCategory.${i.category}`)}</Td>
-                  <Td className="text-right tabular-nums">
+                  <Td label={t("clinic.inventory.onHand")} className="text-right tabular-nums">
                     <span className={i.low ? "font-semibold text-danger" : "font-semibold"}>{i.onHand}</span> <span className="text-[12px] text-text-3">{t(`inventoryUnit.${i.unit}` as never)}</span>
                     {i.expired > 0 ? (
                       <p className="text-[12px] text-danger">{t("clinic.inventory.expiredQty", { count: i.expired })}</p>
                     ) : null}
                   </Td>
-                  <Td className="text-right tabular-nums text-text-2">{i.minStock || "—"}</Td>
+                  <Td label={t("clinic.inventory.minStock")} className="text-right tabular-nums text-text-2">{i.minStock || "—"}</Td>
                   <Td>
                     {i.nextExpiry ? (
                       <span className="flex items-center gap-2 tabular-nums">

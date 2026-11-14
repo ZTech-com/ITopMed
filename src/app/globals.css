@@ -137,6 +137,82 @@ body {
   font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* A word or code longer than its box breaks instead of spilling out of it. */
+  overflow-wrap: break-word;
+}
+
+/* Grid columns never grow to their content's width (wide tables scroll inside
+   their own box instead of pushing the page wider than a phone screen). */
+.grid > * {
+  min-width: 0;
+}
+
+/* Browsers give <fieldset> min-width: min-content, so a wide table inside one
+   would widen the page; let it shrink like any other box. */
+fieldset {
+  min-width: 0;
+}
+
+/* Scroll boxes contain their absolutely positioned children (e.g. screen-reader
+   labels), which would otherwise escape the box and widen the page. */
+.overflow-x-auto,
+.overflow-auto {
+  position: relative;
+}
+
+/* Phones: <Table phone="cards"> shows each row as a card — the first cell is the
+   title on its own line, the other cells flow below it and wrap. Header cells stay
+   available to screen readers. */
+@media (max-width: 639.98px) {
+  .table-cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .table-cards tbody {
+    display: block;
+  }
+  .table-cards tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-cards tr:last-child {
+    border-bottom: 0;
+  }
+  .table-cards td {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    padding: 0 !important;
+    border: 0 !important;
+    text-align: left !important;
+    font-size: 13.5px;
+  }
+  .table-cards td:first-child {
+    flex-basis: 100%;
+    font-size: 14.5px;
+  }
+  .table-cards td:empty {
+    display: none;
+  }
+  .table-cards td[data-label]::before {
+    content: attr(data-label) ": ";
+    color: var(--text-3);
+    font-weight: 400;
+  }
+}
+
+/* Text next to a checkbox/radio inside a flex label may shrink and wrap. */
+label > span,
+label > input + span {
+  min-width: 0;
 }
 
 :focus-visible {

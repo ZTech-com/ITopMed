@@ -35,7 +35,7 @@ export default async function PortalInvoicesPage({ params }: { params: Promise<{
                         {l.quantity > 1 ? <span className="text-text-3"> × {l.quantity}</span> : null}
                         {l.discountMinor > 0n ? <span className="text-text-3"> · {t("portal.invoices.discount")} −{money(l.discountMinor, inv.currency)}</span> : null}
                       </span>
-                      <span className="tabular-nums">{money(l.totalMinor, inv.currency)}</span>
+                      <span className="whitespace-nowrap text-right tabular-nums">{money(l.totalMinor, inv.currency)}</span>
                     </li>
                   ))}
                 </ul>
@@ -59,11 +59,11 @@ export default async function PortalInvoicesPage({ params }: { params: Promise<{
                   <ul className="space-y-1 text-[13px] text-text-3">
                     {inv.payments.map((pay) => (
                       <li key={pay.id} className="flex justify-between gap-3">
-                        <span>
+                        <span className="min-w-0">
                           {format.dateTime(pay.receivedAt, { dateStyle: "medium", timeStyle: "short", timeZone: tz })} · {t(`paymentMethod.${pay.method}` as never)}
                           {pay.refundedMinor > 0n ? ` · ${t("portal.invoices.refunded")} ${money(pay.refundedMinor, pay.currency)}` : ""}
                         </span>
-                        <span className="tabular-nums">{money(pay.amountMinor, pay.currency)}</span>
+                        <span className="whitespace-nowrap text-right tabular-nums">{money(pay.amountMinor, pay.currency)}</span>
                       </li>
                     ))}
                   </ul>

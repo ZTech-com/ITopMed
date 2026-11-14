@@ -9,8 +9,9 @@ export function cx(...parts: (string | false | null | undefined)[]) {
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
+// Labels stay on one line when there is room and wrap (never overflow) on narrow screens.
 const base =
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-control)] font-medium transition-[background,box-shadow,color,transform] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 select-none";
+  "inline-flex max-w-full items-center justify-center gap-2 text-center leading-tight rounded-[var(--radius-control)] font-medium transition-[background,box-shadow,color,transform] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 select-none";
 const variants: Record<Variant, string> = {
   primary: "bg-accent-solid text-on-accent hover:bg-accent-solid-hover shadow-sm",
   secondary: "bg-surface text-text border border-border-strong hover:bg-surface-2",
@@ -18,9 +19,9 @@ const variants: Record<Variant, string> = {
   danger: "bg-danger-solid text-white hover:opacity-90",
 };
 const sizes: Record<Size, string> = {
-  sm: "h-8 px-3 text-[13px]",
-  md: "h-10 px-4 text-sm",
-  lg: "h-12 px-5 text-[15px]",
+  sm: "min-h-8 px-3 py-1 text-[13px]",
+  md: "min-h-10 px-4 py-2 text-sm",
+  lg: "min-h-12 px-5 py-2.5 text-[15px]",
 };
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md", extra?: string) {
@@ -37,7 +38,9 @@ export function ButtonLink({ variant = "primary", size = "md", className, ...res
 
 export function Card({ className, children, ...rest }: ComponentProps<"section">) {
   return (
-    <section className={cx("rounded-[var(--radius-card)] border border-border bg-surface shadow-card", className)} {...rest}>
+    // min-w-0: as a grid/flex child a card must never grow to its content's width
+    // (a wide table scrolls inside the card instead of widening the page).
+    <section className={cx("min-w-0 rounded-[var(--radius-card)] border border-border bg-surface shadow-card", className)} {...rest}>
       {children}
     </section>
   );
@@ -64,10 +67,11 @@ export function PageHeader({ title, description, action, eyebrow }: { title: Rea
     <header className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:mb-8">
       <div className="min-w-0 max-w-3xl">
         {eyebrow ? <p className="mb-1 text-[13px] font-medium text-text-3">{eyebrow}</p> : null}
-        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.022em] sm:text-[30px]">{title}</h1>
+        <h1 className="text-[24px] font-semibold leading-tight tracking-[-0.022em] [overflow-wrap:anywhere] sm:text-[30px]">{title}</h1>
         {description ? <p className="mt-2 text-[15px] leading-relaxed text-text-2">{description}</p> : null}
       </div>
-      {action ? <div className="flex shrink-0 gap-2">{action}</div> : null}
+      {/* Wraps on narrow screens instead of pushing the page wider than the phone. */}
+      {action ? <div className="flex min-w-0 max-w-full flex-wrap gap-2">{action}</div> : null}
     </header>
   );
 }
@@ -155,23 +159,30 @@ export function EmptyState({ title, description, action, icon }: { title: ReactN
 
 export function Stat({ label, value, hint, icon }: { label: ReactNode; value: ReactNode; hint?: ReactNode; icon?: ReactNode }) {
   return (
-    <Card className="p-5">
+    <Card className="@container p-4 sm:p-5">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[13px] font-medium text-text-2">{label}</p>
-        {icon ? <span className="text-text-3">{icon}</span> : null}
+        <p className="min-w-0 text-[13px] font-medium text-text-2">{label}</p>
+        {icon ? <span className="shrink-0 text-text-3">{icon}</span> : null}
       </div>
-      <p className="mt-3 text-[32px] font-semibold leading-none tracking-[-0.03em] tabular-nums">{value}</p>
+      {/* Size follows the card width, so large sums never leave the card; the currency may wrap below the digits. */}
+      <p className="mt-3 text-[clamp(1.125rem,12cqi,2rem)] font-semibold leading-[1.1] tracking-[-0.02em] tabular-nums [overflow-wrap:anywhere]">{value}</p>
       {hint ? <p className="mt-2 text-[12px] text-text-3">{hint}</p> : null}
     </Card>
   );
 }
 
 /** Responsive table: scrolls horizontally inside its card on narrow screens. */
-export function Table({ children, caption }: { children: ReactNode; caption?: string }) {
+/**
+ * Data table. On phones (`phone="cards"`, the default) every row becomes a compact
+ * card — first cell as the title, the other cells wrapping below it — so nothing
+ * needs sideways scrolling. Use `phone="scroll"` where columns only make sense
+ * side by side (e.g. a matrix).
+ */
+export function Table({ children, caption, phone = "cards" }: { children: ReactNode; caption?: string; phone?: "cards" | "scroll" }) {
   return (
     // Focusable so keyboard users can scroll wide tables on narrow screens (WCAG 2.1.1).
     <div className="overflow-x-auto" tabIndex={0} role={caption ? "region" : undefined} aria-label={caption}>
-      <table className="w-full min-w-[640px] border-collapse text-left text-[14px]">
+      <table className={cx("w-full border-collapse text-left text-[14px]", phone === "cards" ? "table-cards sm:min-w-[640px]" : "min-w-[640px]")}>
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         {children}
       </table>
@@ -187,8 +198,13 @@ export function Th({ children, className }: { children?: ReactNode; className?: 
   );
 }
 
-export function Td({ children, className }: { children?: ReactNode; className?: string }) {
-  return <td className={cx("border-b border-border px-5 py-3.5 align-middle first:pl-6", className)}>{children}</td>;
+/** `label`: shown before the value only in the phone card layout, for cells that are ambiguous without their column header (e.g. two amounts). */
+export function Td({ children, className, label }: { children?: ReactNode; className?: string; label?: string }) {
+  return (
+    <td data-label={label} className={cx("border-b border-border px-5 py-3.5 align-middle first:pl-6", className)}>
+      {children}
+    </td>
+  );
 }
 
 export function DescriptionList({ items }: { items: { label: ReactNode; value: ReactNode }[] }) {

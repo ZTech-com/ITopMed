@@ -775,7 +775,8 @@
       "qty": "Кол-во",
       "invoices": "Счета",
       "expensesByCategory": "Расходы по категориям",
-      "dayTableCaption": "Таблица оплат по дням"
+      "dayTableCaption": "Таблица оплат по дням",
+      "lastDays": "Последние {days} дн."
     },
     "expenses": {
       "title": "Расходы",
@@ -1101,7 +1102,8 @@
     "ORDERED": "Назначен",
     "COLLECTED": "Материал взят",
     "RESULTED": "Ожидает подтверждения",
-    "VERIFIED": "Подтверждён"
+    "VERIFIED": "Подтверждён",
+    "MERGED": "Объединён"
   },
   "platformRole": {
     "SUPER_ADMIN": "Суперадминистратор",
@@ -1534,7 +1536,8 @@
     "USER": "Бывший или неизвестный пользователь",
     "PLATFORM_USER": "Поддержка ITop Med",
     "SYSTEM": "Система",
-    "ANONYMOUS": "Без входа в систему"
+    "ANONYMOUS": "Без входа в систему",
+    "PATIENT": "Пациент"
   },
   "priority": {
     "ROUTINE": "Плановый",
