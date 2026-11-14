@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { env } from "../env";
 import { logger } from "../logger";
+import { mailboxRoot } from "../local/paths";
 
 /**
  * SMS delivery.
@@ -24,7 +25,7 @@ export async function sendSms(to: string, text: string): Promise<{ delivered: bo
   const e = env();
   if (e.SMS_TRANSPORT === "none") return { delivered: false, transport: null };
   try {
-    const dir = path.join(process.cwd(), ".dev-mailbox", "sms");
+    const dir = path.join(mailboxRoot(), "sms");
     await fs.mkdir(dir, { recursive: true });
     const safeTo = to.replace(/[^0-9+]/g, "");
     const file = path.join(dir, `${new Date().toISOString().replace(/[:.]/g, "-")}_${safeTo}.txt`);

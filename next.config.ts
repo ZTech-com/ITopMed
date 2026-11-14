@@ -13,7 +13,12 @@ const securityHeaders = [
   // time, and a single-computer installation must not pin HTTPS on localhost).
 ];
 
+// The packaged Windows app (scripts/package/build-win.ts) needs a self-contained
+// server; it builds into its own folder so a running local installation is untouched.
+const packaging = process.env.ITM_STANDALONE === "1";
+
 const config: NextConfig = {
+  ...(packaging ? { output: "standalone" as const, distDir: ".next-pkg" } : {}),
   poweredByHeader: false,
   reactStrictMode: true,
   serverExternalPackages: ["@node-rs/argon2", "embedded-postgres"],

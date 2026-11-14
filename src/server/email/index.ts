@@ -4,6 +4,7 @@ import path from "node:path";
 import nodemailer from "nodemailer";
 import { env } from "../env";
 import { logger } from "../logger";
+import { mailboxRoot } from "../local/paths";
 
 export interface EmailMessage {
   to: string;
@@ -29,7 +30,7 @@ export async function sendEmail(msg: EmailMessage): Promise<{ delivered: boolean
       const transport = nodemailer.createTransport(e.SMTP_URL);
       await transport.sendMail({ from: e.EMAIL_FROM, to: msg.to, subject: msg.subject, text: msg.text, html: msg.html });
     } else {
-      const dir = path.join(process.cwd(), ".dev-mailbox");
+      const dir = mailboxRoot();
       await fs.mkdir(dir, { recursive: true });
       const safeTo = msg.to.replace(/[^a-z0-9@._-]/gi, "_");
       const file = path.join(dir, `${new Date().toISOString().replace(/[:.]/g, "-")}_${safeTo}.html`);

@@ -2309,5 +2309,24 @@
     "fingerprint": "Certificate fingerprint (SHA-256) — compare it with the one shown on the device:",
     "why": "The certificate is only for the ITop Med server on this clinic's network and is installed once per device. After that, data travels encrypted.",
     "link": "Connect a phone or tablet"
+  },
+  "welcome": {
+    "title": "Welcome to ITop Med",
+    "subtitle": "Let's set up your clinic in a minute. No programs or commands needed.",
+    "clinicSection": "Your clinic",
+    "clinicName": "Clinic name",
+    "clinicNamePlaceholder": "For example: Shifo Cardio",
+    "iAmDoctor": "I see patients myself (doctor)",
+    "iAmFrontDesk": "I also run the front desk and cash",
+    "accountSection": "Your account (clinic Admin)",
+    "fullName": "Your full name",
+    "emailHint": "You sign in with this email. It need not be a real mailbox — just remember it.",
+    "passwordHint": "At least 12 characters, letters and digits. Write it down and keep it safe.",
+    "confirmPassword": "Repeat the password",
+    "mfa": "Two-step protection with your phone (recommended)",
+    "mfaHint": "Sign-in asks for the password plus a Google Authenticator code. If off, the password alone signs in — weaker protection.",
+    "submit": "Create the clinic",
+    "privacy": "All data stays on this computer only, with an encrypted backup every day.",
+    "done": "Your clinic is ready! Sign in with your email and password."
   }
 }

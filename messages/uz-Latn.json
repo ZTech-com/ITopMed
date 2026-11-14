@@ -2309,5 +2309,24 @@
     "fingerprint": "Sertifikat barmoq izi (SHA-256) — qurilmadagisi bilan solishtiring:",
     "why": "Sertifikat faqat shu klinika tarmog'idagi ITop Med server uchun va har bir qurilmaga bir marta o'rnatiladi. Shundan keyin ma'lumotlar shifrlangan holda uzatiladi.",
     "link": "Telefon yoki planshetni ulash"
+  },
+  "welcome": {
+    "title": "ITop Med'ga xush kelibsiz",
+    "subtitle": "Bir daqiqada klinikangizni sozlaymiz. Hech qanday dastur yoki buyruq kerak emas.",
+    "clinicSection": "Klinikangiz",
+    "clinicName": "Klinika nomi",
+    "clinicNamePlaceholder": "Masalan: Shifo Kardio",
+    "iAmDoctor": "Men o'zim ham shifokorman (qabul qilaman)",
+    "iAmFrontDesk": "Registratura va kassani ham o'zim qilaman",
+    "accountSection": "Sizning hisobingiz (klinika Admini)",
+    "fullName": "To'liq ismingiz",
+    "emailHint": "Shu email bilan kirasiz. Internet pochta bo'lishi shart emas, faqat eslab qoling.",
+    "passwordHint": "Kamida 12 belgi, harf va raqam. Yozib oling va xavfsiz joyda saqlang.",
+    "confirmPassword": "Parolni takrorlang",
+    "mfa": "Telefon orqali ikki bosqichli himoya (tavsiya etiladi)",
+    "mfaHint": "Kirishda parol + telefondagi Google Authenticator kodi. O'chirsangiz, faqat parol bilan kirasiz — himoya kuchsizroq bo'ladi.",
+    "submit": "Klinikani yaratish",
+    "privacy": "Barcha ma'lumotlar faqat shu kompyuterda saqlanadi va har kuni shifrlangan zaxira nusxasi olinadi.",
+    "done": "Klinikangiz tayyor! Email va parolingiz bilan kiring."
   }
 }

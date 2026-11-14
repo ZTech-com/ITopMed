@@ -7,6 +7,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { dataRoot } from "./paths";
 
 /** Adapters that other devices on the Wi-Fi/LAN can never reach. */
 const VIRTUAL = /vethernet|virtualbox|vmware|hyper-v|wsl|docker|loopback|bluetooth|npcap|vpn|tap-|tun|utun|zerotier|hamachi|default switch/i;
@@ -34,14 +35,14 @@ export function lanAddresses(): string[] {
 
 export const LOCAL_PUBLIC_PORT = Number(process.env.LOCAL_PUBLIC_PORT ?? 3443);
 
-export function caCertPath(root = process.cwd()): string {
-  return path.join(root, ".data", "certs", "itopmed-local-ca.crt");
+export function caCertPath(): string {
+  return path.join(dataRoot(), "certs", "itopmed-local-ca.crt");
 }
 
 /** PEM of the local CA certificate (public part only), or null outside a local installation. */
-export function readCaPem(root = process.cwd()): string | null {
+export function readCaPem(): string | null {
   try {
-    return fs.readFileSync(caCertPath(root), "utf8");
+    return fs.readFileSync(caCertPath(), "utf8");
   } catch {
     return null;
   }

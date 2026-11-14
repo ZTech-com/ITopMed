@@ -6,16 +6,23 @@ import { Form, SubmitButton, TextField } from "@/components/ui/form";
 import { Alert } from "@/components/ui/primitives";
 import { safeNext } from "@/lib/safe-next";
 import { getClinicPrincipal } from "@/server/auth/guards";
+import { needsFirstRun } from "@/server/local/first-run";
 import { clinicLoginAction } from "../../clinic-actions";
 
-export default async function ClinicLoginPage({ searchParams }: { searchParams: Promise<{ activated?: string; reset?: string; next?: string }> }) {
+export default async function ClinicLoginPage({ searchParams }: { searchParams: Promise<{ activated?: string; reset?: string; next?: string; welcome?: string }> }) {
   const sp = await searchParams;
   const next = safeNext(sp.next);
+  if (await needsFirstRun()) redirect("/welcome");
   const p = await getClinicPrincipal();
   if (p && (!p.mfaRequired || p.mfaVerified)) redirect(next ?? "/clinics");
   const t = await getTranslations();
   return (
     <AuthLayout title={t("auth.clinicTitle")} subtitle={t("auth.clinicSubtitle")}>
+      {sp.welcome ? (
+        <div className="mb-5">
+          <Alert tone="success">{t("welcome.done")}</Alert>
+        </div>
+      ) : null}
       {sp.activated || sp.reset ? (
         <div className="mb-5">
           <Alert tone="success">{sp.reset ? t("auth.resetDone") : t("invite.success")}</Alert>

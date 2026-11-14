@@ -48,7 +48,8 @@ let cached: Env | undefined;
 /** Validated environment. Fails fast and never prints secret values. */
 export function env(): Env {
   if (cached) return cached;
-  const parsed = schema.safeParse(process.env);
+  // An empty line in .env ("TELEGRAM_TRANSPORT=") means "not set", not an invalid value.
+  const parsed = schema.safeParse(Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== "")));
   if (!parsed.success) {
     const fields = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`Invalid environment configuration — ${fields}`);
@@ -61,6 +62,11 @@ export function env(): Env {
   }
   cached = parsed.data;
   return cached;
+}
+
+/** After the first-run form changes a setting in this process (MFA_EXEMPT_EMAILS). */
+export function resetEnvCache() {
+  cached = undefined;
 }
 
 export const isProduction = () => env().NODE_ENV === "production";

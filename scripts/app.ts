@@ -13,7 +13,7 @@
  *
  * The server is scripts/local.ts running hidden; its output goes to .data/logs/local.log.
  */
-import "dotenv/config";
+import dotenv from "dotenv";
 import { execFileSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import http from "node:http";
@@ -24,8 +24,11 @@ import path from "node:path";
 import QRCode from "qrcode";
 import { lanAddresses } from "../src/server/local/lan";
 
-const ROOT = process.cwd();
-const DATA = path.join(ROOT, ".data");
+/** Packaged Windows app: program folder (ITM_ROOT) and data folder (ITM_HOME) - see scripts/local.ts. */
+const PACKAGED = process.env.ITM_PACKAGED === "1";
+const ROOT = PACKAGED ? process.env.ITM_ROOT! : process.cwd();
+const DATA = PACKAGED ? process.env.ITM_HOME! : path.join(ROOT, ".data");
+dotenv.config({ path: PACKAGED ? path.join(DATA, ".env") : path.join(ROOT, ".env"), quiet: true });
 const PID_FILE = path.join(DATA, "local.pid");
 const STOP_FILE = path.join(DATA, "local.stop");
 const LOG = path.join(DATA, "logs", "local.log");
@@ -91,6 +94,7 @@ function openWindow(page = "/") {
 }
 
 const FIREWALL_ASKED = path.join(DATA, "firewall.asked");
+const FIREWALL_PS1 = PACKAGED ? path.join(ROOT, "tools", "firewall.ps1") : path.join(ROOT, "scripts", "windows", "firewall.ps1");
 const firewallRuleOn = () => powershell("Get-NetFirewallRule -DisplayName 'ITop Med (clinic network)' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Enabled") === "True";
 
 /**
@@ -100,8 +104,10 @@ const firewallRuleOn = () => powershell("Get-NetFirewallRule -DisplayName 'ITop 
  * background (--no-window / autostart). Later: npm run app:firewall.
  */
 function offerFirewall() {
-  if (!isWin || fs.existsSync(FIREWALL_ASKED) || firewallRuleOn()) return;
-  fs.writeFileSync(FIREWALL_ASKED, new Date().toISOString());
+  // Asked once per program location (an update in a new folder is a new node.exe for Windows Firewall).
+  if (!isWin || (fs.existsSync(FIREWALL_ASKED) && fs.readFileSync(FIREWALL_ASKED, "utf8") === process.execPath) || firewallRuleOn()) return;
+  fs.mkdirSync(DATA, { recursive: true });
+  fs.writeFileSync(FIREWALL_ASKED, process.execPath);
   console.log("Telefon va planshetlar ulana olishi uchun Windows ruxsat so'raydi — \"Ha\" ni bosing (bir marta).");
   firewall();
 }
@@ -123,7 +129,7 @@ function tail(n: number): string {
 }
 
 async function start() {
-  if (!fs.existsSync(path.join(ROOT, ".env"))) {
+  if (!PACKAGED && !fs.existsSync(path.join(ROOT, ".env"))) {
     console.error("`.env` topilmadi. Avval: npm run setup");
     process.exit(1);
   }
@@ -133,17 +139,30 @@ async function start() {
       rotateLog();
       const out = fs.openSync(LOG, "a");
       const tsx = path.join(ROOT, "node_modules", "tsx", "dist", "cli.mjs");
-      const child = spawn(process.execPath, [tsx, "scripts/local.ts"], { cwd: ROOT, detached: true, windowsHide: true, stdio: ["ignore", out, out] });
+      const argv = PACKAGED ? [path.join(ROOT, "launcher.mjs")] : [tsx, "scripts/local.ts"];
+      const child = spawn(process.execPath, argv, { cwd: ROOT, detached: true, windowsHide: true, stdio: ["ignore", out, out], env: process.env });
       child.unref();
       console.log("ITop Med ishga tushmoqda… (birinchi marta yoki yangilanishdan keyin 1–3 daqiqa)");
     } else {
       console.log("ITop Med ishga tushmoqda, kuting…");
     }
     const started = Date.now();
+    // Packaged app: open the window as soon as the server answers at all - it shows
+    // "ITop Med ishga tushmoqda…" and refreshes itself until the app is ready.
+    if (PACKAGED && !flags.includes("--no-window")) {
+      while (!(await portOpen(3000)) && Date.now() - started < 60_000 && (Date.now() - started < 20_000 || runningPid())) await sleep(500);
+      if (await portOpen(3000)) {
+        openWindow(flags.includes("--admin") ? "/admin" : "/");
+        offerFirewall();
+        return;
+      }
+    }
     while (!(await healthy())) {
       const waited = Date.now() - started;
       if (waited > 8 * 60_000 || (waited > 20_000 && !runningPid())) {
         console.error(`\nITop Med ishga tushmadi. Jurnalning oxiri (${LOG}):\n\n${tail(15)}\n\nTekshirish: npm run app:doctor`);
+        // The packaged app has no console: show the log so the reason is visible.
+        if (PACKAGED && isWin) spawn("notepad", [LOG], { detached: true, stdio: "ignore" }).unref();
         process.exit(1);
       }
       await sleep(1500);
@@ -160,7 +179,7 @@ async function start() {
 
 /** Shuts PostgreSQL down cleanly if it is still running (no stale lock, no crash recovery on the next start). */
 function stopDatabase() {
-  const dataDir = process.env.DEV_PG_DIR ?? path.join(os.homedir(), ".itopmed-dev", "pg");
+  const dataDir = process.env.DEV_PG_DIR ?? (PACKAGED ? path.join(DATA, "pg") : path.join(os.homedir(), ".itopmed-dev", "pg"));
   const pgCtl = path.join(ROOT, "node_modules", "@embedded-postgres", `${isWin ? "windows" : process.platform}-${process.arch}`, "native", "bin", isWin ? "pg_ctl.exe" : "pg_ctl");
   if (!fs.existsSync(pgCtl) || !fs.existsSync(path.join(dataDir, "postmaster.pid"))) return;
   try {
@@ -255,7 +274,7 @@ function firewall() {
     console.log("Faqat Windows uchun.");
     return;
   }
-  const ps1 = path.join(ROOT, "scripts", "windows", "firewall.ps1");
+  const ps1 = FIREWALL_PS1;
   const q = (s: string) => s.replaceAll("'", "''");
   console.log("Windows administrator ruxsatini so'raydi — \"Ha\" ni bosing.");
   powershell(`Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','"${q(ps1)}"','-Node','"${q(process.execPath)}"'`);

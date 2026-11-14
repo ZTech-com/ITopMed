@@ -16,3 +16,7 @@ test-results/
 # Encrypted database backups (never commit)
 backups/
 *.itmbk
+
+# Packaged Windows app build output (scripts/package/build-win.ts)
+.next-pkg/
+dist/

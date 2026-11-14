@@ -14,6 +14,7 @@ Next.js 16 App Router · React 19 · TypeScript strict · Tailwind v4 · Postgre
 | Create a platform admin | `npm run admin:create -- --email x@y --name "Name" --role SUPER_ADMIN` |
 | Dev server | `npm run dev` → http://localhost:3000/admin/login and /login |
 | Local installation (one PC serves the clinic network; self-healing supervisor in `scripts/local.ts`) | `npm run app` / `app:stop` / `app:status` / `app:doctor` (checks + QR) / `app:firewall` / `app:autostart`; devices join via `http://<pc-ip>/connect` |
+| Packaged Windows app for clinics (one zip: own Node runtime + PostgreSQL + prebuilt app; data in `%LOCALAPPDATA%\ITopMed`; first start = /welcome form) | `npm run package:win` → `dist/ITopMed-Windows.zip` (see `scripts/package/build-win.ts`) |
 | Notification worker | `npm run worker` (or `-- --once`); clinics can also "Send due messages now" |
 | Encrypted backup / restore drill | `npm run backup` · `npm run backup:verify -- <file>` (see docs/DEPLOYMENT.md) |
 | Layout audit (every screen at phone/tablet/desktop, light+dark) | `npm run app` then `ITM_AUDIT_EMAIL=… ITM_AUDIT_PASSWORD=… npm run ui:audit -- --slug <clinic>` (owner + SUPER_ADMIN account listed in `MFA_EXEMPT_EMAILS`); must report no problems after any UI change |

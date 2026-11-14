@@ -22,9 +22,8 @@
  *
  * Options: --build (force a fresh production build), --port 3443.
  */
-import "dotenv/config";
+import dotenv from "dotenv";
 import { execFileSync, spawn, type ChildProcess } from "node:child_process";
-import crypto from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
 import https from "node:https";
@@ -33,11 +32,29 @@ import os from "node:os";
 import path from "node:path";
 import tls from "node:tls";
 import pg from "pg";
+import { ensureCertificates as issueCertificates } from "./lib/certs";
 import { startEmbeddedDb } from "./lib/embedded-db";
+import { createEnvFile } from "./lib/env-file";
+import { applyMigrations } from "./lib/migrate";
+import { createBackup, backupKey } from "./lib/backup";
 import { lanAddresses } from "../src/server/local/lan";
 
-const ROOT = process.cwd();
-const DATA = path.join(ROOT, ".data");
+/**
+ * Packaged Windows app (ITM_PACKAGED=1, see scripts/package/build-win.ts): the
+ * program folder (ITM_ROOT) holds a prebuilt app and its own Node runtime; all
+ * data lives in ITM_HOME (%LOCALAPPDATA%\ITopMed) - settings, database,
+ * certificates, logs, backups - so replacing the program folder updates the app
+ * without touching data. From a source checkout everything stays in the project.
+ */
+const PACKAGED = process.env.ITM_PACKAGED === "1";
+const ROOT = PACKAGED ? process.env.ITM_ROOT! : process.cwd();
+const DATA = PACKAGED ? process.env.ITM_HOME! : path.join(ROOT, ".data");
+if (PACKAGED) {
+  if (createEnvFile(path.join(DATA, ".env"))) console.log("Created the settings of this computer (first start).");
+  dotenv.config({ path: path.join(DATA, ".env"), quiet: true });
+} else {
+  dotenv.config({ quiet: true });
+}
 const CERTS = path.join(DATA, "certs");
 const args = process.argv.slice(2);
 const PUBLIC_PORT = Number(args[args.indexOf("--port") + 1] || 0) || 3443;
@@ -59,58 +76,10 @@ const log = (msg: string) => console.log(`[${new Date().toISOString().slice(11, 
 
 /* ---------------------------------------------------------------- certificates */
 
-function opensslPath(): string {
-  try {
-    execFileSync("openssl", ["version"], { stdio: "ignore" });
-    return "openssl";
-  } catch {
-    const candidates = ["C:\\Program Files\\Git\\usr\\bin\\openssl.exe", "C:\\Program Files\\Git\\mingw64\\bin\\openssl.exe"];
-    const found = candidates.find((c) => fs.existsSync(c));
-    if (!found) throw new Error("OpenSSL was not found. Install Git for Windows (it includes OpenSSL) and run again.");
-    return found;
-  }
-}
-let opensslBin: string | undefined;
-function openssl(argv: string[]) {
-  opensslBin ??= opensslPath();
-  // MSYS2_ARG_CONV_EXCL: stop Git's OpenSSL from rewriting "/CN=…" as a Windows path.
-  execFileSync(opensslBin, argv, { stdio: "pipe", env: { ...process.env, MSYS2_ARG_CONV_EXCL: "*" }, windowsHide: true });
-}
-
-/** Private CA (once, 10 years) + server certificate for localhost and every LAN address (re-issued when they change). */
+/** Private CA (once, 10 years) + server certificate for localhost and every LAN address (re-issued when they change). Pure Node: no OpenSSL needed. */
 function ensureCertificates(ips: string[]) {
-  fs.mkdirSync(CERTS, { recursive: true });
-  const caKey = path.join(CERTS, "itopmed-local-ca.key");
-  const caCrt = path.join(CERTS, "itopmed-local-ca.crt");
-  const key = path.join(CERTS, "server.key");
-  const crt = path.join(CERTS, "server.crt");
-  const sanFile = path.join(CERTS, "server.san");
-  if (!fs.existsSync(caKey) || !fs.existsSync(caCrt)) {
-    openssl(["genrsa", "-out", caKey, "3072"]);
-    openssl(["req", "-x509", "-new", "-key", caKey, "-sha256", "-days", "3650", "-subj", "/CN=ITop Med Local CA/O=ITop Med (this computer only)", "-out", caCrt]);
-    log(`Created a private certificate authority: ${caCrt}`);
-  }
-  const names = ["localhost", os.hostname().toLowerCase(), `${os.hostname().toLowerCase()}.local`];
-  const san = [...names.map((n) => `DNS:${n}`), ...["127.0.0.1", ...ips].map((ip) => `IP:${ip}`)].join(",");
-  const valid = () => {
-    try {
-      return new Date(new crypto.X509Certificate(fs.readFileSync(crt)).validTo).getTime() > Date.now() + 30 * 86400_000;
-    } catch {
-      return false;
-    }
-  };
-  if (fs.existsSync(crt) && fs.existsSync(sanFile) && fs.readFileSync(sanFile, "utf8") === san && valid()) return { key, crt, caCrt };
-  const csr = path.join(CERTS, "server.csr");
-  const ext = path.join(CERTS, "server.ext");
-  fs.writeFileSync(ext, `basicConstraints=CA:FALSE\nkeyUsage=digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\nsubjectAltName=${san}\n`);
-  openssl(["genrsa", "-out", key, "2048"]);
-  openssl(["req", "-new", "-key", key, "-subj", "/CN=ITop Med local server", "-out", csr]);
-  // 825 days: the longest validity Apple devices accept for TLS server certificates.
-  openssl(["x509", "-req", "-in", csr, "-CA", caCrt, "-CAkey", caKey, "-CAcreateserial", "-days", "825", "-sha256", "-extfile", ext, "-out", crt]);
-  fs.writeFileSync(sanFile, san);
-  fs.rmSync(csr, { force: true });
-  log(`Issued a server certificate for: ${san.replaceAll("DNS:", "").replaceAll("IP:", "")}`);
-  return { key, crt, caCrt };
+  const host = os.hostname().toLowerCase();
+  return issueCertificates(CERTS, ["localhost", host, `${host}.local`], ["127.0.0.1", ...ips], log);
 }
 
 /* ---------------------------------------------------------------- build */
@@ -181,7 +150,7 @@ async function databaseAnswers(): Promise<boolean> {
   }
 }
 
-const PG_DIR = process.env.DEV_PG_DIR ?? path.join(os.homedir(), ".itopmed-dev", "pg");
+const PG_DIR = process.env.DEV_PG_DIR ?? (PACKAGED ? path.join(DATA, "pg") : path.join(os.homedir(), ".itopmed-dev", "pg"));
 
 /**
  * After a crash or power cut, PostgreSQL helper processes can survive their
@@ -367,6 +336,10 @@ async function main() {
     EMAIL_TRANSPORT: process.env.SMTP_URL ? "smtp" : "dev-mailbox",
     SMS_TRANSPORT: "none",
     NEXT_TELEMETRY_DISABLED: "1",
+    // Next standalone server (packaged) listens where the proxy expects it.
+    PORT: String(APP_PORT),
+    HOSTNAME: "127.0.0.1",
+    ...(PACKAGED ? { ITM_HOME: DATA, ITM_PACKAGED: "1" } : {}),
   };
 
   // Show "starting…" on every entry point at once, before the slow steps.
@@ -400,15 +373,24 @@ async function main() {
 
   await retry("Database start", ensureDatabase, 4);
   log("Applying database migrations…");
-  await retry("Migrations", () => runOnce("migrate", [bin.prisma, "migrate", "deploy"], process.env), 4);
-
-  if (args.includes("--build") || buildIsStale()) {
-    log("Building the production app (1–3 minutes)…");
-    await runOnce("build", [bin.next, "build"], env);
+  if (PACKAGED) {
+    // No Prisma CLI in the package: same migrations, same bookkeeping table, then the plan catalog.
+    await retry("Migrations", () => applyMigrations(process.env.MIGRATION_DATABASE_URL!, path.join(ROOT, "migrations"), log), 4);
+    await runOnce("seed", [path.join(ROOT, "seed.mjs")], process.env);
+  } else {
+    await retry("Migrations", () => runOnce("migrate", [bin.prisma, "migrate", "deploy"], process.env), 4);
+    if (args.includes("--build") || buildIsStale()) {
+      log("Building the production app (1–3 minutes)…");
+      await runOnce("build", [bin.next, "build"], env);
+    }
   }
 
-  const app: Supervised = { name: "app", argv: [bin.next, "start", "-H", "127.0.0.1", "-p", String(APP_PORT)], restarts: [] };
-  const worker: Supervised = { name: "worker", argv: [bin.tsx, "--conditions=react-server", "scripts/worker.ts"], restarts: [] };
+  const app: Supervised = PACKAGED
+    ? { name: "app", argv: [path.join(ROOT, "app", "server.js")], restarts: [] }
+    : { name: "app", argv: [bin.next, "start", "-H", "127.0.0.1", "-p", String(APP_PORT)], restarts: [] };
+  const worker: Supervised = PACKAGED
+    ? { name: "worker", argv: [path.join(ROOT, "app", "worker.mjs")], restarts: [] }
+    : { name: "worker", argv: [bin.tsx, "--conditions=react-server", "scripts/worker.ts"], restarts: [] };
   supervised.push(app, worker);
   startSupervised(app, env);
   startSupervised(worker, env);
@@ -458,6 +440,7 @@ async function main() {
     }
   }
 
+  if (PACKAGED) scheduleBackups();
   writeStatus(ips);
   console.log(`
 ITop Med is running.
@@ -468,6 +451,31 @@ ${ips.map((ip) => `  Other devices:      https://${ip}:${PUBLIC_PORT}     (first
 Emails: ${env.EMAIL_TRANSPORT === "smtp" ? "sent through your SMTP server" : "saved as files in the .dev-mailbox folder on this computer (no SMTP configured)"}.
 Stop: npm run app:stop (or Ctrl+C here).
 `);
+}
+
+/**
+ * Packaged app: an encrypted backup every day into %LOCALAPPDATA%\ITopMed\backups
+ * (first one 10 minutes after start, then every 24 h), keeping the latest 14.
+ * Copy them to a USB drive or another computer from time to time.
+ */
+function scheduleBackups() {
+  const dir = path.join(DATA, "backups");
+  const run = async () => {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      const latest = fs.readdirSync(dir).filter((n) => n.endsWith(".itmbk")).sort().pop();
+      if (latest && Date.now() - fs.statSync(path.join(dir, latest)).mtimeMs < 20 * 3_600_000) return;
+      const file = path.join(dir, `itopmed-${new Date().toISOString().replace(/[:.]/g, "-")}.itmbk`);
+      await createBackup({ databaseUrl: process.env.MIGRATION_DATABASE_URL!, file, key: backupKey(process.env.BACKUP_ENCRYPTION_KEY) });
+      const all = fs.readdirSync(dir).filter((n) => n.endsWith(".itmbk")).sort();
+      for (const old of all.slice(0, Math.max(0, all.length - 14))) fs.rmSync(path.join(dir, old), { force: true });
+      log(`Backup saved: ${file}`);
+    } catch (e) {
+      log(`Backup failed: ${e instanceof Error ? e.message : e}`);
+    }
+  };
+  setTimeout(run, 10 * 60_000).unref();
+  setInterval(run, 60 * 60_000).unref();
 }
 
 function writeStatus(ips: string[]) {

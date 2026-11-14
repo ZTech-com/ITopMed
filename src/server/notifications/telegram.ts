@@ -13,6 +13,7 @@ import { logger } from "../logger";
 import type { PatientPrincipal } from "../portal/auth";
 import { decryptField, encryptField, hashIp, randomToken, sha256Hex, uuidv7 } from "../security/crypto";
 import { rateLimit } from "../security/rate-limit";
+import { mailboxRoot } from "../local/paths";
 
 /**
  * Telegram notifications through the CLINIC's own bot (created by the clinic
@@ -44,7 +45,7 @@ async function api<T>(token: string, method: string, body: Record<string, unknow
 }
 
 async function writeOutbox(name: string, text: string) {
-  const dir = path.join(process.cwd(), ".dev-mailbox", "telegram");
+  const dir = path.join(mailboxRoot(), "telegram");
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(path.join(dir, `${new Date().toISOString().replace(/[:.]/g, "-")}_${name}.txt`), `SIMULATED TELEGRAM (dev-outbox transport)\n\n${text}\n`, "utf8");
 }

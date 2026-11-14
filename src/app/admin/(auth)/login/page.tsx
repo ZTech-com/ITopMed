@@ -6,11 +6,13 @@ import { AuthLayout } from "@/components/shell/auth-layout";
 import { Form, SubmitButton, TextField } from "@/components/ui/form";
 import { Alert } from "@/components/ui/primitives";
 import { getPlatformPrincipal } from "@/server/auth/guards";
+import { needsFirstRun } from "@/server/local/first-run";
 import { adminLoginAction } from "../../actions";
 
 export const metadata: Metadata = { title: "ITop Med Boshqaruv", manifest: "/admin.webmanifest" };
 
 export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ activated?: string }> }) {
+  if (await needsFirstRun()) redirect("/welcome");
   const p = await getPlatformPrincipal();
   if (p?.mfaVerified) redirect("/admin");
   const [t, sp] = await Promise.all([getTranslations("auth"), searchParams]);

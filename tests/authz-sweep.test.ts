@@ -23,6 +23,8 @@ const PUBLIC_PAGES = new Set([
   "(public)/forgot-password/page.tsx",
   // Local installation only (LOCAL_MODE=1): network address + public CA certificate for new devices.
   "(public)/connect/page.tsx",
+  // Fresh local installation only, while no account exists (see completeFirstRun).
+  "(public)/welcome/page.tsx",
   "(public)/reset-password/[token]/page.tsx",
   // Invited ITop Med employee has no account yet; the single-use token is the credential.
   "admin/(auth)/invite/[token]/page.tsx",
@@ -35,6 +37,7 @@ const PUBLIC_ACTIONS = new Set([
   "admin/actions.ts:adminRecoveryCodeAction", // second factor: authenticates the half-signed-in session
   "admin/actions.ts:acceptStaffInvitationAction", // token-authenticated account creation
   "admin/actions.ts:adminLogoutAction",
+  "first-run-actions.ts:firstRunAction", // no account yet: allowed only with zero accounts, LOCAL_MODE, from this computer
   "clinic-actions.ts:clinicLoginAction",
   "clinic-actions.ts:clinicMfaAction",
   "clinic-actions.ts:clinicRecoveryCodeAction", // second factor: authenticates the half-signed-in session
