@@ -11,6 +11,7 @@ import { requireClinic } from "@/server/auth/guards";
 import { addAllergy, addDiagnosis, amendNote, finishEncounter, recordVitals, saveDraft, setClinicalStatus, signNote, startVisit } from "@/server/emr/record";
 import { requestMeta } from "@/server/http";
 import { addPrescription, cancelPrescription } from "@/server/emr/prescriptions";
+import { applyNoteTemplate } from "@/server/emr/documents";
 import { cookies } from "next/headers";
 import { BREAK_GLASS_REASONS } from "@/server/emr/access";
 import { CONSENT_METHODS, CONSENT_PURPOSES, recordConsent, registerPatient, updatePatient, withdrawConsent } from "@/server/patients/patients";
@@ -277,4 +278,16 @@ export async function rescheduleAction(_: FormState, fd: FormData): Promise<Form
   revalidatePath(`/c/${slug}/queue`);
   revalidatePath(`/c/${slug}/appointments`);
   return ok("clinic.queue.rescheduled");
+}
+
+export async function applyNoteTemplateAction(_: FormState, fd: FormData): Promise<FormState> {
+  const { slug, ctx } = await clinicFrom(fd);
+  const encounterId = str(fd, "encounterId");
+  try {
+    await applyNoteTemplate(ctx, encounterId, str(fd, "templateId"), await requestMeta());
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath(`/c/${slug}/encounters/${encounterId}`);
+  return ok("templates.applied");
 }

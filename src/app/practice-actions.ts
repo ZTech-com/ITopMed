@@ -7,6 +7,7 @@ import { toFormState } from "@/server/actions-util";
 import { requireClinic } from "@/server/auth/guards";
 import { completeSetup, setClinicModule } from "@/server/clinic/practice";
 import { updateClinicPolicy } from "@/server/clinic/policy";
+import { addStandardTemplates, archiveTemplate, saveTemplate } from "@/server/clinic/templates";
 import { requestMeta } from "@/server/http";
 
 export async function setupAction(_: FormState, fd: FormData): Promise<FormState> {
@@ -68,4 +69,58 @@ export async function policyAction(_: FormState, fd: FormData): Promise<FormStat
   }
   revalidatePath(`/c/${slug}/settings`);
   return { ok: true, nonce: Date.now() };
+}
+
+// ───────────── Templates ─────────────
+
+export async function saveTemplateAction(_: FormState, fd: FormData): Promise<FormState> {
+  const slug = String(fd.get("$slug") ?? "");
+  const ctx = await requireClinic(slug, "clinic.settings.manage");
+  const kind = String(fd.get("kind") ?? "");
+  const s = (k: string) => String(fd.get(k) ?? "");
+  let id: string;
+  try {
+    id = await saveTemplate(
+      ctx,
+      s("id") || null,
+      {
+        kind,
+        name: s("name"),
+        specialty: s("specialty"),
+        body: s("body"),
+        note: kind === "NOTE" ? { complaints: s("complaints"), history: s("history"), examination: s("examination"), assessment: s("assessment"), plan: s("plan") } : undefined,
+      },
+      await requestMeta(),
+    );
+  } catch (e) {
+    return toFormState(e, fd);
+  }
+  revalidatePath(`/c/${slug}/templates`, "layout");
+  if (!s("id")) redirect(`/c/${slug}/templates/${id}`);
+  return { ok: true, message: "templates.saved", nonce: Date.now() };
+}
+
+export async function archiveTemplateAction(_: FormState, fd: FormData): Promise<FormState> {
+  const slug = String(fd.get("$slug") ?? "");
+  const ctx = await requireClinic(slug, "clinic.settings.manage");
+  try {
+    await archiveTemplate(ctx, String(fd.get("id") ?? ""), await requestMeta());
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath(`/c/${slug}/templates`, "layout");
+  redirect(`/c/${slug}/templates`);
+}
+
+export async function standardTemplatesAction(_: FormState, fd: FormData): Promise<FormState> {
+  const slug = String(fd.get("$slug") ?? "");
+  const ctx = await requireClinic(slug, "clinic.settings.manage");
+  let added = 0;
+  try {
+    added = await addStandardTemplates(ctx, await requestMeta());
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath(`/c/${slug}/templates`);
+  return { ok: true, message: "templates.standardAdded", messageValues: { count: added }, nonce: Date.now() };
 }

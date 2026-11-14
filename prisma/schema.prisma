@@ -159,6 +159,7 @@ model Tenant {
   doctorProfiles       DoctorProfile[]
   clinicPolicy         ClinicPolicy?
   telegramBot          TelegramBot?
+  templates            ClinicTemplate[]
   telegramLinks        TelegramLink[]
   telegramLinkCodes    TelegramLinkCode[]
   prescriptions        Prescription[]
@@ -1930,4 +1931,33 @@ model TelegramLinkCode {
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
 
   @@index([tenantId])
+}
+
+// ───────────────────────────── Clinic templates ─────────────────────────────
+
+enum TemplateKind {
+  /// Pre-filled sections of a doctor's visit note.
+  NOTE
+  /// A printable document (visit summary, referral, certificate…) with placeholders.
+  DOCUMENT
+}
+
+/// Templates the clinic creates itself. Generic text only — never patient data.
+model ClinicTemplate {
+  id          String       @id @db.Uuid
+  tenantId    String       @db.Uuid
+  kind        TemplateKind
+  name        String
+  /// Optional: show only to doctors of this specialty (key from specialties.ts).
+  specialty   String?
+  /// NOTE: JSON object of note sections. DOCUMENT: text with {{placeholders}}.
+  content     String
+  createdById String       @db.Uuid
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  archivedAt  DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, kind])
 }

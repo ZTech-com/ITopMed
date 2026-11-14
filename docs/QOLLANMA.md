@@ -246,6 +246,14 @@ Egaga bu cheklovlar tegishli emas.
 4. Shundan keyin tasdiq, eslatma, bekor qilish va natija tayyorligi haqidagi xabarlar Telegramga ham boradi (tibbiy ma'lumotsiz). Bemor istalgan vaqtda uzishi mumkin.
 Telegram server kompyuterda **internet** bo'lishini talab qiladi. Ishlab chiqish rejimida xabarlar simulyatsiya qilinadi (`.dev-mailbox/telegram`).
 
+## 7e. Shablonlar — keraklisini o'zingiz yarating
+**Shablonlar** bo'limida (chap menyu) ikki xil narsa yaratasiz:
+- **Hujjatlar** — qabul xulosasi, yo'llanma, ma'lumotnoma yoki klinikangizga kerak bo'lgan har qanday chop etiladigan hujjat. Matnga `{{patient.fullName}}`, `{{diagnoses}}`, `{{prescriptions}}`, `{{doctor.fullName}}` kabi maydonlarni qo'yasiz; chop etishda ular qabul ma'lumotlari bilan to'ldiriladi. Maydonlarning to'liq ro'yxati tahrirlash sahifasida bor.
+- **Yozuv shablonlari** — shikoyat, anamnez, ko'rik, xulosa va reja bo'limlari uchun tayyor matn (masalan, "Kardiolog konsultatsiyasi"). Kerak bo'lsa faqat bitta mutaxassislik uchun.
+
+Boshlash uchun **"Tayyor shablonlarni qo'shish"** tugmasini bosing — klinika tilida 5 ta shablon qo'shiladi, ularni o'zingizga moslab o'zgartirasiz.
+Shifokor qabul sahifasida: **"Shablondan to'ldirish"** (faqat bo'sh bo'limlar to'ldiriladi) va **"Hujjatlar"** kartasidan istalgan hujjatni chop etish.
+
 ## 8. Zaxira nusxa (har kuni!)
 
 ```bash

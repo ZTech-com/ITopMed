@@ -83,7 +83,12 @@ async function main() {
     const doctor = page.locator('select[name="doctorProfileId"]');
     const option = await doctor.locator("option", { hasText: /Maxammadov/ }).first().getAttribute("value");
     await doctor.selectOption(option!);
-    await page.locator('form:has(select[name="doctorProfileId"]) button[type="submit"]').click();
+    // Wait for the server action to finish (the name is already visible in the walk-in card before that).
+    await Promise.all([
+      page.waitForResponse((r) => r.request().method() === "POST" && r.url().includes("/queue")),
+      page.locator('form:has(select[name="doctorProfileId"]) button[type="submit"]').click(),
+    ]);
+    await page.waitForLoadState("networkidle");
     await page.getByText(`${lastName} ${firstName}`).first().waitFor();
   });
 
@@ -131,6 +136,20 @@ async function main() {
   await ok(page, "printable prescription", async () => {
     await page.goto(`${encounterUrl}/prescription`);
     await page.getByText("Amlodipine 5 mg").waitFor();
+    await page.getByText(firstName).first().waitFor();
+    await page.goto(encounterUrl);
+  });
+
+  await ok(page, "owner's templates: ready-made set available, visit summary prints with the visit's data", async () => {
+    await page.goto(`${C}/templates`);
+    const add = page.locator('form:has(input[name="$slug"]) button[type="submit"]').first();
+    if ((await page.locator('main a[href*="/templates/0"], main a[href*="/templates/01"]').count()) === 0) {
+      await add.click();
+      await page.waitForLoadState("networkidle");
+    }
+    await page.goto(encounterUrl);
+    await page.locator("#documents a").first().click();
+    await page.waitForURL(/\/document\//);
     await page.getByText(firstName).first().waitFor();
     await page.goto(encounterUrl);
   });

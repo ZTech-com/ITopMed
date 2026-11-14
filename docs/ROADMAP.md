@@ -19,6 +19,8 @@
 
 | 12 | Portal self-booking, Telegram | ✅ (2026-11-14) — **online booking** in the patient portal for doctors who opt in: availability from SECURITY DEFINER functions that return times only (no identities, absences as dates only), the booking validated and written by `portal_book()` inside PostgreSQL (clinic rules: days ahead, earliest time, max active per patient; working hours, days off, slot alignment), double booking impossible (exclusion constraint), confirmation + reminder; **Telegram** through each clinic's own bot (official Bot API; token AES-GCM encrypted, no platform access), patient connects with a one-time deep link from the portal (consent recorded, disconnect withdraws it), worker links chats and delivers messages without clinical content; 4 tests. Simulated (dev-outbox) outside production |
 
+| 13 | Templates (clinic builds its own) | ✅ (2026-11-14) — **Templates** page: the clinic creates its own printable documents with {{placeholders}} (patient, visit, doctor, clinic, note sections, diagnoses, prescriptions, today) and visit-note templates (optionally per specialty); ready-made set in the clinic language (visit summary, referral, certificate of visit, general and cardiology note templates); doctors fill empty note sections in one click and print any document from the visit (care-relationship access, audited); i18n check now validates ICU syntax of every message; 3 tests, walkthrough step |
+
 ## Acceptance criteria
 | # | Criterion | Status |
 |---|---|---|

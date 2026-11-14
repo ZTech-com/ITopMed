@@ -34,6 +34,7 @@ export default async function ClinicLayout({ children, params }: { children: Rea
     ...(isDoctor ? [{ href: `${base}/my-schedule`, label: t("nav.mySchedule"), icon: "calendar" as const }] : []),
     ...(can("schedules.read") ? [{ href: `${base}/doctors`, label: t("nav.doctors"), icon: "doctors" as const }] : []),
     ...(can("services.read") ? [{ href: `${base}/services`, label: t("nav.services"), icon: "services" as const }] : []),
+    ...(can("clinic.settings.read") ? [{ href: `${base}/templates`, label: t("nav.templates"), icon: "activity" as const }] : []),
     ...(can("staff.read") ? [{ href: `${base}/staff`, label: t("nav.team"), icon: "staff" as const }] : []),
     ...(can("roles.manage") ? [{ href: `${base}/roles`, label: t("nav.roles"), icon: "roles" as const }] : []),
     ...(can("clinic.settings.read") ? [{ href: `${base}/facilities`, label: t("nav.facilities"), icon: "facilities" as const }] : []),

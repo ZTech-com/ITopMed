@@ -63,7 +63,8 @@
     "inventory": "Dorixona va ombor",
     "hr": "Kadrlar",
     "integrations": "Integratsiyalar",
-    "control": "Nazorat markazi"
+    "control": "Nazorat markazi",
+    "templates": "Shablonlar"
   },
   "auth": {
     "adminTitle": "ITop Med boshqaruvi",
@@ -1368,7 +1369,8 @@
     "bookingTooFar": "Bu sana onlayn yozilish uchun juda uzoq.",
     "bookingTooMany": "Sizda onlayn yozilishlar soni maksimal. Bittasini bekor qiling yoki klinikaga qo'ng'iroq qiling.",
     "telegramOff": "Telegram xabarnomalari mavjud emas.",
-    "telegramTokenInvalid": "Telegram bu tokenni qabul qilmadi. @BotFather da tekshirib, qayta urinib ko'ring."
+    "telegramTokenInvalid": "Telegram bu tokenni qabul qilmadi. @BotFather da tekshirib, qayta urinib ko'ring.",
+    "noDraftNote": "To'ldirish uchun qoralama yozuv yo'q."
   },
   "email": {
     "invitation": {
@@ -2137,5 +2139,73 @@
     "breakGlass": "Tibbiy kartaga favqulodda kirish (30 kun)",
     "supportAccess": "ITop Med qo'llab-quvvatlashining faol kirishi",
     "period": "Ko'rsatkichlar klinika valyutasi va vaqt mintaqasida; \"30 kun\" — oxirgi 30 kun."
+  },
+  "templates": {
+    "title": "Shablonlar",
+    "subtitle": "O'zingizning hujjatlaringiz va yozuv shablonlari. Hujjatlar qabuldan bemor ma'lumotlari to'ldirilgan holda chop etiladi.",
+    "documents": "Hujjatlar",
+    "documentsHint": "Qabul xulosasi, yo'llanma, ma'lumotnoma — klinikangiz chop etadigan har qanday hujjat.",
+    "notes": "Qabul yozuvi shablonlari",
+    "notesHint": "Shifokor bir bosishda qo'llaydigan oldindan to'ldirilgan bo'limlar.",
+    "new": "Yangi",
+    "none": "Hali shablon yo'q.",
+    "allSpecialties": "Barcha mutaxassisliklar",
+    "emptyHint": "Tayyor shablonlardan boshlang (qabul xulosasi, yo'llanma, ma'lumotnoma va ikkita yozuv shabloni) va ularni o'zingizga moslang.",
+    "addStandard": "Tayyor shablonlarni qo'shish",
+    "standardAdded": "Qo'shildi: {count}.",
+    "newDocument": "Yangi hujjat",
+    "newNote": "Yangi yozuv shabloni",
+    "back": "Barcha shablonlar",
+    "name": "Nomi",
+    "specialty": "Qaysi mutaxassislik uchun",
+    "body": "Hujjat matni",
+    "placeholders": "Avtomatik to'ldiriladigan maydonlar",
+    "placeholdersHint": "Maydonni matnga nusxalang; chop etishda u qabul ma'lumotlari bilan almashtiriladi.",
+    "saved": "Shablon saqlandi.",
+    "archiveTitle": "Shablonni olib tashlash",
+    "archiveHint": "U ro'yxatlardan yo'qoladi. Avval chop etilgan hujjatlarga ta'sir qilmaydi.",
+    "archive": "Olib tashlash",
+    "applyLabel": "Shablondan to'ldirish",
+    "apply": "Qo'llash",
+    "applyHint": "Faqat bo'sh bo'limlar to'ldiriladi; siz yozgan matn o'zgarmaydi.",
+    "applied": "Shablon qoralamaga qo'llandi.",
+    "printTitle": "Hujjatlar",
+    "printHint": "Bu qabul uchun bemor ma'lumotlari to'ldirilgan hujjatni chop eting.",
+    "std": {
+      "summaryName": "Qabul xulosasi",
+      "summaryBody": "Bemor: [[patient.fullName]], tug'ilgan sana [[patient.birthDate]], karta [[patient.mrn]]\nQabul sanasi: [[visit.date]]\n\nShikoyatlar:\n[[note.complaints]]\n\nKo'rik:\n[[note.examination]]\n\nXulosa:\n[[note.assessment]]\n\nTashxis:\n[[diagnoses]]\n\nTavsiyalar:\n[[note.plan]]\n\nRetseptlar:\n[[prescriptions]]\n\nShifokor: [[doctor.fullName]] ([[doctor.specialty]])\nImzo: ______________",
+      "referralName": "Yo'llanma",
+      "referralBody": "Kimga: ______________________________\n\nBemor [[patient.fullName]], tug'ilgan sana [[patient.birthDate]] (karta [[patient.mrn]]), quyidagi uchun yo'llanadi: ______________________________\n\nTashxis:\n[[diagnoses]]\n\nSabab / topilmalar:\n[[note.assessment]]\n\nYo'llagan shifokor: [[doctor.fullName]] ([[doctor.specialty]]), [[clinic.name]], [[clinic.phone]]\nSana: [[today]]\nImzo: ______________",
+      "certificateName": "Ma'lumotnoma",
+      "certificateBody": "Ushbu ma'lumotnoma [[patient.fullName]], tug'ilgan sana [[patient.birthDate]], [[visit.date]] kuni [[clinic.name]] ga murojaat qilgani va [[doctor.fullName]] ([[doctor.specialty]]) qabulida bo'lganini tasdiqlaydi.\n\nTalab qilingan joyga taqdim etish uchun berildi.\n\nSana: [[today]]\nImzo: ______________  Muhr",
+      "noteGeneralName": "Umumiy ko'rik",
+      "noteGeneralHistory": "Surunkali kasalliklar: \nAllergiyalar: \nDoimiy qabul qiladigan dorilar: ",
+      "noteGeneralExam": "Umumiy holati: qoniqarli. Ongi: aniq.\nTeri qoplami: odatiy rangda. O'pka: vezikulyar nafas, xirillash yo'q.\nYurak: ritmik, tonlar aniq. AQB __/__ mm sim. ust., puls __/daq.\nQorin: yumshoq, og'riqsiz.",
+      "noteCardioName": "Kardiolog konsultatsiyasi",
+      "noteCardioComplaints": "Ko'krakdagi og'riq/bosim: \nHansirash: \nYurak urib ketishi: \nOyoqlarda shish: ",
+      "noteCardioHistory": "Gipertoniya qachondan: \nMaksimal AQB: \nChekish: \nIrsiyat: ",
+      "noteCardioExam": "AQB o'ngda __/__, chapda __/__ mm sim. ust. Puls __/daq, ritm: \nYurak tonlari: \nShishlar: \nEKG: ",
+      "noteCardioPlan": "EKG, exokardiografiya, lipidlar, qonda glyukoza.\n2 haftadan keyin nazorat."
+    },
+    "ph": {
+      "patient_fullName": "bemorning to'liq ismi",
+      "patient_birthDate": "tug'ilgan sanasi",
+      "patient_mrn": "karta raqami",
+      "patient_sex": "jinsi",
+      "visit_date": "qabul sanasi",
+      "doctor_fullName": "shifokor ismi",
+      "doctor_specialty": "shifokor mutaxassisligi",
+      "clinic_name": "klinika nomi",
+      "clinic_address": "klinika manzili",
+      "clinic_phone": "klinika telefoni",
+      "note_complaints": "shikoyatlar",
+      "note_history": "anamnez",
+      "note_examination": "ko'rik",
+      "note_assessment": "xulosa",
+      "note_plan": "reja",
+      "diagnoses": "tashxislar (MKB-10)",
+      "prescriptions": "faol retseptlar",
+      "today": "bugungi sana"
+    }
   }
 }

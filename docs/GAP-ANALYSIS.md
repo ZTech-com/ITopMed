@@ -11,8 +11,8 @@ Compared with publicly documented features of Epic (MyChart), athenahealth, eCli
 | Waitlist / fill cancelled slots | Doctolib, Cliniko | ⏳ |
 | EMR: notes, ICD-10, allergies, vitals, signing, amendments | all | ✅ |
 | **Prescriptions (e-Rx) with printable form and allergy check** | all | 🆕 (print; national e-Rx 🔒) |
-| Note templates per specialty | athena, eCW, Medesk | ⏳ |
-| Printable visit summary / referral / sick-leave certificate | all | 🆕 prescription print · visit summary, referral, sick-leave ⏳ |
+| Note templates per specialty | athena, eCW, Medesk | 🆕 clinic-made, per specialty |
+| Printable visit summary / referral / sick-leave certificate | all | 🆕 prescription, visit summary, referral, certificate (clinic-editable templates) · official sick-leave form ⏳ |
 | Laboratory orders, results, four-eyes verification | all | ✅ |
 | Imaging / PACS links | Epic, eCW | ⏳ |
 | Dental chart | dental products | ✅ (treatment plans ⏳) |
@@ -34,6 +34,6 @@ Compared with publicly documented features of Epic (MyChart), athenahealth, eCli
 
 ## Order of work (highest value first)
 1. 🆕 Owner control centre, discount control, prescriptions + prints, rescheduling (this round).
-2. ⏳ Note templates per specialty, sick-leave/referral prints, waitlist.
+2. 🆕 Note templates and printable documents (done) · ⏳ official sick-leave form, waitlist.
 3. 🆕 Portal self-booking and Telegram notifications (done) · ⏳ purchase orders.
 4. 🔒 DMED, Payme/Click/Uzum, OFD, SMS — need agreements and official specifications.

@@ -63,7 +63,8 @@
     "inventory": "Pharmacy & stock",
     "hr": "HR",
     "integrations": "Integrations",
-    "control": "Control centre"
+    "control": "Control centre",
+    "templates": "Templates"
   },
   "auth": {
     "adminTitle": "ITop Med Administration",
@@ -1368,7 +1369,8 @@
     "bookingTooFar": "This date is too far ahead for online booking.",
     "bookingTooMany": "You already have the maximum number of online bookings. Cancel one or call the clinic.",
     "telegramOff": "Telegram notifications are not available.",
-    "telegramTokenInvalid": "Telegram did not accept this token. Check it in @BotFather and try again."
+    "telegramTokenInvalid": "Telegram did not accept this token. Check it in @BotFather and try again.",
+    "noDraftNote": "There is no draft note to fill."
   },
   "email": {
     "invitation": {
@@ -2137,5 +2139,73 @@
     "breakGlass": "Emergency record access (30 days)",
     "supportAccess": "Active ITop Med support access",
     "period": "Figures in the clinic's currency and time zone; \"30 days\" means the last 30 days."
+  },
+  "templates": {
+    "title": "Templates",
+    "subtitle": "Your own documents and note templates. Documents are printed from a visit with the patient's data filled in.",
+    "documents": "Documents",
+    "documentsHint": "Visit summary, referral, certificate — anything your clinic prints.",
+    "notes": "Visit note templates",
+    "notesHint": "Pre-filled note sections a doctor applies in one click.",
+    "new": "New",
+    "none": "No templates yet.",
+    "allSpecialties": "All specialties",
+    "emptyHint": "Start with ready-made templates (visit summary, referral, certificate and two note templates) and change them to your liking.",
+    "addStandard": "Add ready-made templates",
+    "standardAdded": "Added: {count}.",
+    "newDocument": "New document",
+    "newNote": "New note template",
+    "back": "All templates",
+    "name": "Name",
+    "specialty": "For specialty",
+    "body": "Document text",
+    "placeholders": "Fields filled in automatically",
+    "placeholdersHint": "Copy a field into the text; it is replaced with the visit's data when printed.",
+    "saved": "Template saved.",
+    "archiveTitle": "Remove template",
+    "archiveHint": "It disappears from lists. Documents already printed are not affected.",
+    "archive": "Remove",
+    "applyLabel": "Fill from template",
+    "apply": "Apply",
+    "applyHint": "Only empty sections are filled; nothing you wrote is overwritten.",
+    "applied": "Template applied to the draft.",
+    "printTitle": "Documents",
+    "printHint": "Print a document for this visit with the patient's data filled in.",
+    "std": {
+      "summaryName": "Visit summary",
+      "summaryBody": "Patient: [[patient.fullName]], born [[patient.birthDate]], record [[patient.mrn]]\nDate of visit: [[visit.date]]\n\nComplaints:\n[[note.complaints]]\n\nExamination:\n[[note.examination]]\n\nConclusion:\n[[note.assessment]]\n\nDiagnosis:\n[[diagnoses]]\n\nRecommendations:\n[[note.plan]]\n\nPrescriptions:\n[[prescriptions]]\n\nDoctor: [[doctor.fullName]] ([[doctor.specialty]])\nSignature: ______________",
+      "referralName": "Referral",
+      "referralBody": "To: ______________________________\n\nPatient [[patient.fullName]], born [[patient.birthDate]] (record [[patient.mrn]]), is referred for: ______________________________\n\nDiagnosis:\n[[diagnoses]]\n\nReason / findings:\n[[note.assessment]]\n\nReferring doctor: [[doctor.fullName]] ([[doctor.specialty]]), [[clinic.name]], [[clinic.phone]]\nDate: [[today]]\nSignature: ______________",
+      "certificateName": "Certificate of visit",
+      "certificateBody": "This is to certify that [[patient.fullName]], born [[patient.birthDate]], visited [[clinic.name]] on [[visit.date]] and was seen by [[doctor.fullName]] ([[doctor.specialty]]).\n\nIssued for presentation at the place of request.\n\nDate: [[today]]\nSignature: ______________  Stamp",
+      "noteGeneralName": "General examination",
+      "noteGeneralHistory": "Chronic diseases: \nAllergies: \nRegular medicines: ",
+      "noteGeneralExam": "General condition: satisfactory. Consciousness: clear.\nSkin: normal colour. Lungs: vesicular breathing, no rales.\nHeart: rhythmic, sounds clear. BP __/__ mmHg, HR __/min.\nAbdomen: soft, non-tender.",
+      "noteCardioName": "Cardiology consultation",
+      "noteCardioComplaints": "Chest pain/pressure: \nShortness of breath: \nPalpitations: \nSwelling of legs: ",
+      "noteCardioHistory": "Hypertension since: \nMax BP: \nSmoking: \nFamily history: ",
+      "noteCardioExam": "BP right __/__, left __/__ mmHg. HR __/min, rhythm: \nHeart sounds: \nOedema: \nECG: ",
+      "noteCardioPlan": "ECG, echocardiography, lipid profile, glucose.\nFollow-up in 2 weeks."
+    },
+    "ph": {
+      "patient_fullName": "patient's full name",
+      "patient_birthDate": "date of birth",
+      "patient_mrn": "record number",
+      "patient_sex": "sex",
+      "visit_date": "visit date",
+      "doctor_fullName": "doctor's name",
+      "doctor_specialty": "doctor's specialty",
+      "clinic_name": "clinic name",
+      "clinic_address": "clinic address",
+      "clinic_phone": "clinic phone",
+      "note_complaints": "complaints",
+      "note_history": "history",
+      "note_examination": "examination",
+      "note_assessment": "assessment",
+      "note_plan": "plan",
+      "diagnoses": "diagnoses (ICD-10)",
+      "prescriptions": "active prescriptions",
+      "today": "today's date"
+    }
   }
 }

@@ -8,13 +8,14 @@ import { requireClinic } from "@/server/auth/guards";
 import { NOTE_SECTIONS, amendmentHash, getEncounter, noteHash } from "@/server/emr/record";
 import { requestMeta } from "@/server/http";
 import { DomainError } from "@/server/tenancy/provisioning";
-import { allergyAction, amendAction, cancelPrescriptionAction, clinicalStatusAction, diagnosisAction, finishVisitAction, noteAction, prescriptionAction, vitalsAction } from "../../../../care-actions";
+import { allergyAction, amendAction, applyNoteTemplateAction, cancelPrescriptionAction, clinicalStatusAction, diagnosisAction, finishVisitAction, noteAction, prescriptionAction, vitalsAction } from "../../../../care-actions";
 import { labOrderAction } from "../../../../lab-actions";
 import { labReleaseAction } from "../../../../portal-actions";
 import { LabResultsList } from "@/components/lab";
 import { DentalChart, DentalHistory, ToothForm } from "@/components/dental";
 import { toothAction } from "../../../../dental-actions";
 import { listLabTests } from "@/server/lab/lab";
+import { listTemplates } from "@/server/clinic/templates";
 
 /** The doctor's visit workspace. Every load is an audited record access. */
 export default async function EncounterPage({ params, searchParams }: { params: Promise<{ slug: string; id: string }>; searchParams: Promise<{ tooth?: string; dentition?: string }> }) {
@@ -32,6 +33,10 @@ export default async function EncounterPage({ params, searchParams }: { params: 
   const open = e.status === "OPEN";
   const canWrite = isOwn && open && ctx.permissions.has("emr.write");
   const canPrescribe = isOwn && open && ctx.permissions.has("prescriptions.write");
+  const templates = await listTemplates(ctx);
+  const noteTemplates = templates.filter((x) => x.kind === "NOTE");
+  const docTemplates = templates.filter((x) => x.kind === "DOCUMENT");
+  const hasDraft = e.notes.some((n) => n.status === "DRAFT" && n.authorId === ctx.principal.user.id);
   const authors = new Map([[ctx.principal.user.id, ctx.principal.user.fullName]]);
   const s = ctx.tenant.slug;
 
@@ -54,6 +59,19 @@ export default async function EncounterPage({ params, searchParams }: { params: 
       <Card>
         <CardHeader title={t("clinic.visit.note")} description={canWrite ? t("clinic.visit.signHint") : undefined} />
         <CardBody className="space-y-6">
+          {canWrite && hasDraft && noteTemplates.length > 0 ? (
+            <Form action={applyNoteTemplateAction} className="space-y-0">
+              <input type="hidden" name="$slug" value={s} />
+              <input type="hidden" name="encounterId" value={e.id} />
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="min-w-0 flex-1 sm:max-w-sm">
+                  <SelectField name="templateId" label={t("templates.applyLabel")} options={noteTemplates.map((x) => ({ value: x.id, label: x.specialty ? `${x.name} · ${t(`specialties.${x.specialty}` as never)}` : x.name }))} />
+                </div>
+                <SubmitButton variant="secondary">{t("templates.apply")}</SubmitButton>
+              </div>
+              <p className="mt-1 text-[12.5px] text-text-3">{t("templates.applyHint")}</p>
+            </Form>
+          ) : null}
           {e.notes.map((n) =>
             n.status === "SIGNED" ? (
               <SignedNote
@@ -143,6 +161,21 @@ export default async function EncounterPage({ params, searchParams }: { params: 
           </CardBody>
         </Card>
       ) : null}
+      {docTemplates.length > 0 ? (
+        <Card id="documents">
+          <CardHeader title={t("templates.printTitle")} description={t("templates.printHint")} />
+          <CardBody>
+            <div className="flex flex-wrap gap-2">
+              {docTemplates.map((d) => (
+                <ButtonLink key={d.id} href={`/c/${s}/encounters/${e.id}/document/${d.id}`} variant="secondary" size="sm">
+                  {d.name}
+                </ButtonLink>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+      ) : null}
+
       <Card id="prescriptions">
         <CardHeader
           title={t("clinic.rx.title")}
