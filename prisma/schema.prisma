@@ -23,6 +23,8 @@ datasource db {
 enum PlatformRole {
   SUPER_ADMIN
   PLATFORM_ADMIN
+  /// Manages only the clinics of one network (franchise / group). Never sees clinical data.
+  NETWORK_ADMIN
   SUPPORT
   BILLING
   READ_ONLY
@@ -40,6 +42,8 @@ model PlatformUser {
   fullName         String
   passwordHash     String?
   role             PlatformRole
+  /// Set only for NETWORK_ADMIN: the one network this person manages.
+  networkId        String?       @db.Uuid
   status           AccountStatus @default(INVITED)
   locale           String        @default("uz-Latn")
   /// AES-256-GCM encrypted TOTP secret (see src/server/security/crypto.ts)
@@ -51,6 +55,7 @@ model PlatformUser {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
+  network         Network?                  @relation(fields: [networkId], references: [id])
   sessions        PlatformSession[]
   invitationsSent PlatformInvitation[]      @relation("PlatformInviter")
   tenantsCreated  Tenant[]
@@ -93,6 +98,7 @@ model PlatformInvitation {
   email       String
   fullName    String
   role        PlatformRole
+  networkId   String?          @db.Uuid
   tokenHash   String           @unique
   status      InvitationStatus @default(PENDING)
   expiresAt   DateTime
@@ -102,8 +108,26 @@ model PlatformInvitation {
   createdAt   DateTime         @default(now())
 
   invitedBy PlatformUser @relation("PlatformInviter", fields: [invitedById], references: [id])
+  network   Network?     @relation(fields: [networkId], references: [id])
 
   @@index([email])
+}
+
+/// A group of clinics with one owner company (franchise, chain, holding). Platform-only table:
+/// its network admins manage these clinics in the console; clinical data stays inside each clinic.
+model Network {
+  id           String    @id @db.Uuid
+  name         String
+  contactName  String?
+  contactPhone String?
+  createdById  String?   @db.Uuid
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  archivedAt   DateTime?
+
+  tenants     Tenant[]
+  admins      PlatformUser[]
+  invitations PlatformInvitation[]
 }
 
 // ───────────────────────────── Tenancy & subscriptions ───────────────────────
@@ -137,6 +161,10 @@ model Tenant {
   practiceType     PracticeType @default(MULTI_SPECIALTY)
   /// Set when the owner finished the setup assistant.
   setupCompletedAt DateTime?
+  /// Setup chosen by the platform when the clinic was created; applied when the owner first opens the clinic.
+  setupPreset      Json?
+  /// Network (franchise / group of clinics) this clinic belongs to, if any.
+  networkId        String?      @db.Uuid
   createdById      String?      @db.Uuid
   activatedAt      DateTime?
   suspendedAt      DateTime?
@@ -146,6 +174,7 @@ model Tenant {
   updatedAt        DateTime     @updatedAt
 
   createdBy            PlatformUser?           @relation(fields: [createdById], references: [id])
+  network              Network?                @relation(fields: [networkId], references: [id])
   branches             Branch[]
   departments          Department[]
   memberships          Membership[]

@@ -8,7 +8,9 @@ import { doctorsWorkingOn, getDoctorDetail, getMyDoctorProfileId, listDoctors } 
 import { listRooms, listServices } from "@/server/clinic/resources";
 import { withAppContext } from "@/server/db";
 import { MODULES } from "@/server/modules/catalog";
-import { practiceProfile } from "@/server/clinic/practice";
+import { redirect } from "next/navigation";
+import { applyPendingSetup, practiceProfile } from "@/server/clinic/practice";
+import { requestMeta } from "@/server/http";
 import { formatHm, isoWeekday, todayIn } from "@/server/scheduling/time";
 
 /**
@@ -20,6 +22,8 @@ import { formatHm, isoWeekday, todayIn } from "@/server/scheduling/time";
 export default async function ClinicDashboard({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ setup?: string }> }) {
   const { slug } = await params;
   const ctx = await requireClinic(slug);
+  // A clinic created by the platform with a preset is finished for its field on the owner's first visit.
+  if (await applyPendingSetup(ctx, await requestMeta())) redirect(`/c/${slug}?setup=ready`);
   const [t, format] = await Promise.all([getTranslations(), getFormatter()]);
   const has = (p: Parameters<typeof ctx.permissions.has>[0]) => ctx.permissions.has(p);
   const tz = ctx.tenant.timezone;
@@ -58,13 +62,14 @@ export default async function ClinicDashboard({ params, searchParams }: { params
     : [];
 
   const isOwner = ctx.roleKeys.includes("clinic_owner") && ctx.permissions.has("clinic.settings.manage");
-  const setupDone = (await searchParams).setup === "done";
+  const setupParam = (await searchParams).setup;
+  const setupDone = setupParam === "done" || setupParam === "ready";
   const showSetup = isOwner && !setupDone && !(await practiceProfile(ctx))?.setupCompletedAt;
 
   return (
     <>
       <PageHeader eyebrow={`${ctx.tenant.name} · ${todayLabel}`} title={t("clinic.dashboard.welcome", { name: ctx.principal.user.fullName })} />
-      {setupDone ? <Alert tone="success">{t("setup.done")}</Alert> : null}
+      {setupDone ? <Alert tone="success">{t(setupParam === "ready" ? "setup.ready" : "setup.done")}</Alert> : null}
       {showSetup ? (
         <Card>
           <CardBody className="flex flex-wrap items-center justify-between gap-4">

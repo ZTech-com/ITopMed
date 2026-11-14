@@ -84,6 +84,7 @@ export default async function ClinicsPage({ searchParams }: { searchParams: Prom
                       {x.name}
                     </Link>
                     <p className="font-mono text-[12px] text-text-3">/c/{x.slug}</p>
+                    {x.network ? <p className="text-[12px] text-text-2">{x.network.name}</p> : null}
                   </Td>
                   <Td>
                     <Badge tone={STATUS_TONE[x.status]}>{t(`status.${x.status}`)}</Badge>

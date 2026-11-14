@@ -55,6 +55,15 @@ export default async function ClinicDetailPage({ params, searchParams }: { param
 
       {sp.created === "1" ? <div className="mb-6"><Alert tone="success">{t("admin.clinicNew.created")}</Alert></div> : null}
       {sp.created === "nomail" ? <div className="mb-6"><Alert tone="warning">{t("admin.clinicNew.createdNoEmail")}</Alert></div> : null}
+      {sp.created === "existing" ? <div className="mb-6"><Alert tone="warning">{t("admin.clinicNew.createdExisting")}</Alert></div> : null}
+      {sp.created === "ready" ? (
+        <div className="mb-6">
+          <Alert tone="success" title={t("admin.clinicNew.createdReady")}>
+            <span className="block">{t("admin.clinicNew.createdReadyHow")}</span>
+            <span className="mt-1 block break-all font-mono text-[13px]">{env().APP_URL.replace(/\/$/, "")}/login</span>
+          </Alert>
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -63,6 +72,8 @@ export default async function ClinicDetailPage({ params, searchParams }: { param
             <CardBody>
               <DescriptionList
                 items={[
+                  { label: t("admin.clinicNew.sectionType"), value: t(`practiceType.${tenant.practiceType}.name`) },
+                  ...(tenant.network ? [{ label: t("admin.networks.network"), value: tenant.network.name }] : []),
                   { label: t("admin.clinicNew.legalName"), value: tenant.legalName ?? "—" },
                   { label: t("admin.clinicNew.taxId"), value: tenant.taxId ?? "—" },
                   { label: t("admin.clinicNew.contactEmail"), value: tenant.contactEmail ?? "—" },

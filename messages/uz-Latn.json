@@ -64,7 +64,10 @@
     "hr": "Kadrlar",
     "integrations": "Integratsiyalar",
     "control": "Nazorat markazi",
-    "templates": "Shablonlar"
+    "templates": "Shablonlar",
+    "networks": "Tarmoqlar",
+    "networkContext": "Tarmoq: {name}",
+    "superAdminContext": "SuperAdmin · bosh boshqaruv"
   },
   "auth": {
     "adminTitle": "ITop Med boshqaruvi",
@@ -110,7 +113,10 @@
     "recoveryInvalid": "Bu tiklash kodi noto'g'ri yoki allaqachon ishlatilgan.",
     "staffActivated": "Hisobingiz faollashtirildi. Tizimga kiring va ikki bosqichli tekshiruvni sozlang.",
     "mfaCodeHint": "Bu parol emas: autentifikator ilovasida ko'rinadigan 6 xonali raqam. U har 30 soniyada yangilanadi.",
-    "mfaGetApp": "Ilova hali yo'qmi? Google Authenticator'ni o'rnating (bepul):"
+    "mfaGetApp": "Ilova hali yo'qmi? Google Authenticator'ni o'rnating (bepul):",
+    "toConsole": "SuperAdmin va tarmoq adminlari: boshqaruv paneli",
+    "toClinic": "Klinika xodimlari: klinikaga kirish",
+    "consoleWho": "Faqat SuperAdmin va tarmoq adminlari uchun. Klinika xodimlari klinikaga kirish sahifasidan kiradi."
   },
   "invite": {
     "title": "Hisobni faollashtirish",
@@ -185,7 +191,32 @@
       "ownerHint": "Egasi oʻz parolini oʻrnatishi uchun 72 soat amal qiladigan shaxsiy havola oladi. Parollar hech qachon pochta orqali yuborilmaydi.",
       "submit": "Klinikani yaratish",
       "created": "Klinika yaratildi va taklif yuborildi.",
-      "createdNoEmail": "Klinika yaratildi, lekin taklif xati yetkazilmadi. Klinika sahifasidagi «Qayta yuborish» tugmasidan foydalaning."
+      "createdNoEmail": "Klinika yaratildi, lekin taklif xati yetkazilmadi. Klinika sahifasidagi «Qayta yuborish» tugmasidan foydalaning.",
+      "subtitleNew": "Klinika bir bosishda tayyor bo'ladi: sohasiga mos bo'limlar, xizmatlar, shablonlar va egasining hisobi. Egasi kirishi bilan ishlay boshlaydi.",
+      "sectionType": "Klinika turi",
+      "sectionTypeHint": "Bo'limlar, xizmatlar va shablonlar shu turga qarab sozlanadi. Keyin klinika o'zi o'zgartira oladi.",
+      "focusSpecialty": "Asosiy yo'nalish",
+      "focusSpecialtyHint": "Masalan, kardiologiya: EKG, exokardiografiya, Xolter va boshqa xizmatlar o'zi qo'shiladi.",
+      "ownerIsDoctor": "Egasi o'zi ham shifokor (qabul qiladi)",
+      "ownerIsDoctorHint": "Egasiga shifokor roli, asosiy yo'nalish bo'yicha profil va Du–Ju 9:00–18:00 jadval beriladi.",
+      "ownerFrontDesk": "Egasi registratura va kassani ham o'zi qiladi",
+      "ownerFrontDeskHint": "Kichik kabinetlar uchun: administratorsiz bemorni yozish va to'lov olish.",
+      "ownerHintNew": "Egasi klinikaning Admini: xodimlar, sozlamalar, pul va nazorat uning qo'lida.",
+      "ownerEmailHint": "Egasi shu email bilan kiradi.",
+      "ownerAccess": "Kirish usuli",
+      "ownerModePassword": "Parolni hozir o'zim belgilayman",
+      "ownerModePasswordHint": "Hisob darhol yaratiladi. Parolni egasiga o'zingiz berasiz.",
+      "ownerModeInvite": "Emailga taklif yuborish",
+      "ownerModeInviteHint": "Egasi 72 soat amal qiladigan havola orqali o'z parolini o'zi o'rnatadi.",
+      "ownerPassword": "Egasining paroli",
+      "ownerPasswordHint": "Kuchli parol tayyorlab qo'yildi — yozib oling yoki o'zingiznikini kiriting (kamida 12 belgi, harf va raqam). Parol keyin hech qayerda ko'rsatilmaydi.",
+      "network": "Tarmoq (franshiza)",
+      "networkHint": "Tarmoqqa kiritilsa, uning tarmoq admini bu klinikani boshqara oladi.",
+      "networkNone": "Tarmoqsiz (alohida klinika)",
+      "networkFixed": "Klinika «{name}» tarmog'ingizda yaratiladi.",
+      "createdReady": "Klinika tayyor",
+      "createdReadyHow": "Egasi email va siz bergan parol bilan shu manzildan kiradi. Birinchi kirishda klinika sohasiga moslab to'liq sozlanadi:",
+      "createdExisting": "Klinika yaratildi. Bu email bilan ITop Med'da hisob allaqachon bor, shuning uchun uning paroli o'zgartirilmadi: egasi o'z paroli bilan kirib taklifni qabul qiladi (taklif emailga yuborildi)."
     },
     "clinicDetail": {
       "workspace": "Ish maydoni",
@@ -272,6 +303,40 @@
       "request": "Kirish soʻrash",
       "requested": "Soʻrov yuborildi. Uni klinika egasi tasdiqlashi kerak.",
       "none": "Hozircha soʻrovlar yoʻq."
+    },
+    "networks": {
+      "title": "Tarmoqlar",
+      "subtitle": "Franshiza, klinikalar tarmog'i yoki xolding: bir egasi bor bir nechta klinika. Har tarmoqqa o'z admini — u faqat shu tarmoq klinikalarini yaratadi va boshqaradi.",
+      "empty": "Hali tarmoq yo'q",
+      "emptyHint": "Bir nechta klinikasi bor mijoz uchun tarmoq yarating.",
+      "name": "Tarmoq nomi",
+      "network": "Tarmoq",
+      "clinics": "Klinikalar",
+      "clinic": "Klinika",
+      "admins": "Tarmoq adminlari",
+      "create": "Yangi tarmoq",
+      "createHint": "Keyin unga klinikalar qo'shasiz va admin tayinlaysiz.",
+      "contactName": "Mas'ul shaxs",
+      "contactPhone": "Telefon",
+      "createSubmit": "Tarmoqni yaratish",
+      "detailHint": "Tarmoq admini shu klinikalarni yaratadi, to'xtatadi, bo'limlarini yoqadi va egalarini boshqaradi. Tariflar, platforma xodimlari va bemorlarning tibbiy ma'lumotlari unga ko'rinmaydi.",
+      "newClinic": "Tarmoqda yangi klinika",
+      "created": "Tarmoq yaratildi. Endi klinika qo'shing va admin tayinlang.",
+      "noClinics": "Tarmoqda hali klinika yo'q.",
+      "removeClinic": "Tarmoqdan chiqarish",
+      "addClinic": "Mavjud klinikani qo'shish",
+      "add": "Qo'shish",
+      "adminsHint": "Ular boshqaruv paneliga (/admin) o'z email va paroli bilan kiradi va faqat shu tarmoqni ko'radi.",
+      "noAdmins": "Hali admin tayinlanmagan.",
+      "mfaOn": "Ikki bosqichli tekshiruv yoqilgan",
+      "mfaPending": "Birinchi kirish kutilmoqda",
+      "invited": "Taklif yuborilgan",
+      "appoint": "Tarmoq admini tayinlash",
+      "appointHint": "Masalan, franshiza egasi yoki uning boshqaruvchisi.",
+      "appointSubmit": "Admin tayinlash",
+      "clinicRemoved": "Klinika tarmoqdan chiqarildi.",
+      "clinicAdded": "Klinika tarmoqqa qo'shildi.",
+      "adminCreated": "Tarmoq admini yaratildi. Email va parolni unga o'zingiz bering; birinchi kirishda ikki bosqichli tekshiruvni sozlaydi."
     }
   },
   "clinic": {
@@ -1181,14 +1246,15 @@
     "MERGED": "Birlashtirilgan"
   },
   "platformRole": {
-    "SUPER_ADMIN": "Super administrator",
+    "SUPER_ADMIN": "SuperAdmin",
     "PLATFORM_ADMIN": "Platforma administratori",
     "SUPPORT": "Qoʻllab-quvvatlash",
     "BILLING": "Hisob-kitob",
-    "READ_ONLY": "Faqat koʻrish"
+    "READ_ONLY": "Faqat koʻrish",
+    "NETWORK_ADMIN": "Tarmoq admini"
   },
   "roles": {
-    "clinic_owner": "Klinika egasi",
+    "clinic_owner": "Klinika egasi (Admin)",
     "clinic_admin": "Klinika administratori",
     "branch_manager": "Filial rahbari",
     "receptionist": "Registrator",
@@ -2018,7 +2084,8 @@
     "ownerFrontDeskHint": "Hisobingizga registrator va kassir rollarini qoʻshadi. Administrator boʻlsa, uni «Xodimlar» boʻlimida shu rollar bilan taklif qiling.",
     "alreadyFrontDesk": "Sizda registrator va kassir rollari allaqachon bor.",
     "focusSpecialty": "Amaliyotning asosiy yo'nalishi (ixtiyoriy)",
-    "focusSpecialtyHint": "Shu yo'nalishning odatiy xizmatlarini qo'shadi — masalan, kardiologiya xonasi uchun EKG, exokardiografiya va Xolter."
+    "focusSpecialtyHint": "Shu yo'nalishning odatiy xizmatlarini qo'shadi — masalan, kardiologiya xonasi uchun EKG, exokardiografiya va Xolter.",
+    "ready": "Klinika sohangizga moslab sozlandi: xizmatlar, hujjat va yozuv shablonlari tayyor. Xizmatlarga narx qo'ying va ishni boshlang."
   },
   "dental": {
     "title": "Tish formulasi",

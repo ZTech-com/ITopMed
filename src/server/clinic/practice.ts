@@ -9,8 +9,9 @@ import type { Tx } from "../db";
 import { OPTIONAL_MODULES, type ModuleKey } from "../modules/catalog";
 import { SPECIALTIES } from "../scheduling/specialties";
 import { uuidv7 } from "../security/crypto";
-import { DomainError } from "../tenancy/provisioning";
+import { DomainError } from "../errors";
 import { auditClinic, inClinic, requirePermission } from "./context";
+import { addStandardTemplates } from "./templates";
 
 /**
  * One product for every kind of practice: a 1-doctor office, a dental clinic,
@@ -262,6 +263,55 @@ export async function completeSetup(ctx: ClinicContext, raw: unknown, meta: Requ
     });
     return result;
   });
+}
+
+const checkbox = z.preprocess((v) => v === true || v === "on" || v === "true" || v === "1", z.boolean());
+
+/**
+ * How a new clinic is set up for its field, chosen by the platform when it
+ * creates the clinic (stored on Tenant.setupPreset). Modules are switched on
+ * at creation; the rest is applied by applyPendingSetup in the owner's context.
+ */
+export const clinicPresetSchema = z.object({
+  practiceType: z.enum(PRACTICE_TYPES).default("MULTI_SPECIALTY"),
+  focusSpecialty: z.union([z.literal("").transform(() => undefined), z.enum(SPECIALTIES)]).optional(),
+  ownerIsDoctor: checkbox.default(false),
+  ownerFrontDesk: checkbox.default(false),
+});
+export type ClinicPreset = z.infer<typeof clinicPresetSchema>;
+
+/**
+ * The first time the owner opens a clinic that the platform created with a
+ * preset, the clinic is finished for its field in the owner's own context
+ * (their audit trail, their permissions): starter services of the field,
+ * ready-made document and note templates, and - if chosen - the owner's doctor
+ * profile with a Mon-Fri schedule and front-desk roles. Runs once (marks
+ * setupCompletedAt); every step is idempotent if two tabs race. Returns true
+ * when it applied something, so the page reloads with the new roles.
+ */
+export async function applyPendingSetup(ctx: ClinicContext, meta: RequestMeta): Promise<boolean> {
+  if (!ctx.roleKeys.includes("clinic_owner")) return false;
+  const t = await inClinic(ctx, (tx) => tx.tenant.findUnique({ where: { id: ctx.tenant.id }, select: { setupPreset: true, setupCompletedAt: true } }));
+  if (!t?.setupPreset || t.setupCompletedAt) return false;
+  const p = clinicPresetSchema.safeParse(t.setupPreset);
+  if (!p.success) return false;
+  const preset = p.data;
+  await completeSetup(
+    ctx,
+    {
+      practiceType: preset.practiceType,
+      applyModules: false, // already switched on by the platform within the plan
+      addStarterServices: true,
+      ownerIsDoctor: preset.ownerIsDoctor,
+      ownerFrontDesk: preset.ownerFrontDesk,
+      specialty: preset.ownerIsDoctor ? (preset.focusSpecialty ?? "general_practice") : undefined,
+      focusSpecialty: preset.focusSpecialty,
+      weekdaySchedule: true,
+    },
+    meta,
+  );
+  await addStandardTemplates(ctx, meta);
+  return true;
 }
 
 /** For the dashboard: has the owner been through the assistant yet? */

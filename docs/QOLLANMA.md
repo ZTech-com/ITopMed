@@ -97,8 +97,9 @@ Bir marta, o'rnatishdan keyin:
 ```bash
 npm run app:shortcut
 ```
-Ish stolida ikkita yorliq paydo bo'ladi:
+Ish stolida uchta yorliq paydo bo'ladi:
 - **ITop Med**: ikki marta bosing. Server orqa fonda o'zi ishga tushadi (baza, tezkor versiya, bildirishnomalar) va ITop Med alohida oynada, oddiy dastur kabi ochiladi. Birinchi marta va kod yangilangandan keyin 1–3 daqiqa, keyingi safar ~10–15 soniya. Server allaqachon ishlayotgan bo'lsa, oyna darhol ochiladi.
+- **ITop Med Boshqaruv**: SuperAdmin va tarmoq adminlari uchun alohida boshqaruv dasturi (klinikalar, tarmoqlar, adminlar) — o'z oynasida ochiladi. Brauzer menyusidagi "Ilovani o'rnatish" bilan uni alohida ilova qilib ham o'rnatish mumkin.
 - **ITop Med - to'xtatish**: serverni to'g'ri (bazani buzmasdan) to'liq o'chiradi.
 
 Bu kompyuterda sertifikat kerak emas: oyna `http://127.0.0.1:3000` manzilini ochadi. Oynaning menyusidagi **"Ilovani o'rnatish"** orqali ITop Med'ni Start menyusiga ham qo'shishingiz mumkin.
@@ -120,7 +121,7 @@ Server jurnali: `.data/logs/local.log` (5 MB dan oshsa avtomatik almashtiriladi)
 
 Bu kompyuter **server**: u yoniq va Wi-Fi/tarmoqqa ulangan bo'lishi kerak; telefonlar o'sha tarmoqda bo'lsin.
 
-**Bir marta (server kompyuterda):**
+**Bir marta (server kompyuterda):** "ITop Med" yorlig'ini birinchi ochganingizda Windows o'zi ruxsat so'raydi — **Ha** ni bosing. O'tkazib yuborgan bo'lsangiz:
 ```bash
 npm run app:firewall
 ```
@@ -156,19 +157,42 @@ Server buni o'zi sezadi (10–20 soniyada) va yangi IP uchun sertifikatni ishlay
 
 ## 5. Birinchi kun: platformadan klinikagacha
 
-### 5.1. Siz (platforma administratori)
-1. `https://…:3443/admin/login` sahifasiga email va parol bilan kiring.
-2. Birinchi kirishda **ikki bosqichli tekshiruv**ni sozlang: telefonda Google Authenticator / Microsoft Authenticator ilovasini o'rnating, QR kodni skanerlang va 6 xonali kodni kiriting.
-3. Darhol **tiklash kodlarini** yarating, yuklab olib xavfsiz joyda saqlang. Telefon yo'qolsa, ular orqali kirasiz.
-4. **Klinikalar → Yangi klinika:** klinika nomi, manzil nomi (masalan `shifo-kardio`), tarif va egasining emaili. Egaga taklif havolasi boradi (yoki `.dev-mailbox` ga tushadi).
-5. **Platforma xodimlari → Xodimni taklif qilish:** o'z jamoangizni rol bilan taklif qiling (Qo'llab-quvvatlash, Hisob-kitob, Faqat ko'rish va h.k.).
+### 5.0. Uch daraja — kim nimani boshqaradi
+
+| Daraja | Kim | Qayerga kiradi | Nimani boshqaradi |
+|---|---|---|---|
+| **SuperAdmin** | Siz | **ITop Med Boshqaruv** (`/admin`) | Hammasi: klinikalar, tarmoqlar, tariflar, tarmoq adminlari, platforma xodimlari, audit |
+| **Tarmoq admini** | Franshiza / klinikalar tarmog'i egasi | **ITop Med Boshqaruv** (`/admin`) — faqat o'z tarmog'i | O'z tarmog'ida klinika yaratish, to'xtatish, bo'limlarni yoqish, egalarga taklif. Tariflar, boshqa tarmoqlar va platforma xodimlari ko'rinmaydi |
+| **Klinika Admini** (klinika egasi) | 1 ta klinikasi bor odam yoki har bir klinikaning egasi | **ITop Med** (`/login`) | O'z klinikasi: xodimlar, rollar, xizmatlar, pul, Nazorat markazi |
+
+Hech qaysi boshqaruv darajasi (SuperAdmin ham) bemorlarning tibbiy ma'lumotlarini ko'rmaydi — bu klinika ichida qoladi. Har bir sahifaning chap yuqorisida kim ekaningiz yozilgan: "SuperAdmin · bosh boshqaruv", "Tarmoq: …" yoki klinika nomi va "Klinika egasi (Admin)".
+
+### 5.1. Siz (SuperAdmin): klinika yaratish — bir bosishda tayyor
+1. Ish stolidagi **ITop Med Boshqaruv** yorlig'ini oching (yoki `/admin/login`) va email + parol bilan kiring.
+2. **Klinikalar → Yangi klinika:**
+   - **Klinika turi:** Xususiy kabinet, Stomatologiya, Diagnostika, Ko'p tarmoqli klinika yoki Boshqa. Bo'limlar shu turga qarab yoqiladi (masalan, stomatologiyaga tish formulasi, kichik kabinet esa sodda qoladi).
+   - **Asosiy yo'nalish:** masalan Kardiologiya — EKG, exokardiografiya, Xolter va boshqa xizmatlar o'zi qo'shiladi.
+   - **Egasi o'zi ham shifokor** va/yoki **registratura va kassani ham o'zi qiladi** — kichik kabinet uchun belgilang.
+   - **Klinika egasi:** ism, email va **kirish usuli**: "Parolni hozir o'zim belgilayman" (kuchli parol tayyorlab qo'yiladi — yozib oling yoki o'zingiznikini kiriting) yoki "Emailga taklif yuborish".
+   - **Tarmoq** (bo'lsa) — klinika franshizaga tegishli bo'lsa.
+3. "Klinikani yaratish" → **"Klinika tayyor"** va kirish manzili chiqadi. Email va parolni egaga o'zingiz bering. Parol keyin hech qayerda ko'rsatilmaydi va saqlanmaydi (faqat shifrlangan xesh).
+4. Ega birinchi marta kirganda (ikki bosqichli tekshiruvni sozlagach) klinika sohasiga moslab **o'zi to'liq sozlanadi**: xizmatlar, hujjat va yozuv shablonlari, egaga shifokor roli va Du–Ju 9:00–18:00 jadval. Egaga faqat xizmatlarga narx qo'yish qoladi.
+5. Agar bu email bilan hisob avvaldan bo'lsa, uning paroli o'zgartirilmaydi: egasi o'z paroli bilan kirib taklifni qabul qiladi.
+
+### 5.1a. Tarmoqlar (franshiza) va tarmoq adminlari
+1. **Tarmoqlar → Yangi tarmoq:** nom, mas'ul shaxs, telefon.
+2. Tarmoq sahifasida: **mavjud klinikani qo'shish** yoki **"Tarmoqda yangi klinika"**.
+3. **Tarmoq admini tayinlash:** ism, email, parol (yoki emailga taklif). U `/admin` ga kiradi, birinchi kirishda ikki bosqichli tekshiruvni sozlaydi va faqat o'z tarmog'ini ko'radi: yangi klinika yaratadi (avtomatik o'z tarmog'ida), to'xtatadi, bo'limlarni yoqadi, egalarga taklifni qayta yuboradi.
+4. Klinikani tarmoqdan chiqarsangiz, tarmoq admini uni darhol ko'rmay qoladi.
+
+**Platforma xodimlari → Xodimni taklif qilish:** o'z jamoangiz (Qo'llab-quvvatlash, Hisob-kitob, Faqat ko'rish va h.k.). Tarmoq adminlari tarmoq sahifasidan tayinlanadi.
 
 ### 5.2. Klinika egasi (misol: kichik kardiologiya kabineti)
-1. Taklif havolasini oching, ism va parolni kiriting, keyin `/login` orqali kiring. Ega uchun ikki bosqichli tekshiruv majburiy; sozlagach tiklash kodlarini saqlang.
-2. **Sozlash yordamchisi** (bosh sahifada taklif chiqadi):
+1. SuperAdmin bergan email va parol bilan `/login` orqali kiring (yoki taklif havolasini oching). Ega uchun ikki bosqichli tekshiruv majburiy; sozlagach tiklash kodlarini saqlang.
+2. Klinika SuperAdmin tanlagan turga moslab o'zi sozlanadi. Klinikani o'zingiz yaratgan bo'lsangiz yoki boshqacha sozlamoqchi bo'lsangiz — **Sozlash yordamchisi** (bosh sahifa yoki Sozlamalar):
    - Amaliyot turi: **Xususiy kabinet**;
-   - **Amaliyotning asosiy yo'nalishi: Kardiologiya**. Shunda tizim avtomatik ravishda kardiolog konsultatsiyasi, EKG, exokardiografiya, Xolter, qon bosimini 24 soatlik monitoringi va yuklamali sinov xizmatlarini qo'shadi;
-   - "Men shu yerda shifokorman" → mutaxassislik: Kardiologiya, Dushanba–Juma 9:00–18:00 jadval;
+   - **Asosiy yo'nalish: Kardiologiya** — kardiolog konsultatsiyasi, EKG, exokardiografiya, Xolter, 24 soatlik qon bosimi monitoringi va yuklamali sinov xizmatlari qo'shiladi;
+   - "Men shu yerda shifokorman" → Kardiologiya, Du–Ju 9:00–18:00 jadval;
    - Administrator bo'lmasa: "Registratura va kassani o'zim qilaman".
 3. **Xizmatlar va narxlar:** har bir xizmatga narx qo'ying (narxsiz xizmatga hisob chiqarib bo'lmaydi).
 4. Kerak bo'lsa **Xodimlar → Taklif qilish:** hamshira, administrator va h.k.

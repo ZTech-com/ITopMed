@@ -19,8 +19,10 @@ import {
   verifyPlatformMfa,
   verifyPlatformRecoveryCode,
 } from "@/server/auth/platform-auth";
+import { createNetwork, setTenantNetwork } from "@/server/platform/networks";
 import {
   acceptPlatformInvitation,
+  createPlatformAccount,
   invitePlatformStaff,
   resendPlatformInvitation,
   revokePlatformInvitation,
@@ -31,7 +33,7 @@ import { requestSupportAccess } from "@/server/support/access";
 import {
   changeSubscriptionPlan,
   changeTenantStatus,
-  createClinicAndInvite,
+  createClinicWithOwner,
   resendInvitation,
   revokeInvitation,
   setTenantModule,
@@ -96,14 +98,16 @@ export async function adminLogoutAction() {
 
 export async function createClinicAction(_: FormState, fd: FormData): Promise<FormState> {
   const actor = await requirePlatform("tenants.create");
-  let result: Awaited<ReturnType<typeof createClinicAndInvite>>;
+  let result: Awaited<ReturnType<typeof createClinicWithOwner>>;
   try {
-    result = await createClinicAndInvite(actor, Object.fromEntries(fd.entries()), await requestMeta());
+    result = await createClinicWithOwner(actor, Object.fromEntries(fd.entries()), await requestMeta());
   } catch (e) {
     return toFormState(e, fd);
   }
   revalidatePath("/admin/clinics");
-  redirect(`/admin/clinics/${result.tenantId}?created=${result.invitationDelivered ? "1" : "nomail"}`);
+  // The password is never put in the URL: the admin typed or copied it on the form.
+  const created = result.owner === "password" ? "ready" : result.owner === "existing_account" ? "existing" : result.invitationDelivered ? "1" : "nomail";
+  redirect(`/admin/clinics/${result.tenantId}?created=${created}`);
 }
 
 export async function tenantStatusAction(_: FormState, fd: FormData): Promise<FormState> {
@@ -242,4 +246,47 @@ export async function supportRequestAction(_: FormState, fd: FormData): Promise<
   }
   revalidatePath(`/admin/clinics/${tenantId}`);
   return { ok: true, message: "admin.support.requested", nonce: Date.now() };
+}
+
+export async function createNetworkAction(_: FormState, fd: FormData): Promise<FormState> {
+  const actor = await requirePlatform("networks.manage");
+  let id: string;
+  try {
+    id = await createNetwork(actor, Object.fromEntries(fd.entries()), await requestMeta());
+  } catch (e) {
+    return toFormState(e, fd);
+  }
+  revalidatePath("/admin/networks");
+  redirect(`/admin/networks/${id}?created=1`);
+}
+
+export async function tenantNetworkAction(_: FormState, fd: FormData): Promise<FormState> {
+  const actor = await requirePlatform("networks.manage");
+  const networkId = String(fd.get("networkId") ?? "");
+  const tenantId = String(fd.get("tenantId") ?? "");
+  const remove = fd.get("op") === "remove";
+  try {
+    await setTenantNetwork(actor, tenantId, remove ? null : networkId, await requestMeta());
+  } catch (e) {
+    return toFormState(e, fd);
+  }
+  revalidatePath(`/admin/networks/${networkId}`);
+  return { ok: true, message: remove ? "admin.networks.clinicRemoved" : "admin.networks.clinicAdded", nonce: Date.now() };
+}
+
+export async function networkAdminAction(_: FormState, fd: FormData): Promise<FormState> {
+  const actor = await requirePlatform("staff.manage");
+  const networkId = String(fd.get("networkId") ?? "");
+  let r: Awaited<ReturnType<typeof createPlatformAccount>>;
+  try {
+    r = await createPlatformAccount(
+      actor,
+      { email: fd.get("email"), fullName: fd.get("fullName"), role: "NETWORK_ADMIN", networkId, ownerMode: fd.get("ownerMode"), password: fd.get("password") },
+      await requestMeta(),
+    );
+  } catch (e) {
+    return toFormState(e, fd);
+  }
+  revalidatePath(`/admin/networks/${networkId}`);
+  return { ok: true, message: r.mode === "password" ? "admin.networks.adminCreated" : r.delivered ? "admin.staff.invited" : "admin.staff.invitedNoEmail", nonce: Date.now() };
 }

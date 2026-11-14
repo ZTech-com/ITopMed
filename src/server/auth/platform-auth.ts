@@ -89,7 +89,7 @@ export async function loginPlatformUser(emailRaw: string, password: string, meta
 export interface PlatformPrincipal {
   sessionId: string;
   mfaVerified: boolean;
-  user: { id: string; email: string; fullName: string; role: PlatformRole; locale: string; mfaEnrolled: boolean };
+  user: { id: string; email: string; fullName: string; role: PlatformRole; locale: string; mfaEnrolled: boolean; networkId?: string | null };
 }
 
 export async function validatePlatformSession(token: string | undefined | null): Promise<PlatformPrincipal | null> {
@@ -113,6 +113,7 @@ export async function validatePlatformSession(token: string | undefined | null):
       role: s.user.role,
       locale: s.user.locale,
       mfaEnrolled: Boolean(s.user.mfaEnabledAt),
+      networkId: s.user.networkId,
     },
   };
 }

@@ -1,4 +1,5 @@
 import "server-only";
+import { randomInt } from "node:crypto";
 import { hash, verify } from "@node-rs/argon2";
 import { z } from "zod";
 
@@ -28,3 +29,16 @@ export const passwordSchema = z
   .min(12, "validation.passwordTooShort")
   .max(128, "validation.passwordTooLong")
   .refine((v) => /[a-zA-Zа-яА-ЯёЁўЎқҚғҒҳҲ]/.test(v) && /\d/.test(v), "validation.passwordWeak");
+
+const SUGGEST_LETTERS = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ";
+const SUGGEST_DIGITS = "23456789";
+
+/**
+ * A strong password that is easy to read aloud and copy by hand (no 0/O, 1/l/I),
+ * e.g. "Kxm7-Pqt4-Wre9-Hns3": 4 groups of 3 letters + 1 digit, about 84 bits.
+ * Shown once to the platform admin who sets up a clinic owner; never stored.
+ */
+export function suggestPassword(): string {
+  const group = () => Array.from({ length: 3 }, () => SUGGEST_LETTERS[randomInt(SUGGEST_LETTERS.length)]).join("") + SUGGEST_DIGITS[randomInt(SUGGEST_DIGITS.length)];
+  return [group(), group(), group(), group()].join("-");
+}

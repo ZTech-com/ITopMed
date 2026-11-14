@@ -135,12 +135,16 @@ npm run db:seed</pre></div></div>
 
 <section class="page">
   <h2>7. Birinchi kun: platformadan klinikagacha</h2>
-  <h3>7.1. Siz — platforma administratori</h3>
-  <div class="step"><div class="n">1</div><div><code>/admin/login</code> ga email va parol bilan kiring.</div></div>
-  <div class="step"><div class="n">2</div><div>Ikki bosqichli tekshiruvni sozlang (Google/Microsoft Authenticator) va <strong>tiklash kodlarini</strong> saqlang (agar hisobingiz istisnoda bo'lmasa).</div></div>
-  <div class="step"><div class="n">3</div><div><strong>Klinikalar → Yangi klinika:</strong> nom, manzil nomi (masalan <code>shifo-kardio</code>), tarif, egasining emaili. Egaga taklif havolasi boradi.</div></div>
-  <div class="step"><div class="n">4</div><div><strong>Platforma xodimlari:</strong> o'z jamoangizni rol bilan taklif qiling.</div></div>
-  <figure><img src="img/admin-clinics.png" alt="" style="max-height:80mm;object-fit:cover;object-position:top"><figcaption>Platforma: klinikalar ro'yxati</figcaption></figure>
+  <h3>7.1. Uch daraja</h3>
+  <table>
+    <tr><th style="width:20%">Daraja</th><th style="width:24%">Qayerga kiradi</th><th>Nimani boshqaradi</th></tr>
+    <tr><td><strong>SuperAdmin</strong> (siz)</td><td>ITop Med Boshqaruv (<code>/admin</code>)</td><td>Hammasi: klinikalar, tarmoqlar, tariflar, adminlar, audit</td></tr>
+    <tr><td><strong>Tarmoq admini</strong></td><td>ITop Med Boshqaruv — faqat o'z tarmog'i</td><td>Franshiza klinikalarini yaratish, to'xtatish, bo'limlar, egalar</td></tr>
+    <tr><td><strong>Klinika Admini</strong> (egasi)</td><td>ITop Med (<code>/login</code>)</td><td>O'z klinikasi: xodimlar, xizmatlar, pul, nazorat</td></tr>
+  </table>
+  <div class="step"><div class="n">1</div><div><strong>Klinikalar → Yangi klinika:</strong> klinika turi (kabinet, stomatologiya, diagnostika, ko'p tarmoqli), asosiy yo'nalish (masalan kardiologiya), egasi shifokormi, egasining emaili va <strong>parolini o'zingiz belgilaysiz</strong> (kuchli parol tayyorlab qo'yiladi).</div></div>
+  <div class="step"><div class="n">2</div><div>"Klinika tayyor" — email va parolni egaga bering. Ega birinchi kirganda klinika sohasiga moslab o'zi sozlanadi: xizmatlar, shablonlar, shifokor roli va jadval.</div></div>
+  <div class="step"><div class="n">3</div><div><strong>Tarmoqlar:</strong> franshiza yarating, klinikalarni qo'shing va tarmoq admini tayinlang (parol bilan yoki taklif orqali).</div></div>
   <h3>7.2. Klinika egasi (misol: kichik kardiologiya kabineti)</h3>
   <div class="step"><div class="n">1</div><div>Taklif havolasini oching, ism va parol → <code>/login</code> orqali kiring.</div></div>
   <div class="step"><div class="n">2</div><div><strong>Sozlash yordamchisi:</strong> amaliyot turi — Xususiy kabinet; yo'nalish — Kardiologiya (EKG, exokardiografiya, Xolter, QB monitoringi, yuklamali sinov xizmatlari o'zi qo'shiladi); "Men shu yerda shifokorman" va jadval; administrator bo'lmasa "Registratura va kassani o'zim qilaman".</div></div>

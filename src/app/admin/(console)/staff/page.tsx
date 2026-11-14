@@ -21,7 +21,8 @@ export default async function PlatformStaffPage({ searchParams }: { searchParams
     }),
     listPendingPlatformInvitations(p),
   ]);
-  const roleOptions = Object.values(PlatformRole).map((r) => ({ value: r, label: t(`platformRole.${r}`) }));
+  // Network admins are appointed from their network page (they need a network).
+  const roleOptions = Object.values(PlatformRole).filter((r) => r !== "NETWORK_ADMIN").map((r) => ({ value: r, label: t(`platformRole.${r}`) }));
 
   return (
     <>

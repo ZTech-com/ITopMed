@@ -3,6 +3,7 @@
  *
  *   npm run app                  start the server in the background (if needed) and open the app window
  *   npm run app -- --no-window   start the server only (used by autostart)
+ *   npm run app -- --admin       open the control panel (SuperAdmin / network admins) instead of the clinic app
  *   npm run app:stop             stop everything cleanly (database included)
  *   npm run app:status           is it running, and the addresses for other devices
  *   npm run app:doctor           check everything and say what to fix (+ QR code for phones)
@@ -81,11 +82,28 @@ function browser(): string | null {
 }
 
 /** Opens the app in its own window (no address bar), like an installed program. */
-function openWindow() {
+function openWindow(page = "/") {
+  const target = `${URL}${page}`;
   const b = browser();
-  if (b) spawn(b, [`--app=${URL}/`, "--new-window"], { detached: true, stdio: "ignore" }).unref();
-  else if (isWin) spawn("cmd", ["/c", "start", "", `${URL}/`], { detached: true, stdio: "ignore", windowsHide: true }).unref();
-  else spawn(process.platform === "darwin" ? "open" : "xdg-open", [`${URL}/`], { detached: true, stdio: "ignore" }).unref();
+  if (b) spawn(b, [`--app=${target}`, "--new-window"], { detached: true, stdio: "ignore" }).unref();
+  else if (isWin) spawn("cmd", ["/c", "start", "", target], { detached: true, stdio: "ignore", windowsHide: true }).unref();
+  else spawn(process.platform === "darwin" ? "open" : "xdg-open", [target], { detached: true, stdio: "ignore" }).unref();
+}
+
+const FIREWALL_ASKED = path.join(DATA, "firewall.asked");
+const firewallRuleOn = () => powershell("Get-NetFirewallRule -DisplayName 'ITop Med (clinic network)' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Enabled") === "True";
+
+/**
+ * Windows, when the person opens the app themselves: if phones cannot reach
+ * this computer yet, ask ONCE for the firewall rule (Windows shows its own
+ * "Yes/No" dialog; nothing changes without that click). Never in the
+ * background (--no-window / autostart). Later: npm run app:firewall.
+ */
+function offerFirewall() {
+  if (!isWin || fs.existsSync(FIREWALL_ASKED) || firewallRuleOn()) return;
+  fs.writeFileSync(FIREWALL_ASKED, new Date().toISOString());
+  console.log("Telefon va planshetlar ulana olishi uchun Windows ruxsat so'raydi — \"Ha\" ni bosing (bir marta).");
+  firewall();
 }
 
 function rotateLog() {
@@ -131,8 +149,11 @@ async function start() {
       await sleep(1500);
     }
   }
-  if (!flags.includes("--no-window")) openWindow();
-  console.log(`ITop Med ochildi: ${URL}`);
+  if (!flags.includes("--no-window")) {
+    openWindow(flags.includes("--admin") ? "/admin" : "/");
+    offerFirewall();
+  }
+  console.log(`ITop Med ochildi: ${URL}${flags.includes("--admin") ? "/admin" : ""}`);
   const ips = lanAddresses();
   if (ips.length) console.log(`Telefon va planshetlar: http://${ips[0]}:${PUBLIC_PORT}/connect`);
 }
@@ -275,8 +296,9 @@ function shortcut() {
   const make = (name: string, script: string) =>
     execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", shortcutPs(path.join(desktop, `${name}.lnk`), path.join(ROOT, "scripts", "windows", script))], { stdio: "inherit", windowsHide: true });
   make("ITop Med", "start-itopmed.cmd");
+  make("ITop Med Boshqaruv", "start-itopmed-admin.cmd");
   make("ITop Med - to'xtatish", "stop-itopmed.cmd");
-  console.log(`Ish stolida "ITop Med" va "ITop Med - to'xtatish" yorliqlari yaratildi (${os.hostname()}).`);
+  console.log(`Ish stolida "ITop Med", "ITop Med Boshqaruv" va "ITop Med - to'xtatish" yorliqlari yaratildi (${os.hostname()}).`);
 }
 
 const commands: Record<string, () => unknown> = { start, stop, status, doctor, firewall, autostart, shortcut };

@@ -75,6 +75,7 @@ async function sampleIds() {
     const one = async (sql: string) => (await c.query(sql, [t])).rows[0]?.id as string | undefined;
     return {
       tenant: t as string,
+      network: (await c.query(`SELECT id FROM "Network" WHERE "archivedAt" IS NULL ORDER BY "createdAt" LIMIT 1`)).rows[0]?.id as string | undefined,
       invoice: await one(`SELECT id FROM "Invoice" WHERE "tenantId" = $1 ORDER BY "totalMinor" DESC LIMIT 1`),
       patient: await one(`SELECT p.id FROM "Patient" p WHERE p."tenantId" = $1 AND EXISTS (SELECT 1 FROM "Invoice" i WHERE i."patientId" = p.id) LIMIT 1`),
       encounter: await one(`SELECT id FROM "Encounter" WHERE "tenantId" = $1 ORDER BY "createdAt" DESC LIMIT 1`),
@@ -94,7 +95,7 @@ async function sampleIds() {
 function routes(ids: Awaited<ReturnType<typeof sampleIds>>): string[] {
   const c = `/c/${SLUG}`;
   const list = [
-    "/admin", "/admin/clinics", "/admin/clinics/new", `/admin/clinics/${ids.tenant}`, "/admin/staff", "/admin/audit", "/admin/security",
+    "/admin", "/admin/clinics", "/admin/clinics/new", `/admin/clinics/${ids.tenant}`, "/admin/networks", ...(ids.network ? [`/admin/networks/${ids.network}`] : []), "/admin/staff", "/admin/audit", "/admin/security",
     "/clinics", "/account/security",
     c, `${c}/control`, `${c}/setup`, `${c}/patients`, `${c}/patients/new`, `${c}/appointments`, `${c}/queue`, `${c}/my-queue`, `${c}/my-schedule`, `${c}/nurse`,
     `${c}/lab`, `${c}/lab/tests`, `${c}/billing`, `${c}/cash`, `${c}/reports`, `${c}/expenses`, `${c}/inventory`, `${c}/inventory/suppliers`,

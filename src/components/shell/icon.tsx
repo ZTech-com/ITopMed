@@ -1,4 +1,5 @@
-import { BadgeCheck, Cable, Package, Activity, BarChart3, Building2, FlaskConical, HeartPulse, Receipt, TrendingDown, Wallet, CalendarDays, CalendarPlus, ClipboardList, Contact, ListOrdered, DoorOpen, KeyRound, LifeBuoy, Stethoscope, UserRound, GitBranch, LayoutDashboard, ScrollText, Settings, ShieldCheck, Users } from "lucide-react";
+import {
+  Network, BadgeCheck, Cable, Package, Activity, BarChart3, Building2, FlaskConical, HeartPulse, Receipt, TrendingDown, Wallet, CalendarDays, CalendarPlus, ClipboardList, Contact, ListOrdered, DoorOpen, KeyRound, LifeBuoy, Stethoscope, UserRound, GitBranch, LayoutDashboard, ScrollText, Settings, ShieldCheck, Users } from "lucide-react";
 
 /** Icons are referenced by name so server components can pass them to client nav. */
 const ICONS = {
@@ -29,6 +30,7 @@ const ICONS = {
   inventory: Package,
   hr: BadgeCheck,
   integrations: Cable,
+  networks: Network,
 } as const;
 
 export type IconName = keyof typeof ICONS;
