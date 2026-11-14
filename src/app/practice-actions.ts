@@ -52,7 +52,17 @@ export async function policyAction(_: FormState, fd: FormData): Promise<FormStat
   const slug = String(fd.get("$slug") ?? "");
   const ctx = await requireClinic(slug, "clinic.settings.manage");
   try {
-    await updateClinicPolicy(ctx, { maxDiscountPercent: fd.get("maxDiscountPercent"), discountReasonRequired: fd.get("discountReasonRequired") === "on" }, await requestMeta());
+    await updateClinicPolicy(
+      ctx,
+      {
+        maxDiscountPercent: fd.get("maxDiscountPercent"),
+        discountReasonRequired: fd.get("discountReasonRequired") === "on",
+        onlineBookingDays: fd.get("onlineBookingDays") ?? undefined,
+        onlineBookingLeadHours: fd.get("onlineBookingLeadHours") ?? undefined,
+        onlineBookingMaxActive: fd.get("onlineBookingMaxActive") ?? undefined,
+      },
+      await requestMeta(),
+    );
   } catch (e) {
     return toFormState(e, fd);
   }

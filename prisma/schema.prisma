@@ -158,6 +158,9 @@ model Tenant {
   services             Service[]
   doctorProfiles       DoctorProfile[]
   clinicPolicy         ClinicPolicy?
+  telegramBot          TelegramBot?
+  telegramLinks        TelegramLink[]
+  telegramLinkCodes    TelegramLinkCode[]
   prescriptions        Prescription[]
   workSchedules        WorkSchedule[]
   scheduleExceptions   ScheduleException[]
@@ -768,22 +771,24 @@ model Patient {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  tenant        Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  identifiers   PatientIdentifier[]
-  consents      PatientConsent[]
-  appointments  Appointment[]
-  encounters    Encounter[]
-  notes         ClinicalNote[]
-  diagnoses     Diagnosis[]
-  allergies     Allergy[]
-  vitals        VitalSign[]
-  prescriptions Prescription[]
-  invoices      Invoice[]
-  labOrders     LabOrder[]
-  portalAccount PatientAccount?
-  dispenses     StockMovement[]
-  notifications Notification[]
-  dentalChart   DentalChartEntry[]
+  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  identifiers       PatientIdentifier[]
+  consents          PatientConsent[]
+  appointments      Appointment[]
+  encounters        Encounter[]
+  notes             ClinicalNote[]
+  diagnoses         Diagnosis[]
+  allergies         Allergy[]
+  vitals            VitalSign[]
+  prescriptions     Prescription[]
+  telegramLinks     TelegramLink[]
+  telegramLinkCodes TelegramLinkCode[]
+  invoices          Invoice[]
+  labOrders         LabOrder[]
+  portalAccount     PatientAccount?
+  dispenses         StockMovement[]
+  notifications     Notification[]
+  dentalChart       DentalChartEntry[]
 
   @@unique([tenantId, mrn])
   @@index([tenantId, lastName, firstName])
@@ -899,7 +904,8 @@ model Appointment {
   rescheduledAt      DateTime?
   rescheduleCount    Int                 @default(0)
   cancellationReason CancellationReason?
-  createdById        String              @db.Uuid
+  /// Staff member who booked it; empty when the patient booked online in the portal (source = PORTAL).
+  createdById        String?             @db.Uuid
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
@@ -1697,6 +1703,7 @@ model StaffLeave {
 enum NotificationChannel {
   SMS
   EMAIL
+  TELEGRAM
 }
 
 enum NotificationKind {
@@ -1822,13 +1829,19 @@ model RateLimitBucket {
 
 /// Owner-defined control rules of a clinic (one row per clinic, created on first save).
 model ClinicPolicy {
-  tenantId               String   @id @db.Uuid
+  tenantId                 String   @id @db.Uuid
   /// Highest discount (percent of a line) anyone except the clinic owner may give. 100 = no limit.
-  maxDiscountPercent     Int      @default(100)
+  maxDiscountPercent       Int      @default(100)
   /// A written reason is required for every discount.
-  discountReasonRequired Boolean  @default(false)
-  updatedById            String?  @db.Uuid
-  updatedAt              DateTime @updatedAt
+  discountReasonRequired   Boolean  @default(false)
+  /// Patient portal self-booking: how many days ahead patients may book.
+  onlineBookingDays        Int      @default(30)
+  /// Earliest online booking, in minutes from now.
+  onlineBookingLeadMinutes Int      @default(120)
+  /// Most future online visits one patient may hold at once (abuse protection).
+  onlineBookingMaxActive   Int      @default(3)
+  updatedById              String?  @db.Uuid
+  updatedAt                DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 }
@@ -1870,4 +1883,51 @@ model Prescription {
 
   @@index([tenantId, patientId])
   @@index([encounterId])
+}
+
+// ───────────────────────────── Telegram ─────────────────────────────────────
+
+/// The clinic's own Telegram bot (created with @BotFather). The token is a secret: AES-GCM encrypted, never shown again.
+model TelegramBot {
+  tenantId     String   @id @db.Uuid
+  tokenEnc     String
+  username     String
+  enabled      Boolean  @default(true)
+  /// Last processed getUpdates id + 1.
+  updateOffset BigInt   @default(0)
+  connectedAt  DateTime @default(now())
+  updatedById  String?  @db.Uuid
+  updatedAt    DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+}
+
+/// A patient's Telegram chat, linked by the patient themself (portal → bot deep link).
+model TelegramLink {
+  id        String    @id @db.Uuid
+  tenantId  String    @db.Uuid
+  patientId String    @db.Uuid
+  chatId    BigInt
+  linkedAt  DateTime  @default(now())
+  revokedAt DateTime?
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, patientId])
+}
+
+/// One-time code in the bot deep link (only its SHA-256 is stored).
+model TelegramLinkCode {
+  codeHash  String    @id
+  tenantId  String    @db.Uuid
+  patientId String    @db.Uuid
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId])
 }

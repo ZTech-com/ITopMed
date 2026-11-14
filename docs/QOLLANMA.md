@@ -233,6 +233,19 @@ Egaga bu cheklovlar tegishli emas.
 - **Retsept:** shifokor qabul sahifasida "Retseptlar" bo'limida dori, doza, qabul tartibi va muddatni yozadi. Bemorda shu dori bilan mos keladigan allergiya qayd etilgan bo'lsa, tizim to'xtatadi va shifokordan alohida tasdiq so'raydi. Retsept tahrirlanmaydi, faqat bekor qilinadi. "Retseptni chop etish" A5 qog'oz retsept chiqaradi (imzo va muhr uchun joy bilan). Milliy elektron retsept tizimiga ulanish hali yo'q.
 - **Ko'chirish:** Navbat sahifasida yozilgan qabulning yonidagi "Ko'chirish" tugmasi orqali yangi sana va vaqt tanlanadi. Shifokor jadvali va band vaqtlar xuddi yangi yozilishdagidek tekshiriladi; bemorga eslatma yangi vaqtga moslanadi; tarix audit jurnalida saqlanadi.
 
+## 7c. Bemor portali orqali onlayn yozilish
+1. **Shifokorlar va jadval** → shifokor profilida "Onlayn yozilishni qabul qiladi" belgisini yoqing (shifokorning ish jadvali bo'lishi kerak).
+2. **Sozlamalar → Nazorat qoidalari → Onlayn yozilish:** necha kun oldindan, hozirdan kamida necha soat keyin, bitta bemorga nechta onlayn qabul (masalan 30 kun, 2 soat, 3 ta).
+3. Bemor portalda **"Qabulga yozilish"**: shifokor → kun va bo'sh vaqt → tasdiqlash. Band vaqtlar, dam olish kunlari va ish soatlari avtomatik hisobga olinadi; ikki bemor bir vaqtga yozila olmaydi (baza darajasida).
+4. Onlayn yozilgan qabul navbat va qabullar ro'yxatida oddiy qabul kabi ko'rinadi (manbasi: portal). Bemorga tasdiq va eslatma boradi.
+
+## 7d. Telegram xabarnomalari
+1. Telegramda **@BotFather** → `/newbot` → nom va "bot" bilan tugaydigan username → token.
+2. **Integratsiyalar → Telegram bot** → tokenni joylang → "Botni ulash". Token shifrlanib saqlanadi va qayta ko'rsatilmaydi.
+3. Bemor portalda **Hisob → Telegramni ulash** → "Telegramni ochish" → Telegramda **Start**. 20 soniyada ulanadi.
+4. Shundan keyin tasdiq, eslatma, bekor qilish va natija tayyorligi haqidagi xabarlar Telegramga ham boradi (tibbiy ma'lumotsiz). Bemor istalgan vaqtda uzishi mumkin.
+Telegram server kompyuterda **internet** bo'lishini talab qiladi. Ishlab chiqish rejimida xabarlar simulyatsiya qilinadi (`.dev-mailbox/telegram`).
+
 ## 8. Zaxira nusxa (har kuni!)
 
 ```bash

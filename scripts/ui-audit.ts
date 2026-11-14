@@ -179,7 +179,7 @@ async function main() {
     await patient.fill('input[name="phone"]', phone);
     await patient.fill('input[name="password"]', PASSWORD);
     await Promise.all([patient.waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 30_000 }), patient.press('input[name="password"]', "Enter")]);
-    await audit(patient, ["", "/appointments", "/results", "/invoices", "/account"].map((p) => `/p/${SLUG}${p}`));
+    await audit(patient, ["", "/book", "/appointments", "/results", "/invoices", "/account"].map((p) => `/p/${SLUG}${p}`));
   }
 
   await browser.close();

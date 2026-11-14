@@ -1,18 +1,28 @@
 import { getTranslations } from "next-intl/server";
 import { AppointmentItem } from "@/components/portal";
-import { Card, CardHeader, PageHeader } from "@/components/ui/primitives";
+import { Alert, ButtonLink, Card, CardHeader, PageHeader } from "@/components/ui/primitives";
 import { listMyAppointments } from "@/server/portal/data";
 import { requirePatient } from "@/server/portal/guards";
 import { portalCancelAction } from "../../../../portal-actions";
 
-export default async function PortalAppointmentsPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PortalAppointmentsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ booked?: string }> }) {
   const { slug } = await params;
+  const { booked } = await searchParams;
   const p = await requirePatient(slug);
   const [t, list] = await Promise.all([getTranslations(), listMyAppointments(p)]);
   const tz = p.tenant.timezone;
   return (
     <div className="max-w-4xl space-y-6">
-      <PageHeader title={t("portal.appointments.title")} description={t("portal.appointments.subtitle")} />
+      <PageHeader
+        title={t("portal.appointments.title")}
+        description={t("portal.appointments.subtitle")}
+        action={<ButtonLink href={`/p/${p.tenant.slug}/book`}>{t("portal.nav.book")}</ButtonLink>}
+      />
+      {booked ? (
+        <div role="status">
+          <Alert tone="success">{t("portal.book.booked")}</Alert>
+        </div>
+      ) : null}
       <Card>
         <CardHeader title={t("portal.appointments.upcoming")} description={t("portal.appointments.cancelRule")} />
         {list.upcoming.length === 0 ? (

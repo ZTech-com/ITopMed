@@ -1079,7 +1079,12 @@
       "maxDiscount": "Largest discount staff may give (%)",
       "maxDiscountHint": "Per invoice line. 100 = no limit, 0 = no discounts.",
       "reasonRequired": "A reason is required for every discount",
-      "reasonRequiredHint": "The reason is shown on the invoice and in the control centre."
+      "reasonRequiredHint": "The reason is shown on the invoice and in the control centre.",
+      "onlineTitle": "Online booking (patient portal)",
+      "onlineHint": "Applies to doctors who accept online booking (doctor profile).",
+      "bookingDays": "Days ahead",
+      "leadHours": "Earliest, hours from now",
+      "maxActive": "Max online visits per patient"
     },
     "rx": {
       "title": "Prescriptions",
@@ -1113,6 +1118,22 @@
       "signature": "Doctor's signature",
       "stamp": "Stamp",
       "notElectronic": "Paper prescription issued by the clinic; not registered in the national electronic prescription system."
+    },
+    "telegram": {
+      "title": "Telegram bot",
+      "hint": "Reminders and confirmations to patients in Telegram, through your clinic's own bot. Patients connect themselves in the patient portal.",
+      "simulated": "SIMULATED in this installation: messages are saved as files on the server, not sent to Telegram.",
+      "connectedAt": "connected {date}",
+      "linkedPatients": "{count, plural, one {# patient connected} other {# patients connected}}",
+      "disconnect": "Disconnect the bot",
+      "connected": "The bot is connected. Patients can now connect it in the portal.",
+      "step1": "In Telegram open @BotFather and send /newbot.",
+      "step2": "Choose a name (e.g. your clinic) and a username ending in \"bot\".",
+      "step3": "Copy the token BotFather sends and paste it below.",
+      "token": "Bot token",
+      "tokenHint": "Stored encrypted and never shown again. Anyone with the token controls the bot.",
+      "connect": "Connect the bot",
+      "notConnected": "No bot connected."
     }
   },
   "status": {
@@ -1239,7 +1260,11 @@
     "tooth": "Choose a valid tooth number (FDI).",
     "confirmRequired": "Please confirm before continuing.",
     "percent": "Enter a number from 0 to 100.",
-    "durationDays": "Enter a number of days from 1 to 3650."
+    "durationDays": "Enter a number of days from 1 to 3650.",
+    "telegramToken": "This does not look like a bot token (numbers:letters).",
+    "bookingDays": "Enter 1 to 180 days.",
+    "leadHours": "Enter 0 to 168 hours.",
+    "maxActive": "Enter 1 to 20."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -1338,7 +1363,12 @@
     "invitationPending": "An invitation for this email is already pending. Resend or revoke it instead.",
     "discountOverLimit": "This discount is above the limit set by the clinic owner.",
     "discountReasonRequired": "Write the reason for the discount (clinic rule).",
-    "allergyConflict": "The patient has a recorded allergy that matches this medicine. Check, and confirm if you still prescribe it."
+    "allergyConflict": "The patient has a recorded allergy that matches this medicine. Check, and confirm if you still prescribe it.",
+    "bookingTooSoon": "This time is too soon to book online. Choose a later time or call the clinic.",
+    "bookingTooFar": "This date is too far ahead for online booking.",
+    "bookingTooMany": "You already have the maximum number of online bookings. Cancel one or call the clinic.",
+    "telegramOff": "Telegram notifications are not available.",
+    "telegramTokenInvalid": "Telegram did not accept this token. Check it in @BotFather and try again."
   },
   "email": {
     "invitation": {
@@ -1615,7 +1645,8 @@
       "appointments": "Appointments",
       "results": "Results",
       "invoices": "Payments",
-      "account": "Account"
+      "account": "Account",
+      "book": "Book a visit"
     },
     "login": {
       "title": "Patient portal",
@@ -1656,7 +1687,7 @@
       "cancelled": "The appointment has been cancelled.",
       "noneUpcoming": "No upcoming appointments.",
       "nonePast": "No past visits yet.",
-      "bookingNote": "To book or reschedule, please contact the reception desk. Online booking is not available yet."
+      "bookingNote": "To move a visit to another time, please contact the reception desk."
     },
     "results": {
       "title": "Test results",
@@ -1705,6 +1736,29 @@
       "changePassword": "Change password",
       "passwordChanged": "Password changed. Other devices have been signed out.",
       "contactClinic": "To change your name, date of birth or phone number, contact the clinic’s reception desk."
+    },
+    "book": {
+      "title": "Book a visit",
+      "unavailable": "Online booking is not available at this clinic yet. Please call the clinic to book.",
+      "chooseDoctor": "Choose a doctor. Only doctors who accept online booking are listed.",
+      "choose": "Choose",
+      "otherDoctor": "Another doctor",
+      "rules": "You can book up to {days} days ahead. Online visits booked: {active} of {max}.",
+      "confirmTitle": "Confirm your visit",
+      "confirm": "Book this time",
+      "noSlots": "No free times in this period. Try later dates or another doctor.",
+      "later": "Later dates",
+      "booked": "Your visit is booked. You will receive a confirmation and a reminder."
+    },
+    "telegram": {
+      "title": "Telegram notifications",
+      "hint": "Get visit reminders from the clinic's bot @{bot}. Messages never contain medical details.",
+      "linked": "Connected since {date}.",
+      "disconnect": "Disconnect Telegram",
+      "disconnected": "Telegram disconnected. You will not receive messages there.",
+      "connect": "Connect Telegram",
+      "open": "Open Telegram",
+      "afterOpen": "In Telegram press Start. The connection is ready in about 20 seconds; then refresh this page. The link works once, for 15 minutes."
     }
   },
   "inventoryCategory": {
@@ -1773,7 +1827,7 @@
     },
     "telegram": {
       "name": "Telegram",
-      "note": "Planned: notifications through the clinic's Telegram bot after the patient links their chat."
+      "note": "Through the clinic's own Telegram bot (Integrations → Telegram bot); patients connect in the portal."
     },
     "payme": {
       "name": "Payme",
@@ -1817,7 +1871,8 @@
   },
   "notificationChannel": {
     "SMS": "SMS",
-    "EMAIL": "Email"
+    "EMAIL": "Email",
+    "TELEGRAM": "Telegram"
   },
   "notificationReason": {
     "no_consent": "Consent was withdrawn",

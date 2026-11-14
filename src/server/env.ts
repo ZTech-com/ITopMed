@@ -33,6 +33,12 @@ const schema = z.object({
    * Every such sign-in is audited with `mfaExempt: true`. Empty = nobody.
    */
   MFA_EXEMPT_EMAILS: z.string().default(""),
+  /**
+   * Telegram delivery: "api" = the official Bot API (api.telegram.org, needs internet),
+   * "dev-outbox" = SIMULATED (files in .dev-mailbox/telegram), "none" = off.
+   * Default: api in production, dev-outbox otherwise.
+   */
+  TELEGRAM_TRANSPORT: z.enum(["api", "dev-outbox", "none"]).optional(),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -58,6 +64,11 @@ export function env(): Env {
 }
 
 export const isProduction = () => env().NODE_ENV === "production";
+
+export function telegramTransport(): "api" | "dev-outbox" | "none" {
+  const e = env();
+  return e.TELEGRAM_TRANSPORT ?? (e.NODE_ENV === "production" ? "api" : "dev-outbox");
+}
 
 /** True when the owner listed this account in MFA_EXEMPT_EMAILS (see .env.example). */
 export function isMfaExempt(email: string): boolean {

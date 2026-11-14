@@ -3,18 +3,38 @@ import { Form, SelectField, SubmitButton, TextField } from "@/components/ui/form
 import { Card, CardBody, CardHeader, PageHeader, buttonClass } from "@/components/ui/primitives";
 import { SELF_SERVICE_PURPOSES, listMyConsents } from "@/server/portal/data";
 import { requirePatient } from "@/server/portal/guards";
-import { portalConsentAction, portalPasswordAction } from "../../../../portal-actions";
+import { portalConsentAction, portalPasswordAction, portalTelegramDisconnectAction, portalTelegramLinkAction } from "../../../../portal-actions";
+import { TelegramConnect } from "@/components/telegram-connect";
+import { myTelegram } from "@/server/notifications/telegram";
 
 export default async function PortalAccountPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const p = await requirePatient(slug);
-  const [t, format, consents] = await Promise.all([getTranslations(), getFormatter(), listMyConsents(p)]);
+  const [t, format, consents, telegram] = await Promise.all([getTranslations(), getFormatter(), listMyConsents(p), myTelegram(p)]);
   const active = consents.filter((c) => !c.withdrawnAt);
   const missing = SELF_SERVICE_PURPOSES.filter((pp) => !active.some((c) => c.purpose === pp));
   const tz = p.tenant.timezone;
   return (
     <div className="max-w-3xl space-y-6">
       <PageHeader title={t("portal.account.title")} description={t("portal.account.subtitle")} />
+      {telegram.bot ? (
+        <Card>
+          <CardHeader title={t("portal.telegram.title")} description={t("portal.telegram.hint", { bot: telegram.bot })} />
+          <CardBody className="space-y-3 text-[14px]">
+            {telegram.linked ? (
+              <>
+                <p className="font-medium text-success">{t("portal.telegram.linked", { date: format.dateTime(telegram.linked.linkedAt, { dateStyle: "medium", timeZone: tz }) })}</p>
+                <Form action={portalTelegramDisconnectAction} className="space-y-0">
+                  <input type="hidden" name="$slug" value={p.tenant.slug} />
+                  <button className={buttonClass("ghost", "md")}>{t("portal.telegram.disconnect")}</button>
+                </Form>
+              </>
+            ) : (
+              <TelegramConnect action={portalTelegramLinkAction} slug={p.tenant.slug} />
+            )}
+          </CardBody>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader title={t("portal.account.consents")} description={t("portal.account.consentsHint")} />

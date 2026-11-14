@@ -69,6 +69,15 @@ export default async function ClinicSettingsPage({ params }: { params: Promise<{
                   <span className="block text-[13px] text-text-2">{t("clinic.policy.reasonRequiredHint")}</span>
                 </span>
               </label>
+              <div className="border-t border-border pt-4">
+                <p className="text-[14px] font-medium">{t("clinic.policy.onlineTitle")}</p>
+                <p className="mb-3 text-[13px] text-text-2">{t("clinic.policy.onlineHint")}</p>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <TextField name="onlineBookingDays" label={t("clinic.policy.bookingDays")} inputMode="numeric" defaultValue={String(policy.onlineBookingDays)} />
+                  <TextField name="onlineBookingLeadHours" label={t("clinic.policy.leadHours")} inputMode="decimal" defaultValue={String(policy.onlineBookingLeadMinutes / 60)} />
+                  <TextField name="onlineBookingMaxActive" label={t("clinic.policy.maxActive")} inputMode="numeric" defaultValue={String(policy.onlineBookingMaxActive)} />
+                </div>
+              </div>
             </fieldset>
             {isOwner ? <SubmitButton>{t("common.save")}</SubmitButton> : null}
           </Form>

@@ -17,6 +17,8 @@
 
 | 11 | Control, prescriptions, rescheduling | ✅ (2026-11-14) — owner's **control centre** (today's visits, revenue vs last month, unpaid, open cash desks with expected cash, shift shortages, discounts and refunds by person, unsigned notes, unbilled visits, staff without MFA, emergency record access); **control rules** set by the owner only (discount limit %, mandatory reason; discount reason and author stored per line); **prescriptions** (immutable, cancel-only by the prescriber, allergy screen with explicit override, printable A5 prescription; national e-Rx not integrated); **rescheduling** with full booking checks, history and moved reminders; gap analysis in docs/GAP-ANALYSIS.md; 5 tests + browser end-to-end walkthrough (`npm run e2e:walkthrough`, 14 steps) |
 
+| 12 | Portal self-booking, Telegram | ✅ (2026-11-14) — **online booking** in the patient portal for doctors who opt in: availability from SECURITY DEFINER functions that return times only (no identities, absences as dates only), the booking validated and written by `portal_book()` inside PostgreSQL (clinic rules: days ahead, earliest time, max active per patient; working hours, days off, slot alignment), double booking impossible (exclusion constraint), confirmation + reminder; **Telegram** through each clinic's own bot (official Bot API; token AES-GCM encrypted, no platform access), patient connects with a one-time deep link from the portal (consent recorded, disconnect withdraws it), worker links chats and delivers messages without clinical content; 4 tests. Simulated (dev-outbox) outside production |
+
 ## Acceptance criteria
 | # | Criterion | Status |
 |---|---|---|

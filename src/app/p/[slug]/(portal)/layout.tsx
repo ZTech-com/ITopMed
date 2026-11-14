@@ -11,6 +11,7 @@ export default async function PortalLayout({ children, params }: { children: Rea
   const base = `/p/${p.tenant.slug}`;
   const nav: NavItem[] = [
     { href: base, label: t("portal.nav.home"), icon: "dashboard", exact: true },
+    { href: `${base}/book`, label: t("portal.nav.book"), icon: "booking" },
     { href: `${base}/appointments`, label: t("portal.nav.appointments"), icon: "calendar" },
     { href: `${base}/results`, label: t("portal.nav.results"), icon: "lab" },
     { href: `${base}/invoices`, label: t("portal.nav.invoices"), icon: "billing" },

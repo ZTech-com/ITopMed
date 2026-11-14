@@ -1,5 +1,5 @@
 import "server-only";
-import { env } from "../env";
+import { env, telegramTransport } from "../env";
 
 /**
  * Honest status of every external integration. Nothing here pretends to be
@@ -13,12 +13,14 @@ export interface IntegrationInfo {
   status: IntegrationStatus;
 }
 
-export function integrationStatuses(): IntegrationInfo[] {
+/** `telegramBot`: whether this clinic has connected its bot (Telegram is per clinic). */
+export function integrationStatuses(opts: { telegramBot?: boolean } = {}): IntegrationInfo[] {
   const e = env();
+  const tg = telegramTransport();
   return [
     { key: "email", status: e.EMAIL_TRANSPORT === "smtp" ? "connected" : "simulated" },
     { key: "sms", status: e.SMS_TRANSPORT === "dev-outbox" ? "simulated" : "off" },
-    { key: "telegram", status: "planned" },
+    { key: "telegram", status: tg === "none" ? "off" : tg === "dev-outbox" ? "simulated" : opts.telegramBot ? "connected" : "off" },
     { key: "payme", status: "planned" },
     { key: "click", status: "planned" },
     { key: "uzum", status: "planned" },

@@ -5,7 +5,8 @@ import { Badge, Card, CardBody, CardHeader, PageHeader, Table, Td, Th } from "@/
 import { requireClinic } from "@/server/auth/guards";
 import { integrationStatuses, type IntegrationStatus } from "@/server/integrations/catalog";
 import { getNotificationSettings, listNotifications } from "@/server/notifications/notifications";
-import { dispatchNowAction, notificationSettingsAction } from "../../../integrations-actions";
+import { dispatchNowAction, notificationSettingsAction, telegramBotAction } from "../../../integrations-actions";
+import { telegramStatus } from "@/server/notifications/telegram";
 
 const STATUS_TONE: Record<IntegrationStatus, "success" | "warning" | "neutral" | "accent"> = { connected: "success", simulated: "warning", off: "neutral", partial: "accent", planned: "neutral" };
 const LOG_TONE = { PENDING: "accent", SENT: "success", FAILED: "danger", SKIPPED: "neutral" } as const;
@@ -16,7 +17,7 @@ export default async function IntegrationsPage({ params, searchParams }: { param
   const ctx = await requireClinic(slug, "clinic.settings.read");
   const sp = await searchParams;
   const canManage = ctx.permissions.has("clinic.settings.manage");
-  const [t, format, settings, log] = await Promise.all([getTranslations(), getFormatter(), getNotificationSettings(ctx), listNotifications(ctx, { status: sp.status })]);
+  const [t, format, settings, log, tg] = await Promise.all([getTranslations(), getFormatter(), getNotificationSettings(ctx), listNotifications(ctx, { status: sp.status }), telegramStatus(ctx)]);
   const base = `/c/${ctx.tenant.slug}/integrations`;
   const dt = (d: Date) => format.dateTime(d, { dateStyle: "short", timeStyle: "short", timeZone: ctx.tenant.timezone });
 
@@ -24,10 +25,44 @@ export default async function IntegrationsPage({ params, searchParams }: { param
     <div className="max-w-5xl space-y-6">
       <PageHeader title={t("clinic.integrations.title")} description={t("clinic.integrations.subtitle")} />
 
+      <Card id="telegram">
+        <CardHeader title={t("clinic.telegram.title")} description={t("clinic.telegram.hint")} />
+        <CardBody className="space-y-4 text-[14px]">
+          {tg.transport === "dev-outbox" ? <p className="text-text-2">{t("clinic.telegram.simulated")}</p> : null}
+          {tg.bot ? (
+            <>
+              <p>
+                <span className="font-medium">@{tg.bot.username}</span> · {t("clinic.telegram.connectedAt", { date: dt(tg.bot.connectedAt) })} ·{" "}
+                {t("clinic.telegram.linkedPatients", { count: tg.linkedPatients })}
+              </p>
+              {canManage ? (
+                <Form action={telegramBotAction} className="space-y-0">
+                  <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+                  <button name="op" value="disconnect" className="min-h-10 text-[14px] text-danger hover:underline">{t("clinic.telegram.disconnect")}</button>
+                </Form>
+              ) : null}
+            </>
+          ) : canManage && tg.transport !== "none" ? (
+            <Form action={telegramBotAction} successMessage="clinic.telegram.connected">
+              <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+              <ol className="list-decimal space-y-1 pl-5 text-text-2">
+                <li>{t("clinic.telegram.step1")}</li>
+                <li>{t("clinic.telegram.step2")}</li>
+                <li>{t("clinic.telegram.step3")}</li>
+              </ol>
+              <TextField name="token" type="password" label={t("clinic.telegram.token")} hint={t("clinic.telegram.tokenHint")} autoComplete="off" required />
+              <SubmitButton>{t("clinic.telegram.connect")}</SubmitButton>
+            </Form>
+          ) : (
+            <p className="text-text-2">{t("clinic.telegram.notConnected")}</p>
+          )}
+        </CardBody>
+      </Card>
+
       <Card>
         <CardHeader title={t("clinic.integrations.statusTitle")} description={t("clinic.integrations.statusHint")} />
         <ul className="divide-y divide-border">
-          {integrationStatuses().map((i) => (
+          {integrationStatuses({ telegramBot: Boolean(tg.bot) }).map((i) => (
             <li key={i.key} className="flex flex-wrap items-start justify-between gap-3 px-6 py-3">
               <div className="min-w-0 max-w-2xl">
                 <p className="text-[14.5px] font-medium">{t(`integration.${i.key}.name`)}</p>

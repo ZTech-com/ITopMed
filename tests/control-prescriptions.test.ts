@@ -45,10 +45,10 @@ async function setup() {
 describe("clinic control policy: discount limits", () => {
   it("staff are limited, the owner is not; a reason can be required; only the owner sets the rules", async () => {
     const s = await setup();
-    expect(await getClinicPolicy(s.a.ctx)).toEqual({ maxDiscountPercent: 100, discountReasonRequired: false });
+    expect(await getClinicPolicy(s.a.ctx)).toMatchObject({ maxDiscountPercent: 100, discountReasonRequired: false });
     await expect(updateClinicPolicy(s.admin.ctx, { maxDiscountPercent: 100, discountReasonRequired: false }, META)).rejects.toThrow("errors.ownerOnly");
     await expect(updateClinicPolicy(s.a.ctx, { maxDiscountPercent: 150, discountReasonRequired: false }, META)).rejects.toThrow();
-    await updateClinicPolicy(s.a.ctx, { maxDiscountPercent: 10, discountReasonRequired: true }, META);
+    await updateClinicPolicy(s.a.ctx, { maxDiscountPercent: 10, discountReasonRequired: true }, META); // booking rules keep their defaults
 
     const inv = await createInvoice(s.cashier.ctx, { patientId: s.patientId, branchId: s.branch.id }, META);
     // 200 000 so'm line: 10% = 20 000.

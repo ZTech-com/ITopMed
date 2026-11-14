@@ -14,6 +14,8 @@ import { releaseLabOrder } from "@/server/lab/lab";
 import { activatePortalAccount, changePatientPassword, loginPatient, logoutPatient } from "@/server/portal/auth";
 import { cancelMyAppointment, grantMyConsent, withdrawMyConsent } from "@/server/portal/data";
 import { getPortalTenant, requirePatient } from "@/server/portal/guards";
+import { bookOnline } from "@/server/portal/booking";
+import { createTelegramLink, disconnectMyTelegram } from "@/server/notifications/telegram";
 import { disablePortalAccount, issuePortalCode } from "@/server/portal/staff";
 
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "");
@@ -132,4 +134,38 @@ export async function labReleaseAction(_: FormState, fd: FormData): Promise<Form
   }
   revalidatePath(`/c/${slug}`, "layout");
   return ok("clinic.labOrder.released");
+}
+
+// ───────────── Patient: online booking, Telegram ─────────────
+
+export async function portalBookAction(_: FormState, fd: FormData): Promise<FormState> {
+  const p = await requirePatient(str(fd, "$slug"));
+  try {
+    await bookOnline(p, { doctorId: str(fd, "doctorId"), startsAt: str(fd, "startsAt") }, await requestMeta());
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath(`/p/${p.tenant.slug}`, "layout");
+  redirect(`/p/${p.tenant.slug}/appointments?booked=1`);
+}
+
+export async function portalTelegramLinkAction(_: FormState, fd: FormData): Promise<FormState> {
+  const p = await requirePatient(str(fd, "$slug"));
+  try {
+    const link = await createTelegramLink(p, await requestMeta());
+    return { ok: true, data: { link }, nonce: Date.now() };
+  } catch (e) {
+    return toFormState(e);
+  }
+}
+
+export async function portalTelegramDisconnectAction(_: FormState, fd: FormData): Promise<FormState> {
+  const p = await requirePatient(str(fd, "$slug"));
+  try {
+    await disconnectMyTelegram(p, await requestMeta());
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath(`/p/${p.tenant.slug}/account`);
+  return ok("portal.telegram.disconnected");
 }

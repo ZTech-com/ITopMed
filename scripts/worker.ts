@@ -10,16 +10,20 @@ import "dotenv/config";
 import { disconnectAll, platformDb } from "../src/server/db";
 import { logger } from "../src/server/logger";
 import { processDueNotifications } from "../src/server/notifications/notifications";
+import { pollTelegram } from "../src/server/notifications/telegram";
 
-const INTERVAL_MS = 60_000;
+// Short enough that a patient connecting Telegram sees the confirmation quickly.
+const INTERVAL_MS = 20_000;
 
 async function pass() {
   const tenants = await platformDb().tenant.findMany({ where: { status: { in: ["TRIAL", "ACTIVE"] } }, select: { id: true } });
   let sent = 0;
   let failed = 0;
   let skipped = 0;
+  let linked = 0;
   for (const t of tenants) {
     try {
+      linked += await pollTelegram(t.id);
       const r = await processDueNotifications(t.id);
       sent += r.sent;
       failed += r.failed;
@@ -29,7 +33,7 @@ async function pass() {
     }
   }
   const swept = (await platformDb().$queryRaw<{ n: number }[]>`SELECT rate_limit_sweep() AS n`)[0]?.n ?? 0;
-  logger.info("worker.pass", { tenants: tenants.length, sent, failed, skipped, rateLimitBucketsSwept: swept });
+  logger.info("worker.pass", { tenants: tenants.length, sent, failed, skipped, telegramLinked: linked, rateLimitBucketsSwept: swept });
 }
 
 async function main() {

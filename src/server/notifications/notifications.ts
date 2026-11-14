@@ -11,6 +11,7 @@ import { env } from "../env";
 import { withAppContext, type Tx } from "../db";
 import { logger } from "../logger";
 import { uuidv7 } from "../security/crypto";
+import { sendTelegram, telegramChatFor, telegramReady } from "./telegram";
 import { sendSms, smsEnabled } from "./sms";
 
 /**
@@ -29,7 +30,7 @@ import { sendSms, smsEnabled } from "./sms";
  */
 
 export const NOTIFICATION_KINDS = ["APPOINTMENT_BOOKED", "APPOINTMENT_REMINDER", "APPOINTMENT_CANCELLED", "RESULTS_READY"] as const satisfies readonly NotificationKind[];
-const CONSENT_FOR: Record<NotificationChannel, ConsentPurpose> = { SMS: "SMS_REMINDERS", EMAIL: "EMAIL_NOTIFICATIONS" };
+const CONSENT_FOR: Record<NotificationChannel, ConsentPurpose> = { SMS: "SMS_REMINDERS", EMAIL: "EMAIL_NOTIFICATIONS", TELEGRAM: "TELEGRAM_NOTIFICATIONS" };
 const MAX_ATTEMPTS = 3;
 const RETRY_MINUTES = [5, 30, 120];
 
@@ -57,14 +58,18 @@ function enabled(s: Settings, kind: NotificationKind) {
 }
 
 /** Channels this patient can be reached on right now (address present + consent active + transport available). */
-async function reachableChannels(tx: Tx, patientId: string): Promise<{ channel: NotificationChannel; to: string }[]> {
+async function reachableChannels(tx: Tx, tenantId: string, patientId: string): Promise<{ channel: NotificationChannel; to: string }[]> {
   const p = await tx.patient.findUnique({ where: { id: patientId }, select: { phone: true, email: true, status: true } });
   if (!p || p.status !== "ACTIVE") return [];
-  const consents = await tx.patientConsent.findMany({ where: { patientId, withdrawnAt: null, purpose: { in: ["SMS_REMINDERS", "EMAIL_NOTIFICATIONS"] } }, select: { purpose: true } });
+  const consents = await tx.patientConsent.findMany({ where: { patientId, withdrawnAt: null, purpose: { in: ["SMS_REMINDERS", "EMAIL_NOTIFICATIONS", "TELEGRAM_NOTIFICATIONS"] } }, select: { purpose: true } });
   const has = (c: ConsentPurpose) => consents.some((x) => x.purpose === c);
   const out: { channel: NotificationChannel; to: string }[] = [];
   if (p.phone && smsEnabled() && has("SMS_REMINDERS")) out.push({ channel: "SMS", to: p.phone });
   if (p.email && has("EMAIL_NOTIFICATIONS")) out.push({ channel: "EMAIL", to: p.email });
+  if (has("TELEGRAM_NOTIFICATIONS") && (await telegramReady(tx, tenantId))) {
+    const chat = await telegramChatFor(tx, tenantId, patientId);
+    if (chat !== null) out.push({ channel: "TELEGRAM", to: chat.toString() });
+  }
   return out;
 }
 
@@ -77,7 +82,7 @@ async function enqueue(tx: Tx, tenantId: string, e: { patientId: string; kind: N
     const acc = await tx.patientAccount.findFirst({ where: { patientId: e.patientId, tenantId }, select: { status: true } });
     if (acc?.status !== "ACTIVE") return 0; // nothing to point the patient to
   }
-  const channels = await reachableChannels(tx, e.patientId);
+  const channels = await reachableChannels(tx, tenantId, e.patientId);
   if (channels.length === 0) return 0;
   const r = await tx.notification.createMany({
     data: channels.map((c) => ({
@@ -209,9 +214,11 @@ async function dispatchOne(tx: Tx, tenantId: string, id: string, now: Date): Pro
   if (!patient || patient.status !== "ACTIVE") return skip("patient_inactive");
   const consent = await tx.patientConsent.findFirst({ where: { patientId: n.patientId, purpose: CONSENT_FOR[n.channel], withdrawnAt: null }, select: { id: true } });
   if (!consent) return skip("no_consent");
-  const to = n.channel === "SMS" ? patient.phone : patient.email;
+  const chat = n.channel === "TELEGRAM" ? await telegramChatFor(tx, tenantId, n.patientId) : null;
+  const to = n.channel === "SMS" ? patient.phone : n.channel === "EMAIL" ? patient.email : chat?.toString();
   if (!to) return skip("no_address");
   if (n.channel === "SMS" && !smsEnabled()) return skip("sms_off");
+  if (n.channel === "TELEGRAM" && !(await telegramReady(tx, tenantId))) return skip("telegram_off");
 
   let startsAt: Date | undefined;
   let branch: { name: string; phone: string | null } | undefined;
@@ -234,6 +241,10 @@ async function dispatchOne(tx: Tx, tenantId: string, id: string, now: Date): Pro
   let transport: string | null = null;
   if (n.channel === "SMS") {
     const r = await sendSms(to, msg.sms);
+    delivered = r.delivered;
+    transport = r.transport;
+  } else if (n.channel === "TELEGRAM") {
+    const r = await sendTelegram(tx, tenantId, chat!, msg.sms);
     delivered = r.delivered;
     transport = r.transport;
   } else {

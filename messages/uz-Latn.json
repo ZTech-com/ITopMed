@@ -1079,7 +1079,12 @@
       "maxDiscount": "Xodim bera oladigan eng katta chegirma (%)",
       "maxDiscountHint": "Hisobning har bir qatori uchun. 100 — cheklovsiz, 0 — chegirma yo'q.",
       "reasonRequired": "Har bir chegirma uchun sabab yozish majburiy",
-      "reasonRequiredHint": "Sabab hisobda va nazorat markazida ko'rinadi."
+      "reasonRequiredHint": "Sabab hisobda va nazorat markazida ko'rinadi.",
+      "onlineTitle": "Onlayn yozilish (bemor portali)",
+      "onlineHint": "Onlayn yozilishni qabul qiladigan shifokorlarga tegishli (shifokor profili).",
+      "bookingDays": "Necha kun oldindan",
+      "leadHours": "Eng erta, hozirdan necha soat keyin",
+      "maxActive": "Bitta bemorga onlayn qabullar soni"
     },
     "rx": {
       "title": "Retseptlar",
@@ -1113,6 +1118,22 @@
       "signature": "Shifokor imzosi",
       "stamp": "Muhr",
       "notElectronic": "Klinika bergan qog'oz retsept; milliy elektron retsept tizimida ro'yxatdan o'tmagan."
+    },
+    "telegram": {
+      "title": "Telegram bot",
+      "hint": "Bemorlarga eslatma va tasdiqlar Telegramda, klinikangizning o'z boti orqali. Bemorlar bemor portalida o'zlari ulaydi.",
+      "simulated": "Bu o'rnatishda SIMULYATSIYA: xabarlar Telegramga yuborilmaydi, serverda fayl sifatida saqlanadi.",
+      "connectedAt": "{date} da ulangan",
+      "linkedPatients": "{count, plural, other {# ta bemor ulangan}}",
+      "disconnect": "Botni uzish",
+      "connected": "Bot ulandi. Endi bemorlar uni portalda ulashi mumkin.",
+      "step1": "Telegramda @BotFather ni oching va /newbot yuboring.",
+      "step2": "Nom (masalan, klinikangiz nomi) va \"bot\" bilan tugaydigan username tanlang.",
+      "step3": "BotFather yuborgan tokenni nusxalab, quyiga joylang.",
+      "token": "Bot tokeni",
+      "tokenHint": "Shifrlangan holda saqlanadi va qayta ko'rsatilmaydi. Tokeni bor odam botni boshqara oladi.",
+      "connect": "Botni ulash",
+      "notConnected": "Bot ulanmagan."
     }
   },
   "status": {
@@ -1239,7 +1260,11 @@
     "tooth": "Toʻgʻri tish raqamini tanlang (FDI).",
     "confirmRequired": "Davom etishdan oldin tasdiqlang.",
     "percent": "0 dan 100 gacha son kiriting.",
-    "durationDays": "1 dan 3650 gacha kun sonini kiriting."
+    "durationDays": "1 dan 3650 gacha kun sonini kiriting.",
+    "telegramToken": "Bu bot tokeniga o'xshamaydi (raqamlar:harflar).",
+    "bookingDays": "1 dan 180 gacha kun kiriting.",
+    "leadHours": "0 dan 168 gacha soat kiriting.",
+    "maxActive": "1 dan 20 gacha kiriting."
   },
   "errors": {
     "generic": "Nimadir notoʻgʻri ketdi. Qayta urinib koʻring.",
@@ -1338,7 +1363,12 @@
     "invitationPending": "Bu elektron pochtaga taklif allaqachon yuborilgan. Uni qayta yuboring yoki bekor qiling.",
     "discountOverLimit": "Bu chegirma klinika egasi belgilagan chegaradan katta.",
     "discountReasonRequired": "Chegirma sababini yozing (klinika qoidasi).",
-    "allergyConflict": "Bemorda bu doriga mos keladigan allergiya qayd etilgan. Tekshiring va baribir yozsangiz, tasdiqlang."
+    "allergyConflict": "Bemorda bu doriga mos keladigan allergiya qayd etilgan. Tekshiring va baribir yozsangiz, tasdiqlang.",
+    "bookingTooSoon": "Bu vaqt onlayn yozilish uchun juda yaqin. Keyinroq vaqtni tanlang yoki klinikaga qo'ng'iroq qiling.",
+    "bookingTooFar": "Bu sana onlayn yozilish uchun juda uzoq.",
+    "bookingTooMany": "Sizda onlayn yozilishlar soni maksimal. Bittasini bekor qiling yoki klinikaga qo'ng'iroq qiling.",
+    "telegramOff": "Telegram xabarnomalari mavjud emas.",
+    "telegramTokenInvalid": "Telegram bu tokenni qabul qilmadi. @BotFather da tekshirib, qayta urinib ko'ring."
   },
   "email": {
     "invitation": {
@@ -1615,7 +1645,8 @@
       "appointments": "Qabullar",
       "results": "Tahlillar",
       "invoices": "Toʻlovlar",
-      "account": "Profil"
+      "account": "Profil",
+      "book": "Qabulga yozilish"
     },
     "login": {
       "title": "Bemor portali",
@@ -1656,7 +1687,7 @@
       "cancelled": "Qabul bekor qilindi.",
       "noneUpcoming": "Kelgusi qabullar yoʻq.",
       "nonePast": "Hali oʻtgan tashriflar yoʻq.",
-      "bookingNote": "Yozilish yoki qabulni koʻchirish uchun registraturaga murojaat qiling. Onlayn yozilish hozircha mavjud emas."
+      "bookingNote": "Qabulni boshqa vaqtga ko'chirish uchun registraturaga murojaat qiling."
     },
     "results": {
       "title": "Tahlil natijalari",
@@ -1705,6 +1736,29 @@
       "changePassword": "Parolni oʻzgartirish",
       "passwordChanged": "Parol oʻzgartirildi. Boshqa qurilmalardan chiqildi.",
       "contactClinic": "Ism, tugʻilgan sana yoki telefon raqamini oʻzgartirish uchun klinika registraturasiga murojaat qiling."
+    },
+    "book": {
+      "title": "Qabulga yozilish",
+      "unavailable": "Bu klinikada onlayn yozilish hali yoqilmagan. Iltimos, yozilish uchun klinikaga qo'ng'iroq qiling.",
+      "chooseDoctor": "Shifokorni tanlang. Faqat onlayn yozilishni qabul qiladigan shifokorlar ko'rsatilgan.",
+      "choose": "Tanlash",
+      "otherDoctor": "Boshqa shifokor",
+      "rules": "{days} kungacha oldindan yozilish mumkin. Onlayn yozilgan qabullar: {active} / {max}.",
+      "confirmTitle": "Qabulni tasdiqlang",
+      "confirm": "Shu vaqtga yozilish",
+      "noSlots": "Bu davrda bo'sh vaqt yo'q. Keyingi kunlarni yoki boshqa shifokorni tanlang.",
+      "later": "Keyingi kunlar",
+      "booked": "Qabulga yozildingiz. Tasdiqlash va eslatma xabari keladi."
+    },
+    "telegram": {
+      "title": "Telegram xabarnomalari",
+      "hint": "Qabul eslatmalarini klinika boti @{bot} orqali oling. Xabarlarda hech qachon tibbiy ma'lumot bo'lmaydi.",
+      "linked": "{date} dan beri ulangan.",
+      "disconnect": "Telegramni uzish",
+      "disconnected": "Telegram uzildi. U yerga xabar kelmaydi.",
+      "connect": "Telegramni ulash",
+      "open": "Telegramni ochish",
+      "afterOpen": "Telegramda Start tugmasini bosing. Taxminan 20 soniyada ulanadi, so'ng bu sahifani yangilang. Havola bir marta, 15 daqiqa ishlaydi."
     }
   },
   "inventoryCategory": {
@@ -1773,7 +1827,7 @@
     },
     "telegram": {
       "name": "Telegram",
-      "note": "Rejalashtirilgan: bemor oʻz chatini bogʻlagach, klinika Telegram-boti orqali xabarnomalar."
+      "note": "Klinikaning o'z Telegram boti orqali (Integratsiyalar → Telegram bot); bemorlar portalda ulaydi."
     },
     "payme": {
       "name": "Payme",
@@ -1817,7 +1871,8 @@
   },
   "notificationChannel": {
     "SMS": "SMS",
-    "EMAIL": "E-pochta"
+    "EMAIL": "E-pochta",
+    "TELEGRAM": "Telegram"
   },
   "notificationReason": {
     "no_consent": "Rozilik qaytarib olingan",
