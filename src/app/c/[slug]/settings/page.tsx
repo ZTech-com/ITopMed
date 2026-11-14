@@ -5,14 +5,15 @@ import { LOCALES, LOCALE_NATIVE_NAMES, TIMEZONES } from "@/i18n/config";
 import { requireClinic } from "@/server/auth/guards";
 import { getClinicSettings } from "@/server/clinic/admin";
 import { clinicSettingsAction } from "../../../clinic-actions";
-import { moduleAction } from "../../../practice-actions";
+import { moduleAction, policyAction } from "../../../practice-actions";
 import { listClinicModules } from "@/server/clinic/practice";
+import { getClinicPolicy } from "@/server/clinic/policy";
 import { Badge, ButtonLink } from "@/components/ui/primitives";
 
 export default async function ClinicSettingsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const ctx = await requireClinic(slug, "clinic.settings.read");
-  const [t, s, modules] = await Promise.all([getTranslations(), getClinicSettings(ctx), listClinicModules(ctx)]);
+  const [t, s, modules, policy] = await Promise.all([getTranslations(), getClinicSettings(ctx), listClinicModules(ctx), getClinicPolicy(ctx)]);
   const isOwner = ctx.roleKeys.includes("clinic_owner");
   const canEdit = ctx.permissions.has("clinic.settings.manage");
   const optional = t("common.optional");
@@ -51,6 +52,28 @@ export default async function ClinicSettingsPage({ params }: { params: Promise<{
           </div>
         ) : null}
       </Form>
+
+      <Card className="mt-6">
+        <CardHeader title={t("clinic.policy.title")} description={isOwner ? t("clinic.policy.hint") : t("clinic.policy.ownerOnly")} />
+        <CardBody>
+          <Form action={policyAction} successMessage="clinic.policy.saved">
+            <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+            <fieldset disabled={!isOwner} className="space-y-5">
+              <div className="max-w-xs">
+                <TextField name="maxDiscountPercent" label={t("clinic.policy.maxDiscount")} hint={t("clinic.policy.maxDiscountHint")} inputMode="numeric" defaultValue={String(policy.maxDiscountPercent)} />
+              </div>
+              <label className="flex items-start gap-3 text-[14px]">
+                <input type="checkbox" name="discountReasonRequired" defaultChecked={policy.discountReasonRequired} className="mt-0.5 size-4 accent-[var(--accent)]" />
+                <span>
+                  <span className="font-medium">{t("clinic.policy.reasonRequired")}</span>
+                  <span className="block text-[13px] text-text-2">{t("clinic.policy.reasonRequiredHint")}</span>
+                </span>
+              </label>
+            </fieldset>
+            {isOwner ? <SubmitButton>{t("common.save")}</SubmitButton> : null}
+          </Form>
+        </CardBody>
+      </Card>
 
       <Card className="mt-6">
         <CardHeader title={t("clinic.modules.title")} description={t("clinic.modules.hint")} />

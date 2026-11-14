@@ -16,6 +16,7 @@ Next.js 16 App Router · React 19 · TypeScript strict · Tailwind v4 · Postgre
 | Notification worker | `npm run worker` (or `-- --once`); clinics can also "Send due messages now" |
 | Encrypted backup / restore drill | `npm run backup` · `npm run backup:verify -- <file>` (see docs/DEPLOYMENT.md) |
 | Layout audit (every screen at phone/tablet/desktop, light+dark) | `npm run app` then `ITM_AUDIT_EMAIL=… ITM_AUDIT_PASSWORD=… npm run ui:audit -- --slug <clinic>` (owner + SUPER_ADMIN account listed in `MFA_EXEMPT_EMAILS`); must report no problems after any UI change |
+| End-to-end clinical walkthrough in the browser (registration → visit → prescription → invoice → payment) | `npm run app`, then the same ITM_AUDIT_* variables: `npm run e2e:walkthrough -- --slug <clinic>` (creates synthetic records — dev/demo data only) |
 | Checks (run all after every change) | `npm run lint` · `npm run typecheck` · `npm test` · `npm run i18n:check` · `npm run build` — read each exit code; never pipe a check into `tail`/`grep` when judging pass/fail |
 
 Tests boot their own throw-away PostgreSQL on port 54339 and apply the real migrations.

@@ -62,7 +62,8 @@
     "nurse": "Nurse station",
     "inventory": "Pharmacy & stock",
     "hr": "HR",
-    "integrations": "Integrations"
+    "integrations": "Integrations",
+    "control": "Control centre"
   },
   "auth": {
     "adminTitle": "ITop Med Administration",
@@ -594,7 +595,12 @@
       "walkInHint": "The patient joins the doctor’s queue now without taking a booked slot.",
       "branch": "Branch",
       "add": "Add to queue",
-      "added": "Added to the queue."
+      "added": "Added to the queue.",
+      "reschedule": "Move",
+      "newDate": "New date",
+      "newTime": "New time",
+      "rescheduleSubmit": "Move the visit",
+      "rescheduled": "The visit was moved. The patient's reminder follows the new time."
     },
     "visit": {
       "myQueue": "My patients today",
@@ -719,7 +725,11 @@
       "createdAt": "Created",
       "issuedAt": "Issued",
       "patient": "Patient",
-      "doctor": "Doctor"
+      "doctor": "Doctor",
+      "discountReason": "Discount reason",
+      "discountReasonHint": "Recommended when you give a discount.",
+      "discountReasonRequiredHint": "Required by the clinic rules when you give a discount.",
+      "discountLimit": "Your discount limit: {percent}% of a line."
     },
     "cash": {
       "title": "Cash desk",
@@ -1060,6 +1070,49 @@
       "turnOff": "Turn off",
       "enabled": "Section turned on.",
       "disabled": "Section turned off."
+    },
+    "policy": {
+      "title": "Control rules",
+      "hint": "Limits for your staff. They do not apply to you as the owner.",
+      "ownerOnly": "Only the clinic owner can change these rules.",
+      "saved": "Control rules saved.",
+      "maxDiscount": "Largest discount staff may give (%)",
+      "maxDiscountHint": "Per invoice line. 100 = no limit, 0 = no discounts.",
+      "reasonRequired": "A reason is required for every discount",
+      "reasonRequiredHint": "The reason is shown on the invoice and in the control centre."
+    },
+    "rx": {
+      "title": "Prescriptions",
+      "hint": "Each medicine on its own line. Mistakes are cancelled, never edited.",
+      "print": "Print prescription",
+      "none": "No prescriptions in this visit.",
+      "allergyOverride": "despite allergy",
+      "cancelledLabel": "cancelled",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "cancel": "Cancel prescription",
+      "drug": "Medicine and strength",
+      "drugHint": "International name preferred, e.g. Bisoprolol 5 mg",
+      "dose": "Dose",
+      "dosePlaceholder": "1 tablet",
+      "frequency": "How often",
+      "frequencyPlaceholder": "once daily in the morning",
+      "route": "Route",
+      "routePlaceholder": "by mouth",
+      "duration": "Duration (days)",
+      "instructions": "Instructions for the patient",
+      "allergyCheck": "Recorded allergies: {list}. The medicine is checked against them.",
+      "allergyConfirm": "I am aware of the allergy and still prescribe this medicine.",
+      "add": "Add prescription",
+      "added": "Prescription added.",
+      "addedDespiteAllergy": "Prescription added despite the recorded allergy (recorded in the audit log).",
+      "cancelled": "Prescription cancelled.",
+      "printNow": "Print",
+      "paperTitle": "PRESCRIPTION",
+      "doctor": "Doctor",
+      "license": "licence",
+      "signature": "Doctor's signature",
+      "stamp": "Stamp",
+      "notElectronic": "Paper prescription issued by the clinic; not registered in the national electronic prescription system."
     }
   },
   "status": {
@@ -1184,7 +1237,9 @@
     "wholeNumber": "Enter a whole number.",
     "range": "Enter a value between 1 and 72.",
     "tooth": "Choose a valid tooth number (FDI).",
-    "confirmRequired": "Please confirm before continuing."
+    "confirmRequired": "Please confirm before continuing.",
+    "percent": "Enter a number from 0 to 100.",
+    "durationDays": "Enter a number of days from 1 to 3650."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -1280,7 +1335,10 @@
     "mfaResetOtherClinics": "This account also works in other clinics, so only ITop Med support can reset its two-step verification.",
     "mfaNotSetUp": "Two-step verification is not set up for this account.",
     "staffExists": "An employee with this email already exists.",
-    "invitationPending": "An invitation for this email is already pending. Resend or revoke it instead."
+    "invitationPending": "An invitation for this email is already pending. Resend or revoke it instead.",
+    "discountOverLimit": "This discount is above the limit set by the clinic owner.",
+    "discountReasonRequired": "Write the reason for the discount (clinic rule).",
+    "allergyConflict": "The patient has a recorded allergy that matches this medicine. Check, and confirm if you still prescribe it."
   },
   "email": {
     "invitation": {
@@ -1981,5 +2039,48 @@
     "subtitle": "You have been invited as {role}.",
     "mfaNote": "At your first sign-in you will set up two-step verification with an authenticator app.",
     "accept": "Create account"
+  },
+  "control": {
+    "title": "Control centre",
+    "subtitle": "What is happening today and what needs your attention: money, cash, discounts, discipline and security.",
+    "allGood": "Nothing needs your attention right now.",
+    "attention": "{count, plural, one {# item needs} other {# items need}} your attention.",
+    "today": "Today",
+    "visitsToday": "Visits today",
+    "completedOf": "{done} completed",
+    "waitingOrInRoom": "waiting or with the doctor",
+    "noShowRate": "No-shows in 30 days: {percent}%",
+    "revenueToday": "Revenue today",
+    "revenueMonth": "Revenue this month",
+    "noPrevMonth": "No data for last month",
+    "vsPrevMonth": "{change}% vs the same days last month",
+    "outstanding": "Unpaid by patients",
+    "unpaidInvoices": "{count, plural, one {# invoice} other {# invoices}}",
+    "cash": "Cash desks",
+    "cashHint": "Open shifts and the cash that should be in each desk now.",
+    "noOpenShifts": "No cash shift is open.",
+    "shiftDifferences": "Shortages and surpluses at shift close (30 days)",
+    "discounts": "Discounts by staff (30 days)",
+    "discountsHint": "Who gave discounts, how often and how much.",
+    "limits": "Limits",
+    "noDiscounts": "No discounts were given.",
+    "unknownStaff": "Unknown (before tracking)",
+    "times": "{count, plural, one {# time} other {# times}}",
+    "refunds": "Refunds",
+    "noRefunds": "No refunds.",
+    "voids": "Cancelled invoices: {count}",
+    "clinical": "Clinical discipline",
+    "clinicalHint": "Records that should have been finished.",
+    "draftNotes": "Unsigned notes older than 24 h",
+    "openEncounters": "Visits still open after 24 h",
+    "unbilledVisits": "Completed visits without an invoice (30 days)",
+    "open": "Open",
+    "security": "Security",
+    "securityHint": "Accounts and access that need a look.",
+    "activityLog": "Activity log",
+    "withoutMfa": "Owners, admins and accountants without two-step verification",
+    "breakGlass": "Emergency record access (30 days)",
+    "supportAccess": "Active ITop Med support access",
+    "period": "Figures in the clinic's currency and time zone; \"30 days\" means the last 30 days."
   }
 }

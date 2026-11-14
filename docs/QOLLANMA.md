@@ -215,6 +215,24 @@ Boshqa yo'nalishlar uchun ham tayyor xizmatlar to'plami bor: pediatriya, ginekol
 
 ---
 
+## 7a. Nazorat markazi va nazorat qoidalari (egasi uchun)
+
+**Nazorat markazi** (chap menyuda, qalqon belgisi) bitta sahifada ko'rsatadi:
+- **Bugun:** qabullar soni, kutayotganlar, kelmaganlar, bugungi va oylik tushum (o'tgan oyning shu kunlariga nisbatan %), bemorlarning qarzi;
+- **Kassalar:** ochiq smenalar va hozir har bir kassada bo'lishi kerak bo'lgan naqd pul; smena yopilishidagi kamomad va ortiqchalar;
+- **Chegirmalar:** kim, necha marta va qancha chegirma bergan (30 kun); pul qaytarishlar va bekor qilingan hisoblar;
+- **Klinik intizom:** 24 soatdan ortiq imzolanmagan yozuvlar (shifokor bo'yicha), ochiq qolgan qabullar, hisob chiqarilmagan qabullar;
+- **Xavfsizlik:** ikki bosqichli tekshiruvsiz ega/administrator/buxgalterlar, tibbiy kartaga favqulodda kirishlar.
+
+**Nazorat qoidalari** (Sozlamalar → Nazorat qoidalari; faqat ega o'zgartiradi):
+- xodim bera oladigan eng katta chegirma foizi (masalan 10%); undan oshsa tizim rad etadi;
+- har bir chegirma uchun sabab yozish majburiyligi. Sabab hisobda va nazorat markazida ko'rinadi.
+Egaga bu cheklovlar tegishli emas.
+
+## 7b. Retsept va qabulni ko'chirish
+- **Retsept:** shifokor qabul sahifasida "Retseptlar" bo'limida dori, doza, qabul tartibi va muddatni yozadi. Bemorda shu dori bilan mos keladigan allergiya qayd etilgan bo'lsa, tizim to'xtatadi va shifokordan alohida tasdiq so'raydi. Retsept tahrirlanmaydi, faqat bekor qilinadi. "Retseptni chop etish" A5 qog'oz retsept chiqaradi (imzo va muhr uchun joy bilan). Milliy elektron retsept tizimiga ulanish hali yo'q.
+- **Ko'chirish:** Navbat sahifasida yozilgan qabulning yonidagi "Ko'chirish" tugmasi orqali yangi sana va vaqt tanlanadi. Shifokor jadvali va band vaqtlar xuddi yangi yozilishdagidek tekshiriladi; bemorga eslatma yangi vaqtga moslanadi; tarix audit jurnalida saqlanadi.
+
 ## 8. Zaxira nusxa (har kuni!)
 
 ```bash

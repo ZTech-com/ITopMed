@@ -62,7 +62,8 @@
     "nurse": "Hamshira posti",
     "inventory": "Dorixona va ombor",
     "hr": "Kadrlar",
-    "integrations": "Integratsiyalar"
+    "integrations": "Integratsiyalar",
+    "control": "Nazorat markazi"
   },
   "auth": {
     "adminTitle": "ITop Med boshqaruvi",
@@ -594,7 +595,12 @@
       "walkInHint": "Bemor yozilish vaqtini band qilmasdan hozir shifokor navbatiga qoʻshiladi.",
       "branch": "Filial",
       "add": "Navbatga qoʻshish",
-      "added": "Navbatga qoʻshildi."
+      "added": "Navbatga qoʻshildi.",
+      "reschedule": "Ko'chirish",
+      "newDate": "Yangi sana",
+      "newTime": "Yangi vaqt",
+      "rescheduleSubmit": "Qabulni ko'chirish",
+      "rescheduled": "Qabul ko'chirildi. Bemorga eslatma yangi vaqtga moslandi."
     },
     "visit": {
       "myQueue": "Bugungi bemorlarim",
@@ -719,7 +725,11 @@
       "createdAt": "Yaratilgan",
       "issuedAt": "Chiqarilgan",
       "patient": "Bemor",
-      "doctor": "Shifokor"
+      "doctor": "Shifokor",
+      "discountReason": "Chegirma sababi",
+      "discountReasonHint": "Chegirma berganda yozish tavsiya etiladi.",
+      "discountReasonRequiredHint": "Chegirma berganda klinika qoidasiga ko'ra majburiy.",
+      "discountLimit": "Sizning chegirma chegarangiz: qatorning {percent}%."
     },
     "cash": {
       "title": "Kassa",
@@ -1060,6 +1070,49 @@
       "turnOff": "Oʻchirish",
       "enabled": "Boʻlim yoqildi.",
       "disabled": "Boʻlim oʻchirildi."
+    },
+    "policy": {
+      "title": "Nazorat qoidalari",
+      "hint": "Xodimlaringiz uchun cheklovlar. Ular sizga, egaga, tegishli emas.",
+      "ownerOnly": "Bu qoidalarni faqat klinika egasi o'zgartira oladi.",
+      "saved": "Nazorat qoidalari saqlandi.",
+      "maxDiscount": "Xodim bera oladigan eng katta chegirma (%)",
+      "maxDiscountHint": "Hisobning har bir qatori uchun. 100 — cheklovsiz, 0 — chegirma yo'q.",
+      "reasonRequired": "Har bir chegirma uchun sabab yozish majburiy",
+      "reasonRequiredHint": "Sabab hisobda va nazorat markazida ko'rinadi."
+    },
+    "rx": {
+      "title": "Retseptlar",
+      "hint": "Har bir dori alohida qatorda. Xato bo'lsa bekor qilinadi, tahrirlanmaydi.",
+      "print": "Retseptni chop etish",
+      "none": "Bu qabulda retsept yo'q.",
+      "allergyOverride": "allergiyaga qaramay",
+      "cancelledLabel": "bekor qilingan",
+      "days": "{count, plural, other {# kun}}",
+      "cancel": "Retseptni bekor qilish",
+      "drug": "Dori va dozasi",
+      "drugHint": "Xalqaro nomi afzal, masalan Bisoprolol 5 mg",
+      "dose": "Bir martalik doza",
+      "dosePlaceholder": "1 tabletka",
+      "frequency": "Qabul qilish tartibi",
+      "frequencyPlaceholder": "kuniga 1 marta ertalab",
+      "route": "Qabul usuli",
+      "routePlaceholder": "og'iz orqali",
+      "duration": "Davomiyligi (kun)",
+      "instructions": "Bemor uchun ko'rsatma",
+      "allergyCheck": "Qayd etilgan allergiyalar: {list}. Dori ular bilan tekshiriladi.",
+      "allergyConfirm": "Allergiyadan xabardorman va baribir shu dorini yozaman.",
+      "add": "Retsept qo'shish",
+      "added": "Retsept qo'shildi.",
+      "addedDespiteAllergy": "Retsept qayd etilgan allergiyaga qaramay qo'shildi (audit jurnalida yozildi).",
+      "cancelled": "Retsept bekor qilindi.",
+      "printNow": "Chop etish",
+      "paperTitle": "RETSEPT",
+      "doctor": "Shifokor",
+      "license": "litsenziya",
+      "signature": "Shifokor imzosi",
+      "stamp": "Muhr",
+      "notElectronic": "Klinika bergan qog'oz retsept; milliy elektron retsept tizimida ro'yxatdan o'tmagan."
     }
   },
   "status": {
@@ -1184,7 +1237,9 @@
     "wholeNumber": "Butun son kiriting.",
     "range": "1 dan 72 gacha qiymat kiriting.",
     "tooth": "Toʻgʻri tish raqamini tanlang (FDI).",
-    "confirmRequired": "Davom etishdan oldin tasdiqlang."
+    "confirmRequired": "Davom etishdan oldin tasdiqlang.",
+    "percent": "0 dan 100 gacha son kiriting.",
+    "durationDays": "1 dan 3650 gacha kun sonini kiriting."
   },
   "errors": {
     "generic": "Nimadir notoʻgʻri ketdi. Qayta urinib koʻring.",
@@ -1280,7 +1335,10 @@
     "mfaResetOtherClinics": "Bu hisob boshqa klinikalarda ham ishlaydi, shuning uchun uning ikki bosqichli tekshiruvini faqat ITop Med qo'llab-quvvatlash xizmati qayta o'rnata oladi.",
     "mfaNotSetUp": "Bu hisobda ikki bosqichli tekshiruv sozlanmagan.",
     "staffExists": "Bu elektron pochtali xodim allaqachon mavjud.",
-    "invitationPending": "Bu elektron pochtaga taklif allaqachon yuborilgan. Uni qayta yuboring yoki bekor qiling."
+    "invitationPending": "Bu elektron pochtaga taklif allaqachon yuborilgan. Uni qayta yuboring yoki bekor qiling.",
+    "discountOverLimit": "Bu chegirma klinika egasi belgilagan chegaradan katta.",
+    "discountReasonRequired": "Chegirma sababini yozing (klinika qoidasi).",
+    "allergyConflict": "Bemorda bu doriga mos keladigan allergiya qayd etilgan. Tekshiring va baribir yozsangiz, tasdiqlang."
   },
   "email": {
     "invitation": {
@@ -1981,5 +2039,48 @@
     "subtitle": "Siz {role} sifatida taklif qilindingiz.",
     "mfaNote": "Birinchi kirishda autentifikator ilovasi orqali ikki bosqichli tekshiruvni sozlaysiz.",
     "accept": "Hisob yaratish"
+  },
+  "control": {
+    "title": "Nazorat markazi",
+    "subtitle": "Bugun nima bo'lyapti va nimaga e'tibor berish kerak: pul, kassa, chegirmalar, intizom va xavfsizlik.",
+    "allGood": "Hozir e'tibor talab qiladigan narsa yo'q.",
+    "attention": "{count, plural, other {# ta holat}} e'tiboringizni talab qiladi.",
+    "today": "Bugun",
+    "visitsToday": "Bugungi qabullar",
+    "completedOf": "{done} ta yakunlangan",
+    "waitingOrInRoom": "kutmoqda yoki shifokor qabulida",
+    "noShowRate": "30 kunda kelmaganlar: {percent}%",
+    "revenueToday": "Bugungi tushum",
+    "revenueMonth": "Shu oydagi tushum",
+    "noPrevMonth": "O'tgan oy uchun ma'lumot yo'q",
+    "vsPrevMonth": "O'tgan oyning shu kunlariga nisbatan {change}%",
+    "outstanding": "Bemorlarning qarzi",
+    "unpaidInvoices": "{count, plural, other {# ta hisob}}",
+    "cash": "Kassalar",
+    "cashHint": "Ochiq smenalar va hozir har bir kassada bo'lishi kerak bo'lgan naqd pul.",
+    "noOpenShifts": "Ochiq kassa smenasi yo'q.",
+    "shiftDifferences": "Smena yopilishidagi kamomad va ortiqchalar (30 kun)",
+    "discounts": "Xodimlar bergan chegirmalar (30 kun)",
+    "discountsHint": "Kim, necha marta va qancha chegirma bergan.",
+    "limits": "Cheklovlar",
+    "noDiscounts": "Chegirma berilmagan.",
+    "unknownStaff": "Noma'lum (kuzatuvdan oldin)",
+    "times": "{count, plural, other {# marta}}",
+    "refunds": "Pul qaytarishlar",
+    "noRefunds": "Qaytarish bo'lmagan.",
+    "voids": "Bekor qilingan hisoblar: {count}",
+    "clinical": "Klinik intizom",
+    "clinicalHint": "Yakunlanishi kerak bo'lgan yozuvlar.",
+    "draftNotes": "24 soatdan ortiq imzolanmagan yozuvlar",
+    "openEncounters": "24 soatdan keyin ham ochiq qabullar",
+    "unbilledVisits": "Hisob chiqarilmagan yakunlangan qabullar (30 kun)",
+    "open": "Ochish",
+    "security": "Xavfsizlik",
+    "securityHint": "Ko'rib chiqish kerak bo'lgan hisoblar va kirishlar.",
+    "activityLog": "Faoliyat jurnali",
+    "withoutMfa": "Ikki bosqichli tekshiruvsiz ega, administrator va buxgalterlar",
+    "breakGlass": "Tibbiy kartaga favqulodda kirish (30 kun)",
+    "supportAccess": "ITop Med qo'llab-quvvatlashining faol kirishi",
+    "period": "Ko'rsatkichlar klinika valyutasi va vaqt mintaqasida; \"30 kun\" — oxirgi 30 kun."
   }
 }

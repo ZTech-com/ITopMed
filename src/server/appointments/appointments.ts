@@ -8,7 +8,7 @@ import type { Tx } from "../db";
 import { addDays, instantToLocalDate, isLocalDate, isoWeekday, localDateToDbDate, localToInstant, type LocalDate } from "../scheduling/time";
 import { uuidv7 } from "../security/crypto";
 import { DomainError } from "../tenancy/provisioning";
-import { notifyAppointmentBooked, notifyAppointmentCancelled } from "../notifications/notifications";
+import { notifyAppointmentBooked, notifyAppointmentCancelled, notifyAppointmentRescheduled } from "../notifications/notifications";
 
 const uuid = z.uuid();
 export const CANCELLATION_REASONS = ["PATIENT_REQUEST", "CLINIC_RESCHEDULE", "DOCTOR_UNAVAILABLE", "DUPLICATE", "OTHER"] as const;
@@ -214,6 +214,50 @@ export async function cancelAppointment(ctx: ClinicContext, appointmentId: strin
     await auditClinic(tx, ctx, meta, { action: "appointment.cancelled", entityType: "Appointment", entityId: a.id, metadata: { reason: r } });
     await notifyAppointmentCancelled(tx, ctx.tenant.id, { id: a.id, patientId: a.patientId, startsAt: a.startsAt });
   });
+}
+
+export const rescheduleSchema = z.object({
+  startsAt: z.iso.datetime({ offset: true }),
+  doctorProfileId: z.union([z.literal("").transform(() => undefined), uuid]).optional(),
+});
+
+/**
+ * Moves a booked visit to another time (and optionally another doctor) with
+ * the same checks as a new booking: working hours, absences, branch scope and
+ * the database's no-double-booking constraint. History stays in the audit log;
+ * the patient's pending reminder follows the new time.
+ */
+export async function rescheduleAppointment(ctx: ClinicContext, appointmentId: string, raw: unknown, meta: RequestMeta) {
+  requirePermission(ctx, "appointments.manage");
+  const input = rescheduleSchema.parse(raw);
+  const startsAt = new Date(input.startsAt);
+  if (startsAt.getTime() < Date.now() - PAST_TOLERANCE_MS) throw new DomainError("errors.slotInPast");
+  await inClinic(ctx, async (tx) => {
+    const a = await loadAppointment(tx, ctx, appointmentId);
+    if (a.status !== "BOOKED") throw new DomainError("errors.invalidTransition");
+    const doctor = await loadDoctor(tx, ctx, input.doctorProfileId ?? a.doctorProfileId);
+    if (a.serviceId && doctor.services.length && !doctor.services.some((x) => x.serviceId === a.serviceId)) throw new DomainError("errors.serviceNotProvided");
+    const endsAt = new Date(startsAt.getTime() + (a.endsAt.getTime() - a.startsAt.getTime()));
+    const tz = ctx.tenant.timezone;
+    const date = instantToLocalDate(startsAt, tz);
+    const absent = await tx.scheduleException.findUnique({ where: { doctorProfileId_date: { doctorProfileId: doctor.id, date: localDateToDbDate(date) } } });
+    if (absent) throw new DomainError("errors.outsideSchedule");
+    const blocks = await tx.workSchedule.findMany({ where: { doctorProfileId: doctor.id, weekday: isoWeekday(date) } });
+    const block = blocks.find((b) => localToInstant(date, b.startMinute, tz) <= startsAt && endsAt <= localToInstant(date, b.endMinute, tz));
+    if (!block) throw new DomainError("errors.outsideSchedule");
+    assertBranch(ctx, block.branchId);
+    await tx.appointment.update({
+      where: { id: a.id },
+      data: { startsAt, endsAt, doctorProfileId: doctor.id, branchId: block.branchId, roomId: block.roomId, rescheduledAt: new Date(), rescheduleCount: { increment: 1 } },
+    });
+    await auditClinic(tx, ctx, meta, {
+      action: "appointment.rescheduled",
+      entityType: "Appointment",
+      entityId: a.id,
+      metadata: { from: a.startsAt.toISOString(), to: startsAt.toISOString(), doctorChanged: doctor.id !== a.doctorProfileId },
+    });
+    await notifyAppointmentRescheduled(tx, ctx.tenant.id, { id: a.id, patientId: a.patientId, startsAt });
+  }).catch(translateConflict);
 }
 
 const apptInclude = {

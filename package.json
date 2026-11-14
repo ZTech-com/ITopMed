@@ -30,7 +30,8 @@
     "app": "tsx scripts/app.ts start",
     "app:stop": "tsx scripts/app.ts stop",
     "app:shortcut": "tsx scripts/app.ts shortcut",
-    "ui:audit": "tsx scripts/ui-audit.ts"
+    "ui:audit": "tsx scripts/ui-audit.ts",
+    "e2e:walkthrough": "tsx scripts/e2e-walkthrough.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",

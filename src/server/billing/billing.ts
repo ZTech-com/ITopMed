@@ -5,6 +5,7 @@ import { parseMoney } from "@/lib/money";
 import type { ClinicContext } from "../auth/clinic-auth";
 import type { RequestMeta } from "../auth/platform-auth";
 import { assertBranch, auditClinic, inClinic, requirePermission } from "../clinic/context";
+import { policyIn } from "../clinic/policy";
 import type { Tx } from "../db";
 import { addDays, instantToLocalDate, localToInstant } from "../scheduling/time";
 import { uuidv7 } from "../security/crypto";
@@ -85,6 +86,12 @@ export const lineSchema = z.object({
   serviceId: uuid,
   quantity: z.coerce.number().int().min(1, "validation.quantity").max(1000, "validation.quantity"),
   discount: z.string().default(""),
+  discountReason: z
+    .string()
+    .trim()
+    .max(300, "validation.tooLong")
+    .transform((v) => (v.length >= 3 ? v : undefined))
+    .optional(),
 });
 
 export async function addInvoiceLine(ctx: ClinicContext, invoiceId: string, raw: unknown, meta: RequestMeta) {
@@ -102,11 +109,32 @@ export async function addInvoiceLine(ctx: ClinicContext, invoiceId: string, raw:
     const gross = s.priceMinor * BigInt(input.quantity);
     const discount = input.discount.trim() ? parseMoney(input.discount, inv.currency) : 0n;
     if (discount === null || discount > gross) throw new DomainError("errors.invalidDiscount");
+    // Owner's control rules (Settings → Control): limit and written reason. The owner is not limited.
+    if (discount > 0n) {
+      const policy = await policyIn(tx, ctx.tenant.id);
+      if (!ctx.roleKeys.includes("clinic_owner") && discount * 100n > gross * BigInt(policy.maxDiscountPercent)) throw new DomainError("errors.discountOverLimit");
+      if (policy.discountReasonRequired && !input.discountReason) throw new DomainError("errors.discountReasonRequired");
+    }
     await tx.invoiceLine.create({
-      data: { id: uuidv7(), tenantId: ctx.tenant.id, invoiceId: inv.id, serviceId: s.id, description: s.name, quantity: input.quantity, unitPriceMinor: s.priceMinor, discountMinor: discount, totalMinor: gross - discount },
+      data: {
+        id: uuidv7(),
+        tenantId: ctx.tenant.id,
+        invoiceId: inv.id,
+        serviceId: s.id,
+        description: s.name,
+        quantity: input.quantity,
+        unitPriceMinor: s.priceMinor,
+        discountMinor: discount,
+        discountReason: discount > 0n ? (input.discountReason ?? null) : null,
+        createdById: ctx.principal.user.id,
+        totalMinor: gross - discount,
+      },
     });
     await recalcTotals(tx, inv.id);
-    if (discount > 0n) await auditClinic(tx, ctx, meta, { action: "invoice.discount_applied", entityType: "Invoice", entityId: inv.id, metadata: { discountMinor: discount.toString() } });
+    if (discount > 0n) {
+      const percent = Number((discount * 10000n) / gross) / 100;
+      await auditClinic(tx, ctx, meta, { action: "invoice.discount_applied", entityType: "Invoice", entityId: inv.id, metadata: { discountMinor: discount.toString(), percent, withReason: Boolean(input.discountReason) } });
+    }
   });
 }
 

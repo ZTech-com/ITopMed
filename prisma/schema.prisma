@@ -52,7 +52,7 @@ model PlatformUser {
   updatedAt        DateTime      @updatedAt
 
   sessions        PlatformSession[]
-  invitationsSent PlatformInvitation[] @relation("PlatformInviter")
+  invitationsSent PlatformInvitation[]      @relation("PlatformInviter")
   tenantsCreated  Tenant[]
   supportGrants   SupportAccessGrant[]
   recoveryCodes   PlatformMfaRecoveryCode[]
@@ -157,6 +157,8 @@ model Tenant {
   rooms                Room[]
   services             Service[]
   doctorProfiles       DoctorProfile[]
+  clinicPolicy         ClinicPolicy?
+  prescriptions        Prescription[]
   workSchedules        WorkSchedule[]
   scheduleExceptions   ScheduleException[]
   doctorServices       DoctorService[]
@@ -775,6 +777,7 @@ model Patient {
   diagnoses     Diagnosis[]
   allergies     Allergy[]
   vitals        VitalSign[]
+  prescriptions Prescription[]
   invoices      Invoice[]
   labOrders     LabOrder[]
   portalAccount PatientAccount?
@@ -892,6 +895,9 @@ model Appointment {
   startedAt          DateTime?
   completedAt        DateTime?
   cancelledAt        DateTime?
+  /// Set when the visit was moved to another time (the move itself is in the audit log).
+  rescheduledAt      DateTime?
+  rescheduleCount    Int                 @default(0)
   cancellationReason CancellationReason?
   createdById        String              @db.Uuid
   createdAt          DateTime            @default(now())
@@ -930,15 +936,16 @@ model Encounter {
   closedAt        DateTime?
   createdAt       DateTime        @default(now())
 
-  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  patient     Patient            @relation(fields: [patientId], references: [id], onDelete: Restrict)
-  doctor      DoctorProfile      @relation(fields: [doctorProfileId], references: [id], onDelete: Restrict)
-  appointment Appointment?       @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
-  notes       ClinicalNote[]
-  diagnoses   Diagnosis[]
-  vitals      VitalSign[]
-  labOrders   LabOrder[]
-  dentalChart DentalChartEntry[]
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient       Patient            @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor        DoctorProfile      @relation(fields: [doctorProfileId], references: [id], onDelete: Restrict)
+  appointment   Appointment?       @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  notes         ClinicalNote[]
+  diagnoses     Diagnosis[]
+  vitals        VitalSign[]
+  prescriptions Prescription[]
+  labOrders     LabOrder[]
+  dentalChart   DentalChartEntry[]
 
   @@index([tenantId, patientId, startedAt])
 }
@@ -1147,6 +1154,10 @@ model InvoiceLine {
   quantity       Int
   unitPriceMinor BigInt
   discountMinor  BigInt   @default(0)
+  /// Why the discount was given (required when the clinic policy says so).
+  discountReason String?
+  /// Who added the line (accountability for discounts).
+  createdById    String?  @db.Uuid
   totalMinor     BigInt
   createdAt      DateTime @default(now())
 
@@ -1805,4 +1816,58 @@ model RateLimitBucket {
 
   @@index([windowEndAt])
   @@ignore
+}
+
+// ───────────────────────────── Clinic control policy ────────────────────────
+
+/// Owner-defined control rules of a clinic (one row per clinic, created on first save).
+model ClinicPolicy {
+  tenantId               String   @id @db.Uuid
+  /// Highest discount (percent of a line) anyone except the clinic owner may give. 100 = no limit.
+  maxDiscountPercent     Int      @default(100)
+  /// A written reason is required for every discount.
+  discountReasonRequired Boolean  @default(false)
+  updatedById            String?  @db.Uuid
+  updatedAt              DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+}
+
+// ───────────────────────────── Prescriptions ─────────────────────────────────
+
+enum PrescriptionStatus {
+  ACTIVE
+  CANCELLED
+}
+
+/// A medication prescribed during a visit. Immutable once written: mistakes are cancelled, not edited.
+model Prescription {
+  id              String             @id @db.Uuid
+  tenantId        String             @db.Uuid
+  patientId       String             @db.Uuid
+  encounterId     String             @db.Uuid
+  prescribedById  String             @db.Uuid
+  /// Medicine name (international non-proprietary name or trade name) and strength, e.g. "Bisoprolol 5 mg".
+  drug            String
+  /// e.g. "1 tablet"
+  dose            String
+  /// e.g. "once daily in the morning"
+  frequency       String
+  /// e.g. "by mouth"
+  route           String?
+  durationDays    Int?
+  instructions    String?
+  /// The prescriber confirmed despite a recorded allergy that matches the medicine.
+  allergyOverride Boolean            @default(false)
+  status          PrescriptionStatus @default(ACTIVE)
+  cancelledAt     DateTime?
+  cancelledById   String?            @db.Uuid
+  createdAt       DateTime           @default(now())
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient   Patient   @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, patientId])
+  @@index([encounterId])
 }

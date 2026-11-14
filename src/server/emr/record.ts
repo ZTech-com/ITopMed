@@ -93,7 +93,7 @@ export async function getMedicalRecord(ctx: ClinicContext, patientId: string, me
 
 // ───────────── Encounters ─────────────
 
-async function loadEncounter(tx: Tx, encounterId: string) {
+export async function loadEncounter(tx: Tx, encounterId: string) {
   if (!uuid.safeParse(encounterId).success) throw new DomainError("errors.notFound");
   const e = await tx.encounter.findUnique({ where: { id: encounterId } });
   if (!e) throw new DomainError("errors.notFound");
@@ -139,6 +139,7 @@ export async function getEncounter(ctx: ClinicContext, encounterId: string, meta
           notes: { include: { amendments: true }, orderBy: { createdAt: "asc" } },
           diagnoses: { where: { status: { not: "ENTERED_IN_ERROR" } }, orderBy: { recordedAt: "asc" } },
           vitals: { orderBy: { measuredAt: "desc" } },
+          prescriptions: { orderBy: { createdAt: "asc" } },
           appointment: { select: { id: true, status: true, startsAt: true } },
         },
       }),
@@ -241,7 +242,7 @@ export const diagnosisSchema = z.object({
   kind: z.enum(["PRIMARY", "SECONDARY"]),
 });
 
-async function ownOpenEncounter(tx: Tx, encounterId: string, doctorProfileId: string | null) {
+export async function ownOpenEncounter(tx: Tx, encounterId: string, doctorProfileId: string | null) {
   const e = await loadEncounter(tx, encounterId);
   if (e.doctorProfileId !== doctorProfileId) throw new DomainError("errors.notYourPatient");
   if (e.status !== "OPEN") throw new DomainError("errors.encounterClosed");

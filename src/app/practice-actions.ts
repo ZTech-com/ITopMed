@@ -6,6 +6,7 @@ import type { FormState } from "@/lib/form-state";
 import { toFormState } from "@/server/actions-util";
 import { requireClinic } from "@/server/auth/guards";
 import { completeSetup, setClinicModule } from "@/server/clinic/practice";
+import { updateClinicPolicy } from "@/server/clinic/policy";
 import { requestMeta } from "@/server/http";
 
 export async function setupAction(_: FormState, fd: FormData): Promise<FormState> {
@@ -45,4 +46,16 @@ export async function moduleAction(_: FormState, fd: FormData): Promise<FormStat
   }
   revalidatePath(`/c/${slug}`, "layout");
   return { ok: true, message: enabled ? "clinic.modules.enabled" : "clinic.modules.disabled", nonce: Date.now() };
+}
+
+export async function policyAction(_: FormState, fd: FormData): Promise<FormState> {
+  const slug = String(fd.get("$slug") ?? "");
+  const ctx = await requireClinic(slug, "clinic.settings.manage");
+  try {
+    await updateClinicPolicy(ctx, { maxDiscountPercent: fd.get("maxDiscountPercent"), discountReasonRequired: fd.get("discountReasonRequired") === "on" }, await requestMeta());
+  } catch (e) {
+    return toFormState(e, fd);
+  }
+  revalidatePath(`/c/${slug}/settings`);
+  return { ok: true, nonce: Date.now() };
 }

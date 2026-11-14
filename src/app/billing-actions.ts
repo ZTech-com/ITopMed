@@ -32,7 +32,7 @@ export async function invoiceLineAction(_: FormState, fd: FormData): Promise<For
   const invoiceId = str(fd, "invoiceId");
   try {
     if (fd.get("op") === "remove") await removeInvoiceLine(ctx, str(fd, "lineId"), await requestMeta());
-    else await addInvoiceLine(ctx, invoiceId, { serviceId: str(fd, "serviceId"), quantity: str(fd, "quantity") || "1", discount: str(fd, "discount") }, await requestMeta());
+    else await addInvoiceLine(ctx, invoiceId, { serviceId: str(fd, "serviceId"), quantity: str(fd, "quantity") || "1", discount: str(fd, "discount"), discountReason: str(fd, "discountReason") }, await requestMeta());
   } catch (e) {
     return toFormState(e, fd);
   }

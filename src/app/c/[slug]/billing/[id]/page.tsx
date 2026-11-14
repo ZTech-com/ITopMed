@@ -9,6 +9,7 @@ import { Form, SelectField, SubmitButton, TextField } from "@/components/ui/form
 import { Alert, Badge, ButtonLink, Card, CardBody, CardHeader, DescriptionList, PageHeader, STATUS_TONE, buttonClass } from "@/components/ui/primitives";
 import { requireClinic } from "@/server/auth/guards";
 import { PAYMENT_METHODS, REFUND_REASONS, VOID_REASONS, getInvoice } from "@/server/billing/billing";
+import { DEFAULT_POLICY, getClinicPolicy } from "@/server/clinic/policy";
 import { listServices } from "@/server/clinic/resources";
 import { invoiceLineAction, issueInvoiceAction, paymentAction, refundAction, voidInvoiceAction } from "../../../../billing-actions";
 
@@ -24,6 +25,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ slug: 
   const payable = inv.status === "ISSUED" || inv.status === "PARTIALLY_PAID";
   const can = (p: Parameters<typeof ctx.permissions.has>[0]) => ctx.permissions.has(p);
   const services = draft && can("billing.invoice") ? (await listServices(ctx)).filter((x) => x.currency === inv.currency) : [];
+  const policy = draft && can("billing.invoice") ? await getClinicPolicy(ctx) : DEFAULT_POLICY;
   const outstanding = inv.totalMinor - inv.paidMinor;
   const hidden = (
     <>
@@ -78,6 +80,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ slug: 
                 {l.quantity} × {money(l.unitPriceMinor, inv.currency)}
                 {l.discountMinor > 0n ? ` · ${t("clinic.billing.discount")} −${money(l.discountMinor, inv.currency)}` : ""}
               </p>
+              {l.discountReason ? <p className="mt-0.5 text-[13px] text-text-3">{t("clinic.billing.discountReason")}: {l.discountReason}</p> : null}
               {draft && can("billing.invoice") ? (
                 <Form action={invoiceLineAction} className="mt-1 space-y-0">
                   {hidden}
@@ -104,6 +107,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ slug: 
                 <tr key={l.id}>
                   <td className="px-6 py-2.5">
                     <span className="font-medium">{l.description}</span>
+                    {l.discountReason ? <span className="block text-[12.5px] text-text-3">{t("clinic.billing.discountReason")}: {l.discountReason}</span> : null}
                     {draft && can("billing.invoice") ? (
                       <Form action={invoiceLineAction} className="inline-block space-y-0 pl-2 align-middle">
                         {hidden}
@@ -141,6 +145,15 @@ export default async function InvoicePage({ params }: { params: Promise<{ slug: 
                   <TextField name="discount" label={t("clinic.billing.discount")} hint={t("clinic.billing.discountHint")} inputMode="numeric" />
                   <button name="op" value="add" className={buttonClass("secondary", "lg")}>{t("clinic.billing.addLine")}</button>
                 </div>
+                <TextField
+                  name="discountReason"
+                  label={t("clinic.billing.discountReason")}
+                  hint={policy.discountReasonRequired ? t("clinic.billing.discountReasonRequiredHint") : t("clinic.billing.discountReasonHint")}
+                  optionalLabel={policy.discountReasonRequired ? undefined : t("common.optional")}
+                />
+                {policy.maxDiscountPercent < 100 && !ctx.roleKeys.includes("clinic_owner") ? (
+                  <p className="text-[13px] text-text-2">{t("clinic.billing.discountLimit", { percent: policy.maxDiscountPercent })}</p>
+                ) : null}
               </Form>
             ) : null}
             <div className="flex flex-wrap justify-end gap-2">

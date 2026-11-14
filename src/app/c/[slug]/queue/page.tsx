@@ -11,7 +11,7 @@ import { listDoctors } from "@/server/clinic/doctors";
 import { withAppContext } from "@/server/db";
 import { searchPatients } from "@/server/patients/patients";
 import { isLocalDate, todayIn } from "@/server/scheduling/time";
-import { queueAction, walkInAction } from "../../../care-actions";
+import { queueAction, rescheduleAction, walkInAction } from "../../../care-actions";
 
 const UUID = /^[0-9a-f-]{36}$/;
 
@@ -87,6 +87,25 @@ export default async function QueuePage({ params, searchParams }: { params: Prom
                         {a.startsAt <= new Date() ? <button name="op" value="no_show" className={buttonClass("ghost", "sm")}>{t("clinic.queue.noShow")}</button> : null}
                       </div>
                     </Form>
+                  ) : null}
+                  {canManage && a.status === "BOOKED" ? (
+                    <details className="w-full sm:w-auto">
+                      <summary className={buttonClass("ghost", "sm", "cursor-pointer list-none")}>{t("clinic.queue.reschedule")}</summary>
+                      <Form action={rescheduleAction} className="mt-2 space-y-3 rounded-[var(--radius-control)] border border-border bg-surface-2 p-3">
+                        {hidden(a.id)}
+                        <div className="grid grid-cols-2 gap-2">
+                          <label className="text-[12px] text-text-3">
+                            {t("clinic.queue.newDate")}
+                            <input type="date" name="date" defaultValue={date} min={today} required className="mt-1 block h-10 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-2 text-[14px] text-text" />
+                          </label>
+                          <label className="text-[12px] text-text-3">
+                            {t("clinic.queue.newTime")}
+                            <input type="time" name="time" step={300} required className="mt-1 block h-10 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-2 text-[14px] text-text" />
+                          </label>
+                        </div>
+                        <SubmitButton variant="secondary">{t("clinic.queue.rescheduleSubmit")}</SubmitButton>
+                      </Form>
+                    </details>
                   ) : null}
                   {canManage && (a.status === "BOOKED" || a.status === "CHECKED_IN") ? (
                     <Form action={queueAction} className="space-y-0">

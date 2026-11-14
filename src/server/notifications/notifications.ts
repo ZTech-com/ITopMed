@@ -108,6 +108,18 @@ export async function notifyAppointmentBooked(tx: Tx, tenantId: string, a: { id:
   }
 }
 
+/** The visit moved: the pending reminder follows the new time (or is skipped when too late now). */
+export async function notifyAppointmentRescheduled(tx: Tx, tenantId: string, a: { id: string; patientId: string; startsAt: Date }) {
+  const s = await settingsIn(tx, tenantId);
+  const remindAt = new Date(a.startsAt.getTime() - s.reminderHoursBefore * 3_600_000);
+  const inTime = remindAt.getTime() > Date.now() + 30 * 60_000;
+  await tx.notification.updateMany({
+    where: { tenantId, subjectId: a.id, kind: "APPOINTMENT_REMINDER", status: "PENDING" },
+    data: inTime ? { dueAt: remindAt } : { status: "SKIPPED", lastError: "rescheduled" },
+  });
+  if (inTime) await enqueue(tx, tenantId, { patientId: a.patientId, kind: "APPOINTMENT_REMINDER", subjectId: a.id, dueAt: remindAt });
+}
+
 export async function notifyAppointmentCancelled(tx: Tx, tenantId: string, a: { id: string; patientId: string; startsAt: Date }) {
   if (a.startsAt.getTime() < Date.now()) return;
   await enqueue(tx, tenantId, { patientId: a.patientId, kind: "APPOINTMENT_CANCELLED", subjectId: a.id, dueAt: new Date() });

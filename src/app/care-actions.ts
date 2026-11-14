@@ -5,10 +5,12 @@ import { redirect } from "next/navigation";
 import type { ConsentPurpose } from "@/generated/prisma/client";
 import type { FormState } from "@/lib/form-state";
 import { toFormState } from "@/server/actions-util";
-import { bookAppointment, cancelAppointment, checkIn, markNoShow, registerWalkIn } from "@/server/appointments/appointments";
+import { bookAppointment, cancelAppointment, checkIn, markNoShow, registerWalkIn, rescheduleAppointment } from "@/server/appointments/appointments";
+import { isLocalDate, localToInstant } from "@/server/scheduling/time";
 import { requireClinic } from "@/server/auth/guards";
 import { addAllergy, addDiagnosis, amendNote, finishEncounter, recordVitals, saveDraft, setClinicalStatus, signNote, startVisit } from "@/server/emr/record";
 import { requestMeta } from "@/server/http";
+import { addPrescription, cancelPrescription } from "@/server/emr/prescriptions";
 import { cookies } from "next/headers";
 import { BREAK_GLASS_REASONS } from "@/server/emr/access";
 import { CONSENT_METHODS, CONSENT_PURPOSES, recordConsent, registerPatient, updatePatient, withdrawConsent } from "@/server/patients/patients";
@@ -223,4 +225,56 @@ export async function breakGlassAction(fd: FormData) {
   if (!/^[0-9a-f-]{36}$/.test(patientId) || !(BREAK_GLASS_REASONS as readonly string[]).includes(reason)) redirect(`/c/${slug}/patients`);
   (await cookies()).set(`itm_bg_${patientId}`, reason, { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: `/c/${slug}/patients/${patientId}`, maxAge: 600 });
   redirect(`/c/${slug}/patients/${patientId}/record`);
+}
+
+export async function prescriptionAction(_: FormState, fd: FormData): Promise<FormState> {
+  const { slug, ctx } = await clinicFrom(fd);
+  const encounterId = str(fd, "encounterId");
+  try {
+    const r = await addPrescription(
+      ctx,
+      encounterId,
+      {
+        drug: str(fd, "drug"),
+        dose: str(fd, "dose"),
+        frequency: str(fd, "frequency"),
+        route: str(fd, "route"),
+        durationDays: str(fd, "durationDays"),
+        instructions: str(fd, "instructions"),
+        allergyOverride: fd.get("allergyOverride") === "on",
+      },
+      await requestMeta(),
+    );
+    revalidatePath(`/c/${slug}/encounters/${encounterId}`);
+    return ok(r.allergyOverride ? "clinic.rx.addedDespiteAllergy" : "clinic.rx.added");
+  } catch (e) {
+    return toFormState(e, fd);
+  }
+}
+
+export async function cancelPrescriptionAction(_: FormState, fd: FormData): Promise<FormState> {
+  const { slug, ctx } = await clinicFrom(fd);
+  try {
+    await cancelPrescription(ctx, str(fd, "prescriptionId"), await requestMeta());
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath(`/c/${slug}/encounters/${str(fd, "encounterId")}`);
+  return ok("clinic.rx.cancelled");
+}
+
+export async function rescheduleAction(_: FormState, fd: FormData): Promise<FormState> {
+  const { slug, ctx } = await clinicFrom(fd);
+  const date = str(fd, "date");
+  const time = /^(\d{2}):(\d{2})$/.exec(str(fd, "time"));
+  if (!isLocalDate(date) || !time) return { message: "validation.date", nonce: Date.now() };
+  const startsAt = localToInstant(date, Number(time[1]) * 60 + Number(time[2]), ctx.tenant.timezone).toISOString();
+  try {
+    await rescheduleAppointment(ctx, str(fd, "appointmentId"), { startsAt, doctorProfileId: str(fd, "doctorProfileId") }, await requestMeta());
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath(`/c/${slug}/queue`);
+  revalidatePath(`/c/${slug}/appointments`);
+  return ok("clinic.queue.rescheduled");
 }

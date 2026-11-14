@@ -8,7 +8,7 @@ import { requireClinic } from "@/server/auth/guards";
 import { NOTE_SECTIONS, amendmentHash, getEncounter, noteHash } from "@/server/emr/record";
 import { requestMeta } from "@/server/http";
 import { DomainError } from "@/server/tenancy/provisioning";
-import { allergyAction, amendAction, clinicalStatusAction, diagnosisAction, finishVisitAction, noteAction, vitalsAction } from "../../../../care-actions";
+import { allergyAction, amendAction, cancelPrescriptionAction, clinicalStatusAction, diagnosisAction, finishVisitAction, noteAction, prescriptionAction, vitalsAction } from "../../../../care-actions";
 import { labOrderAction } from "../../../../lab-actions";
 import { labReleaseAction } from "../../../../portal-actions";
 import { LabResultsList } from "@/components/lab";
@@ -31,6 +31,7 @@ export default async function EncounterPage({ params, searchParams }: { params: 
   const tz = ctx.tenant.timezone;
   const open = e.status === "OPEN";
   const canWrite = isOwn && open && ctx.permissions.has("emr.write");
+  const canPrescribe = isOwn && open && ctx.permissions.has("prescriptions.write");
   const authors = new Map([[ctx.principal.user.id, ctx.principal.user.fullName]]);
   const s = ctx.tenant.slug;
 
@@ -142,6 +143,74 @@ export default async function EncounterPage({ params, searchParams }: { params: 
           </CardBody>
         </Card>
       ) : null}
+      <Card id="prescriptions">
+        <CardHeader
+          title={t("clinic.rx.title")}
+          description={canPrescribe ? t("clinic.rx.hint") : undefined}
+          action={
+            e.prescriptions.some((p) => p.status === "ACTIVE") ? (
+              <ButtonLink href={`/c/${s}/encounters/${e.id}/prescription`} variant="secondary" size="sm">
+                {t("clinic.rx.print")}
+              </ButtonLink>
+            ) : null
+          }
+        />
+        <CardBody className="space-y-4">
+          {e.prescriptions.length === 0 ? <p className="text-[14px] text-text-2">{t("clinic.rx.none")}</p> : null}
+          <ul className="space-y-3">
+            {e.prescriptions.map((p) => (
+              <li key={p.id} className={p.status === "CANCELLED" ? "text-[14px] text-text-3 line-through" : "text-[14px]"}>
+                <p className="font-medium">
+                  {p.drug}
+                  {p.allergyOverride ? (
+                    <span className="ml-2 inline-block align-middle">
+                      <Badge tone="danger">{t("clinic.rx.allergyOverride")}</Badge>
+                    </span>
+                  ) : null}
+                  {p.status === "CANCELLED" ? <span className="ml-2 no-underline">({t("clinic.rx.cancelledLabel")})</span> : null}
+                </p>
+                <p className="text-text-2">
+                  {[p.dose, p.frequency, p.route, p.durationDays ? t("clinic.rx.days", { count: p.durationDays }) : null].filter(Boolean).join(" · ")}
+                </p>
+                {p.instructions ? <p className="text-text-2">{p.instructions}</p> : null}
+                {p.status === "ACTIVE" && p.prescribedById === ctx.principal.user.id && ctx.permissions.has("prescriptions.write") ? (
+                  <Form action={cancelPrescriptionAction} className="mt-1 space-y-0">
+                    <input type="hidden" name="$slug" value={s} />
+                    <input type="hidden" name="encounterId" value={e.id} />
+                    <input type="hidden" name="prescriptionId" value={p.id} />
+                    <button className="min-h-8 text-[13px] text-text-3 hover:text-danger">{t("clinic.rx.cancel")}</button>
+                  </Form>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          {canPrescribe ? (
+            <Form action={prescriptionAction} className="border-t border-border pt-4">
+              <input type="hidden" name="$slug" value={s} />
+              <input type="hidden" name="encounterId" value={e.id} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <TextField name="drug" label={t("clinic.rx.drug")} hint={t("clinic.rx.drugHint")} required />
+                <TextField name="dose" label={t("clinic.rx.dose")} placeholder={t("clinic.rx.dosePlaceholder")} required />
+                <TextField name="frequency" label={t("clinic.rx.frequency")} placeholder={t("clinic.rx.frequencyPlaceholder")} required />
+                <TextField name="route" label={t("clinic.rx.route")} placeholder={t("clinic.rx.routePlaceholder")} optionalLabel={t("common.optional")} />
+                <TextField name="durationDays" label={t("clinic.rx.duration")} inputMode="numeric" optionalLabel={t("common.optional")} />
+              </div>
+              <TextAreaField name="instructions" label={t("clinic.rx.instructions")} rows={2} optionalLabel={t("common.optional")} />
+              {allergies.length > 0 ? (
+                <div className="space-y-2 rounded-[var(--radius-control)] border border-border bg-sunken p-3 text-[14px]">
+                  <p>{t("clinic.rx.allergyCheck", { list: allergies.map((a) => a.substance).join(", ") })}</p>
+                  <label className="flex items-start gap-2">
+                    <input type="checkbox" name="allergyOverride" className="mt-0.5 size-4 accent-[var(--accent)]" />
+                    <span>{t("clinic.rx.allergyConfirm")}</span>
+                  </label>
+                </div>
+              ) : null}
+              <SubmitButton variant="secondary">{t("clinic.rx.add")}</SubmitButton>
+            </Form>
+          ) : null}
+        </CardBody>
+      </Card>
+
       <Card>
         <CardHeader title={t("clinic.labOrder.title")} />
         <CardBody className="space-y-4">
