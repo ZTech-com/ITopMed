@@ -21,6 +21,8 @@ const files = walk(ROOT);
 const PUBLIC_PAGES = new Set([
   "page.tsx",
   "(public)/forgot-password/page.tsx",
+  // Local installation only (LOCAL_MODE=1): network address + public CA certificate for new devices.
+  "(public)/connect/page.tsx",
   "(public)/reset-password/[token]/page.tsx",
   // Invited ITop Med employee has no account yet; the single-use token is the credential.
   "admin/(auth)/invite/[token]/page.tsx",
@@ -73,7 +75,8 @@ describe("authorization sweep", () => {
 
   it("every route handler authorizes", () => {
     const routes = files.filter((f) => f.endsWith(`${path.sep}route.ts`)).map(rel);
-    const PUBLIC_ROUTES = new Set(["api/health/route.ts"]);
+    // Local installation only (LOCAL_MODE=1): the PUBLIC half of the local CA, so devices can trust HTTPS.
+    const PUBLIC_ROUTES = new Set(["api/health/route.ts", "(public)/connect/ca.crt/route.ts", "(public)/connect/ios/route.ts"]);
     const missing = routes.filter((r) => !PUBLIC_ROUTES.has(r) && !GUARDS.test(fs.readFileSync(path.join(ROOT, r), "utf8")));
     expect(missing).toEqual([]);
   });

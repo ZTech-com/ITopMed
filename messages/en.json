@@ -2207,5 +2207,40 @@
       "prescriptions": "active prescriptions",
       "today": "today's date"
     }
+  },
+  "connect": {
+    "title": "Connect this device",
+    "desktopTitle": "Connect phones and tablets",
+    "subtitle": "Open ITop Med on a phone, tablet or another computer",
+    "qrAlt": "QR code for the connect page",
+    "scanHint": "Scan with the phone's camera. The phone must be on the same Wi-Fi network as this computer.",
+    "orType": "Or type in the phone's browser:",
+    "noNetwork": "This computer is not connected to Wi-Fi or a network. Connect it and reload the page.",
+    "secureOk": "This device is connected securely.",
+    "open": "Open ITop Med",
+    "step1": "Download the security certificate",
+    "download": "Download certificate",
+    "step2": "Trust the certificate",
+    "step3": "Open ITop Med at the secure address",
+    "step4": "Install it as an app",
+    "trust": {
+      "android": "Settings → Security → Encryption & credentials → Install a certificate → CA certificate → choose the downloaded file.",
+      "ios": "Settings → “Profile Downloaded” → Install. Then Settings → General → About → Certificate Trust Settings → turn on “ITop Med Local CA”.",
+      "desktop": "Windows: open the file → Install Certificate → Current User → “Trusted Root Certification Authorities” → Finish. macOS: open the file → Keychain → “Always Trust”. Then restart the browser."
+    },
+    "install": {
+      "android": "Chrome menu (⋮) → “Install app” or “Add to Home screen”.",
+      "ios": "In Safari: Share → “Add to Home Screen”.",
+      "desktop": "The install icon in the address bar, or the browser menu → “Install app”."
+    },
+    "platform": {
+      "android": "Android",
+      "ios": "iPhone / iPad",
+      "desktop": "Windows / macOS"
+    },
+    "otherDevices": "Other device types",
+    "fingerprint": "Certificate fingerprint (SHA-256) — compare it with the one shown on the device:",
+    "why": "The certificate is only for the ITop Med server on this clinic's network and is installed once per device. After that, data travels encrypted.",
+    "link": "Connect a phone or tablet"
   }
 }

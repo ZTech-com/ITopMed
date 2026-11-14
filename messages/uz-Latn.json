@@ -2207,5 +2207,40 @@
       "prescriptions": "faol retseptlar",
       "today": "bugungi sana"
     }
+  },
+  "connect": {
+    "title": "Qurilmani ulash",
+    "desktopTitle": "Telefon va planshetlarni ulash",
+    "subtitle": "Telefon, planshet yoki boshqa kompyuterda ITop Med'ni ochish",
+    "qrAlt": "Ulanish sahifasi uchun QR kod",
+    "scanHint": "Telefon kamerasi bilan skanerlang. Telefon shu kompyuter bilan bitta Wi-Fi tarmog'ida bo'lishi kerak.",
+    "orType": "Yoki telefon brauzerida yozing:",
+    "noNetwork": "Kompyuter hech qaysi Wi-Fi yoki tarmoqqa ulanmagan. Tarmoqqa ulang va sahifani yangilang.",
+    "secureOk": "Bu qurilma xavfsiz ulangan.",
+    "open": "ITop Med'ni ochish",
+    "step1": "Xavfsizlik sertifikatini yuklab oling",
+    "download": "Sertifikatni yuklab olish",
+    "step2": "Sertifikatga ishonch bildiring",
+    "step3": "ITop Med'ni xavfsiz manzilda oching",
+    "step4": "Ilova sifatida o'rnating",
+    "trust": {
+      "android": "Sozlamalar → Xavfsizlik → Shifrlash va hisob ma'lumotlari → Sertifikat o'rnatish → CA sertifikati → yuklab olingan faylni tanlang.",
+      "ios": "Sozlamalar → «Profil yuklandi» → O'rnatish. Keyin Sozlamalar → Asosiy → Ma'lumot → Sertifikatlarga ishonch sozlamalari → «ITop Med Local CA» ni yoqing.",
+      "desktop": "Windows: faylni oching → Sertifikatni o'rnatish → Joriy foydalanuvchi → «Ishonchli ildiz sertifikat markazlari» → Tayyor. macOS: faylni oching → Keychain → «Doim ishonish». Keyin brauzerni qayta oching."
+    },
+    "install": {
+      "android": "Chrome menyusi (⋮) → «Ilovani o'rnatish» yoki «Bosh ekranga qo'shish».",
+      "ios": "Safari'da Ulashish tugmasi → «Bosh ekranga qo'shish».",
+      "desktop": "Manzil satridagi o'rnatish belgisi yoki brauzer menyusi → «Ilovani o'rnatish»."
+    },
+    "platform": {
+      "android": "Android",
+      "ios": "iPhone / iPad",
+      "desktop": "Windows / macOS"
+    },
+    "otherDevices": "Boshqa qurilma turlari",
+    "fingerprint": "Sertifikat barmoq izi (SHA-256) — qurilmadagisi bilan solishtiring:",
+    "why": "Sertifikat faqat shu klinika tarmog'idagi ITop Med server uchun va har bir qurilmaga bir marta o'rnatiladi. Shundan keyin ma'lumotlar shifrlangan holda uzatiladi.",
+    "link": "Telefon yoki planshetni ulash"
   }
 }

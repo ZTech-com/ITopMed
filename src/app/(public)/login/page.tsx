@@ -31,6 +31,13 @@ export default async function ClinicLoginPage({ searchParams }: { searchParams: 
             {t("auth.forgot")}
           </Link>
         </p>
+        {process.env.LOCAL_MODE === "1" ? (
+          <p className="text-center text-[13px]">
+            <Link href="/connect" className="text-accent hover:underline">
+              {t("connect.link")}
+            </Link>
+          </p>
+        ) : null}
       </Form>
     </AuthLayout>
   );

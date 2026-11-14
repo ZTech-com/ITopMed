@@ -163,7 +163,7 @@ async function main() {
   };
 
   // 1. Public screens (signed out).
-  if (!ONLY) await audit(await fresh(), ["/", "/login", "/admin/login", "/forgot-password", `/p/${SLUG}/login`, `/p/${SLUG}/activate`]);
+  if (!ONLY) await audit(await fresh(), ["/", "/login", "/connect", "/admin/login", "/forgot-password", `/p/${SLUG}/login`, `/p/${SLUG}/activate`]);
 
   // 2. Staff: platform console + clinic workspace.
   const staff = await fresh();

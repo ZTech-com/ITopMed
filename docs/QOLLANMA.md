@@ -98,61 +98,57 @@ Bir marta, o'rnatishdan keyin:
 npm run app:shortcut
 ```
 Ish stolida ikkita yorliq paydo bo'ladi:
-- **ITop Med**: ikki marta bosing. Server orqa fonda o'zi ishga tushadi (baza, tezkor versiya, bildirishnomalar) va ITop Med alohida oynada, manzil satrisiz, oddiy dastur kabi ochiladi. Birinchi marta va kod yangilangandan keyin 1–3 daqiqa kutasiz, keyingi safar 20–30 soniya. Server allaqachon ishlayotgan bo'lsa, oyna darhol ochiladi.
-- **ITop Med - to'xtatish**: serverni to'liq o'chiradi.
+- **ITop Med**: ikki marta bosing. Server orqa fonda o'zi ishga tushadi (baza, tezkor versiya, bildirishnomalar) va ITop Med alohida oynada, oddiy dastur kabi ochiladi. Birinchi marta va kod yangilangandan keyin 1–3 daqiqa, keyingi safar ~10–15 soniya. Server allaqachon ishlayotgan bo'lsa, oyna darhol ochiladi.
+- **ITop Med - to'xtatish**: serverni to'g'ri (bazani buzmasdan) to'liq o'chiradi.
 
-Bu kompyuterda sertifikat kerak emas: oyna `http://127.0.0.1:3000` manzilini ochadi, brauzer uni xavfsiz manzil deb hisoblaydi. Oynaning menyusidagi **"Ilovani o'rnatish"** orqali ITop Med'ni Start menyusiga ham qo'shishingiz mumkin.
+Bu kompyuterda sertifikat kerak emas: oyna `http://127.0.0.1:3000` manzilini ochadi. Oynaning menyusidagi **"Ilovani o'rnatish"** orqali ITop Med'ni Start menyusiga ham qo'shishingiz mumkin.
 
-Terminal orqali ham ishlaydi: `npm run app` (ochish) va `npm run app:stop` (to'xtatish). Server jurnali: `.data/logs/local.log`.
+**Server o'zini o'zi tiklaydi.** Ma'lumotlar bazasi, ilova yoki bildirishnomalar xizmati to'xtab qolsa (xato, elektr uzilishi, jarayon o'chirilgani), server ularni bir necha soniyada qayta ishga tushiradi; ilova javob bermay qolsa ham. Oraliqda foydalanuvchilar xato emas, "ITop Med ishga tushmoqda…" sahifasini ko'radi. Terminal oynasini yopish serverni to'xtatmaydi.
 
-Kompyuter yoqilganda avtomatik ishga tushishi uchun: `Win + R` → `shell:startup` → ochilgan papkaga "ITop Med" yorlig'ining nusxasini qo'ying.
+| Buyruq | Nima qiladi |
+|---|---|
+| `npm run app` | Serverni ishga tushiradi (kerak bo'lsa) va oynani ochadi |
+| `npm run app:stop` | Hammasini to'g'ri to'xtatadi |
+| `npm run app:status` | Ishlayaptimi va boshqa qurilmalar uchun manzillar |
+| `npm run app:doctor` | Hammasini tekshiradi, nima qilish kerakligini aytadi va telefon uchun **QR kod** chiqaradi |
+| `npm run app:firewall` | Windows Firewall'da tarmoq ruxsati (bir marta, administrator ruxsati so'raladi) |
+| `npm run app:autostart` | Kompyuterga kirganda server o'zi (oynasiz) ishga tushadi; o'chirish: `npm run app:autostart -- off` |
 
-## 4a. Klinikaning butun tarmog'ida, hamma qurilmada
+Server jurnali: `.data/logs/local.log` (5 MB dan oshsa avtomatik almashtiriladi).
 
-Yorliq (yoki `npm run app`) tarmoq uchun ham HTTPS manzilini ochadi. Terminalda natijani ko'rib ishga tushirish uchun:
+## 4a. Telefon, planshet va boshqa kompyuterlar (butun klinika tarmog'i)
+
+Bu kompyuter **server**: u yoniq va Wi-Fi/tarmoqqa ulangan bo'lishi kerak; telefonlar o'sha tarmoqda bo'lsin.
+
+**Bir marta (server kompyuterda):**
 ```bash
-npm run local
+npm run app:firewall
 ```
-Bu bitta buyruq:
-1. ma'lumotlar bazasini ishga tushiradi;
-2. yangi migratsiyalarni qo'llaydi;
-3. tezkor production versiyasini yig'adi (birinchi marta 1–2 daqiqa);
-4. bildirishnomalar xizmatini ishga tushiradi;
-5. tarmoq uchun **HTTPS** manzilini ochadi va ekranda ko'rsatadi, masalan:
-```
-On this computer:   https://localhost:3443
-Other devices:      https://192.168.0.80:3443
-```
+Windows "Ha/Yo'q" deb so'raydi — **Ha**. Bu faqat shu tarmoqdagi qurilmalarga ruxsat beradi (internetga ochilmaydi) va Windows avval qo'ygan Node.js bloklarini olib tashlaydi. Tekshirish: `npm run app:doctor` — hamma qatorda ✓ bo'lishi kerak.
 
-Kodni yangilaganingizdan keyin `npm run local -- --build` bilan qayta yig'ing. To'xtatish uchun Ctrl+C bosing.
+**Har bir telefon/planshet uchun (2 daqiqa):**
+1. Server kompyuterda ITop Med kirish sahifasidagi **"Telefon yoki planshetni ulash"** havolasini bosing (yoki `npm run app:doctor`) — QR kod chiqadi.
+2. Telefon kamerasi bilan QR kodni skanerlang. Yoki telefon brauzerida server IP manzilini yozing, masalan `192.168.0.80` — o'zi ulanish sahifasiga o'tadi.
+3. Ulanish sahifasi telefon turini o'zi aniqlaydi va qadamlarni ko'rsatadi: **sertifikatni yuklab olish** → **ishonch bildirish** → **ITop Med'ni ochish** → **ilova sifatida o'rnatish**.
 
-Bu kompyuter **server** vazifasini bajaradi: u yoniq va tarmoqqa ulangan bo'lishi kerak. Telefonlar va boshqa kompyuterlar o'sha Wi-Fi/tarmoqda bo'lishi kerak. Windows birinchi marta "Firewall" ruxsatini so'rasa, **Private network** uchun ruxsat bering.
+Sertifikat faqat shu klinika serveri uchun (`.data/certs/itopmed-local-ca.crt` — ochiq qism). Maxfiy kalit (`.key`) kompyuterdan hech qachon chiqmaydi, uni hech kimga bermang. Sahifadagi barmoq izini (SHA-256) server kompyuterdagi ulanish sahifasidagisi bilan solishtirsangiz, soxta sertifikat emasligiga ishonch hosil qilasiz.
 
-### 4.1. Sertifikatni har bir qurilmaga bir marta o'rnatish
-
-Tarmoqdagi manzil xavfsiz (HTTPS) bo'lishi uchun ITop Med shu kompyuterda o'zining sertifikat markazini yaratadi:
-`.data/certs/itopmed-local-ca.crt`. Bu fayl faqat **ochiq qism**. Maxfiy kalit (`.key`) kompyuterdan hech qachon chiqmasligi kerak, uni hech kimga bermang.
-
-Faylni qurilmaga Telegram (o'zingizga), USB yoki email orqali o'tkazing, keyin:
-
-- **Windows (server kompyuterning o'zi ham):** faylni ikki marta bosing → *Install Certificate* → *Current User* → *Place all certificates in the following store* → **Trusted Root Certification Authorities** → *Finish*. Brauzerni qayta oching.
+Qo'lda o'rnatish (agar kerak bo'lsa):
 - **Android:** *Sozlamalar → Xavfsizlik → Shifrlash va hisob ma'lumotlari → Sertifikat o'rnatish → CA sertifikati* → faylni tanlang.
-- **iPhone/iPad:** faylni oching → *Sozlamalar → Profil yuklandi → O'rnatish*. Keyin **majburiy:** *Sozlamalar → Asosiy → Ma'lumot → Sertifikatlarga ishonch sozlamalari* → "ITop Med Local CA" ni yoqing.
-- **macOS:** faylni oching → Keychain → *Always Trust*.
+- **iPhone/iPad:** profilni o'rnating, keyin **majburiy:** *Sozlamalar → Asosiy → Ma'lumot → Sertifikatlarga ishonch sozlamalari* → "ITop Med Local CA" ni yoqing.
+- **Windows:** faylni oching → *Install Certificate* → *Current User* → **Trusted Root Certification Authorities** → *Finish*. **macOS:** Keychain → *Always Trust*.
 
-### 4.2. Ilova sifatida o'rnatish (telefon, planshet, kompyuter)
-Manzilni oching (`https://192.168.0.80:3443` kabi), keyin:
-- **Android / Chrome / Edge:** menyu → **"Ilovani o'rnatish"** yoki "Bosh ekranga qo'shish";
-- **iPhone (Safari):** Ulashish tugmasi → **"Bosh ekranga qo'shish"**.
-
-Ilova alohida oynada, belgisi bilan ochiladi. Internet bo'lmasa, oflayn sahifani ko'rsatadi.
+Ilova alohida oynada, belgisi bilan ochiladi. Server bilan aloqa bo'lmasa, oflayn sahifani ko'rsatadi.
 
 ### 4.3. Email
 SMTP sozlanmagan bo'lsa, xatlar (taklif havolalari, parol tiklash) server kompyuterdagi **`.dev-mailbox`** papkasiga fayl bo'lib tushadi. Faylni brauzerda ochib, havolani kerakli odamga yuborasiz.
-Haqiqiy email uchun `.env` ga `SMTP_URL=smtps://login:parol@smtp.server.uz:465` qo'shing, `npm run local` o'zi SMTP ga o'tadi.
+Haqiqiy email uchun `.env` ga `SMTP_URL=smtps://login:parol@smtp.server.uz:465` qo'shing va `npm run app:stop`, `npm run app` qiling.
 
-### 4.4. IP manzil o'zgarsa
-Sertifikat yangi IP uchun avtomatik qayta chiqariladi. Sertifikat markazi o'zgarmaydi, shuning uchun qurilmalarga qayta o'rnatish shart emas. Doimiy bo'lishi uchun routerda server kompyuterga **doimiy IP** (DHCP reservation) bering.
+### 4.4. IP manzil o'zgarsa yoki Wi-Fi uzilsa
+Server buni o'zi sezadi (10–20 soniyada) va yangi IP uchun sertifikatni ishlayotgan holda yangilaydi. Sertifikat markazi o'zgarmaydi, shuning uchun qurilmalarga qayta o'rnatish shart emas — faqat yangi manzilni oching (QR kod yangisini ko'rsatadi). Manzil o'zgarmasligi uchun routerda server kompyuterga **doimiy IP** (DHCP reservation) bering.
+
+### 4.5. Terminalda ko'rib ishga tushirish
+`npm run local` — xuddi shu server, lekin chiqishi ekranda (Ctrl+C bilan to'xtaydi). Kodni yangilagach majburan qayta yig'ish: `npm run local -- --build`.
 
 > **Ishlab chiqish rejimi** (dasturchilar uchun, faqat shu kompyuterda): `npm run db:start` va `npm run dev` → http://localhost:3000.
 
@@ -288,8 +284,9 @@ Migratsiyalar `npm run local` ichida avtomatik qo'llanadi. Yangilashdan oldin `n
 
 | Belgi | Sabab va yechim |
 |---|---|
-| "Your connection is not private" / sertifikat xatosi | Shu qurilmaga sertifikat o'rnatilmagan (4.1) |
-| Telefonda sahifa ochilmaydi | Telefon boshqa Wi-Fi'da; server kompyuter o'chiq; Firewall Private network ruxsati yo'q |
+| "Your connection is not private" / sertifikat xatosi | Shu qurilmaga sertifikat o'rnatilmagan: telefonda server IP manzilini yozing (masalan `192.168.0.80`) va ulanish sahifasidagi qadamlarni bajaring (4a) |
+| Telefonda sahifa ochilmaydi | `npm run app:doctor` ni ishga tushiring — u sababini aytadi. Odatda: telefon boshqa Wi-Fi'da; server o'chiq; Firewall ruxsati yo'q (`npm run app:firewall`); mehmon Wi-Fi qurilmalarni bir-biridan ajratadi (asosiy Wi-Fi'ga ulaning) |
+| ITop Med oynasi ochilmaydi yoki "ishga tushmadi" | `npm run app:doctor`; xato matni va jurnal: `.data/logs/local.log`. `npm run app:stop`, keyin `npm run app` |
 | "Too many attempts" | 5–15 daqiqa kuting (xavfsizlik chegarasi) |
 | Hisob bloklangan | 5 marta noto'g'ri parol: 15 daqiqa kuting yoki "Parolni unutdingizmi" (klinika xodimlari). Platforma xodimlari parolini Super administrator yoki `admin:create` buyrug'i bilan tiklaydi |
 | Telefon (Authenticator) yo'qolgan | Tiklash kodi bilan kiring; kod yo'q bo'lsa administrator MFA'ni qayta o'rnatadi |

@@ -26,7 +26,7 @@
     <li><span>3. Bo'limlar va rollar</span><span>4</span></li>
     <li><span>4. O'rnatish (bir marta)</span><span>5</span></li>
     <li><span>5. Kompyuterda ilova sifatida ishga tushirish</span><span>6</span></li>
-    <li><span>6. Klinikaning butun tarmog'ida, hamma qurilmada</span><span>7</span></li>
+    <li><span>6. Telefon, planshet va boshqa kompyuterlar</span><span>7</span></li>
     <li><span>7. Birinchi kun: platformadan klinikagacha</span><span>8</span></li>
     <li><span>8. Kundalik ish rollar bo'yicha</span><span>9</span></li>
     <li><span>9. Bemor yo'li: ro'yxatdan to'lovgacha</span><span>10</span></li>
@@ -104,32 +104,33 @@ npm run db:seed</pre></div></div>
 <section class="page">
   <h2>5. Kompyuterda ilova sifatida (eng oson yo'l)</h2>
   <div class="grid2">
-    <div class="card ok"><h3>"ITop Med" yorlig'i</h3><p>Ikki marta bosing: baza, tezkor versiya va bildirishnomalar orqa fonda ishga tushadi va ITop Med alohida oynada ochiladi. Birinchi marta va yangilanishdan keyin 1–3 daqiqa, keyingi safar 20–30 soniya.</p></div>
-    <div class="card"><h3>"ITop Med - to'xtatish"</h3><p>Serverni to'g'ri (bazani buzmasdan) o'chiradi. Terminaldan: <code>npm run app</code> va <code>npm run app:stop</code>. Jurnal: <code>.data/logs/local.log</code>.</p></div>
+    <div class="card ok"><h3>"ITop Med" yorlig'i</h3><p>Ikki marta bosing: baza, tezkor versiya va bildirishnomalar orqa fonda ishga tushadi va ITop Med alohida oynada ochiladi. Birinchi marta va yangilanishdan keyin 1–3 daqiqa, keyingi safar ~10–15 soniya.</p></div>
+    <div class="card"><h3>"ITop Med - to'xtatish"</h3><p>Hammasini to'g'ri (bazani buzmasdan) o'chiradi. Terminal oynasini yopish serverni to'xtatmaydi.</p></div>
   </div>
-  <p style="margin-top:4mm">Kompyuter yoqilganda avtomatik ochilishi uchun: <code>Win + R</code> → <code>shell:startup</code> → shu papkaga "ITop Med" yorlig'ining nusxasini qo'ying.</p>
-
+  <div class="card accent" style="margin-top:4mm"><h3>Server o'zini o'zi tiklaydi</h3><p>Ma'lumotlar bazasi, ilova yoki bildirishnomalar xizmati to'xtab qolsa (xato, elektr uzilishi), server ularni bir necha soniyada qayta ishga tushiradi; ilova javob bermay qolsa ham. Oraliqda xato emas, "ITop Med ishga tushmoqda…" sahifasi ko'rinadi. Wi-Fi yoki IP o'zgarsa, sertifikat o'zi yangilanadi.</p></div>
+  <table>
+    <tr><th style="width:36%">Buyruq</th><th>Nima qiladi</th></tr>
+    <tr><td><code>npm run app</code></td><td>Serverni ishga tushiradi (kerak bo'lsa) va oynani ochadi</td></tr>
+    <tr><td><code>npm run app:stop</code></td><td>Hammasini to'g'ri to'xtatadi</td></tr>
+    <tr><td><code>npm run app:status</code></td><td>Ishlayaptimi va boshqa qurilmalar uchun manzillar</td></tr>
+    <tr><td><code>npm run app:doctor</code></td><td>Hammasini tekshiradi, nimani tuzatish kerakligini aytadi va telefon uchun QR kod chiqaradi</td></tr>
+    <tr><td><code>npm run app:firewall</code></td><td>Windows Firewall'da tarmoq ruxsati (bir marta, administrator ruxsati so'raladi)</td></tr>
+    <tr><td><code>npm run app:autostart</code></td><td>Kompyuterga kirganda server o'zi (oynasiz) ishga tushadi; o'chirish: <code>-- off</code></td></tr>
+  </table>
+  <p class="small muted">Jurnal: <code>.data/logs/local.log</code> (5 MB dan oshsa almashtiriladi).</p>
 </section>
 
 <section class="page">
-  <h2>6. Klinikaning butun tarmog'ida, hamma qurilmada</h2>
-  <p>Ilova ishga tushganda tarmoq uchun HTTPS manzili ham ochiladi, masalan:</p>
-  <pre>Shu kompyuterda:     https://localhost:3443
-Boshqa qurilmalar:   https://192.168.0.80:3443</pre>
-  <p>Bu kompyuter <strong>server</strong>: u yoniq va tarmoqqa ulangan bo'lishi kerak; telefonlar o'sha Wi-Fi'da bo'lsin. Windows "Firewall" so'rasa — <strong>Private network</strong> uchun ruxsat bering. Routerda server kompyuterga doimiy IP (DHCP reservation) bering.</p>
-  <h3>6.1. Sertifikatni har bir qurilmaga bir marta o'rnatish</h3>
-  <p>Fayl: <code>.data/certs/itopmed-local-ca.crt</code> (faqat ochiq qism; <code>.key</code> faylini hech kimga bermang). Telegram, USB yoki email orqali qurilmaga o'tkazing:</p>
-  <table>
-    <tr><th style="width:22%">Qurilma</th><th>Qadamlar</th></tr>
-    <tr><td>Windows</td><td>Faylni ikki marta bosing → Install Certificate → Current User → Trusted Root Certification Authorities → Finish → brauzerni qayta oching</td></tr>
-    <tr><td>Android</td><td>Sozlamalar → Xavfsizlik → Shifrlash va hisob ma'lumotlari → Sertifikat o'rnatish → CA sertifikati</td></tr>
-    <tr><td>iPhone / iPad</td><td>Faylni oching → Sozlamalar → Profil yuklandi → O'rnatish → <strong>keyin</strong> Asosiy → Ma'lumot → Sertifikatlarga ishonch → "ITop Med Local CA" ni yoqing</td></tr>
-    <tr><td>macOS</td><td>Faylni oching → Keychain → Always Trust</td></tr>
-  </table>
-  <h3>6.2. Telefonga ilova sifatida o'rnatish</h3>
-  <p>Manzilni oching → Android/Chrome/Edge: menyu → <strong>"Ilovani o'rnatish"</strong>; iPhone (Safari): Ulashish → <strong>"Bosh ekranga qo'shish"</strong>.</p>
-  <h3>6.3. Email</h3>
-  <p>SMTP sozlanmagan bo'lsa xatlar (taklif, parol tiklash) <code>.dev-mailbox</code> papkasiga fayl bo'lib tushadi — ochib havolani kerakli odamga yuborasiz. Haqiqiy email uchun <code>.env</code> ga <code>SMTP_URL=smtps://login:parol@smtp.server.uz:465</code> qo'shing.</p>
+  <h2>6. Telefon, planshet va boshqa kompyuterlar</h2>
+  <p>Bu kompyuter <strong>server</strong>: yoniq va Wi-Fi'ga ulangan bo'lsin; telefonlar o'sha Wi-Fi'da bo'lsin. Routerda server kompyuterga doimiy IP (DHCP reservation) bering.</p>
+  <div class="step"><div class="n">1</div><div><strong>Bir marta, server kompyuterda:</strong> <code>npm run app:firewall</code> → Windows so'raganda <strong>Ha</strong>. Faqat shu tarmoqdagi qurilmalarga ruxsat beradi (internetga ochilmaydi). Keyin <code>npm run app:doctor</code> — hammasi ✓ bo'lsin.</div></div>
+  <div class="step"><div class="n">2</div><div>Kirish sahifasidagi <strong>"Telefon yoki planshetni ulash"</strong> → QR kod. Telefon kamerasi bilan skanerlang — yoki telefon brauzerida server IP manzilini yozing (masalan <code>192.168.0.80</code>).</div></div>
+  <div class="step"><div class="n">3</div><div>Ulanish sahifasi telefon turini o'zi aniqlaydi: <strong>sertifikatni yuklab olish → ishonch bildirish → ITop Med'ni ochish → ilova sifatida o'rnatish</strong>. Har bir qurilmaga bir marta, ~2 daqiqa.</div></div>
+  <div class="phones" style="margin-top:3mm">
+    <figure><img src="img/connect-qr.png" alt="" style="max-height:105mm"><figcaption>Server kompyuterda: QR kod</figcaption></figure>
+    <figure><img src="img/connect-phone.png" alt="" style="max-height:105mm"><figcaption>Telefonda: qadamlar</figcaption></figure>
+  </div>
+  <p class="small">Sertifikat faqat shu klinika serveri uchun (ochiq qism). Maxfiy kalit (<code>.data/certs/*.key</code>) kompyuterdan chiqmaydi. Barmoq izini (SHA-256) ikki ekranda solishtirsangiz, soxta emasligiga ishonch hosil qilasiz. Email: SMTP bo'lmasa xatlar <code>.dev-mailbox</code> papkasiga tushadi; haqiqiy email uchun <code>.env</code> ga <code>SMTP_URL</code> qo'shing.</p>
 </section>
 
 <section class="page">
@@ -328,8 +329,8 @@ npm run app</pre><p>Ilova kod yangilanganini o'zi sezadi va qayta yig'adi, migra
   <h2 style="margin-top:8mm">16. Muammolar va yechimlar</h2>
   <table>
     <tr><th style="width:36%">Belgi</th><th>Sabab va yechim</th></tr>
-    <tr><td>"Your connection is not private"</td><td>Shu qurilmaga sertifikat o'rnatilmagan (6.1)</td></tr>
-    <tr><td>Telefonda sahifa ochilmaydi</td><td>Boshqa Wi-Fi; server o'chiq; Firewall Private network ruxsati yo'q</td></tr>
+    <tr><td>"Your connection is not private"</td><td>Sertifikat o'rnatilmagan: telefonda server IP manzilini yozing va ulanish sahifasi qadamlarini bajaring (6-bo'lim)</td></tr>
+    <tr><td>Telefonda sahifa ochilmaydi</td><td><code>npm run app:doctor</code> sababini aytadi: boshqa Wi-Fi, server o'chiq, Firewall (<code>npm run app:firewall</code>) yoki mehmon Wi-Fi qurilmalarni ajratadi</td></tr>
     <tr><td>"Too many attempts" / hisob bloklangan</td><td>5–15 daqiqa kuting yoki "Parolni unutdingizmi"</td></tr>
     <tr><td>Authenticator yo'qolgan</td><td>Tiklash kodi bilan kiring; yo'q bo'lsa administrator MFA'ni qayta o'rnatadi</td></tr>
     <tr><td>Taklif xati kelmadi</td><td>SMTP yo'q — <code>.dev-mailbox</code> papkasini oching</td></tr>
@@ -337,7 +338,7 @@ npm run app</pre><p>Ilova kod yangilanganini o'zi sezadi va qayta yig'adi, migra
     <tr><td>Shifokorga qabul yozib bo'lmaydi</td><td>Jadval yo'q, ta'tilda yoki vaqt band</td></tr>
     <tr><td>Chegirma rad etildi</td><td>Nazorat qoidalaridagi chegaradan oshgan yoki sabab yozilmagan</td></tr>
     <tr><td>Bemor onlayn yozila olmaydi</td><td>Shifokorda "Onlayn yozilish" yoqilmagan, jadval yo'q yoki bemor limitga yetgan</td></tr>
-    <tr><td>Ilova ochilmaydi</td><td>"ITop Med - to'xtatish" → qayta oching; jurnal: <code>.data/logs/local.log</code></td></tr>
+    <tr><td>Ilova ochilmaydi</td><td><code>npm run app:doctor</code>; "ITop Med - to'xtatish" → qayta oching; jurnal: <code>.data/logs/local.log</code></td></tr>
     <tr><td>"OpenSSL was not found"</td><td>Git for Windows'ni o'rnating</td></tr>
   </table>
 </section>
@@ -371,6 +372,7 @@ npm run app</pre><p>Ilova kod yangilanganini o'zi sezadi va qayta yig'adi, migra
   <table>
     <tr><th style="width:44%">Buyruq</th><th>Nima qiladi</th></tr>
     <tr><td><code>npm run app</code> · <code>npm run app:stop</code></td><td>Ilovani ochish · to'xtatish</td></tr>
+    <tr><td><code>npm run app:doctor</code> · <code>app:firewall</code> · <code>app:autostart</code></td><td>Tekshiruv va QR · tarmoq ruxsati · avtomatik ishga tushish</td></tr>
     <tr><td><code>npm run app:shortcut</code></td><td>Ish stoli yorliqlarini yaratish</td></tr>
     <tr><td><code>npm run local</code></td><td>Server rejimi terminalda (tarmoq manzillarini ko'rsatadi)</td></tr>
     <tr><td><code>npm run setup</code></td><td>Yangi <code>.env</code> (kalitlar) yaratish</td></tr>

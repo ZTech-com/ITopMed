@@ -8,7 +8,7 @@ import { pathToFileURL } from "node:url";
 import { chromium } from "playwright-core";
 
 const SRC = path.join(process.cwd(), "docs", "pdf-src");
-const OUT = path.join(process.cwd(), "docs", "pdf");
+const OUT = process.env.ITM_PDF_OUT ?? path.join(process.cwd(), "docs", "pdf");
 const DOCS = [
   { html: "sotuv.html", pdf: "ITopMed-sotuv.pdf", title: "ITop Med — Sotuv bo'limi uchun" },
   { html: "qollanma.html", pdf: "ITopMed-qollanma.pdf", title: "ITop Med — Egasi uchun qo'llanma" },
@@ -23,8 +23,16 @@ async function main() {
     await page.evaluate(() => Promise.all(Array.from(document.images).map((i) => (i.complete ? null : new Promise((r) => (i.onload = i.onerror = r))))));
     const broken = await page.evaluate(() => Array.from(document.images).filter((i) => !i.naturalWidth).map((i) => i.getAttribute("src")));
     if (broken.length) throw new Error(`${d.html}: missing images ${broken.join(", ")}`);
+    const target = path.join(OUT, d.pdf);
+    try {
+      fs.closeSync(fs.openSync(target, "a")); // fails if a PDF viewer keeps the file locked
+    } catch {
+      console.error(`  ${d.pdf}: the file is open in another program — close it and run again (skipped)`);
+      process.exitCode = 1;
+      continue;
+    }
     await page.pdf({
-      path: path.join(OUT, d.pdf),
+      path: target,
       format: "A4",
       printBackground: true,
       preferCSSPageSize: true,
