@@ -1,5 +1,5 @@
 import pg from "pg";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import config from "../next.config";
 import { proxy } from "@/proxy";
@@ -68,6 +68,21 @@ describe("security headers", () => {
     for (const d of ["default-src 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'"]) expect(csp).toContain(d);
     const other = proxy(new NextRequest("http://localhost:3000/login")).headers.get("Content-Security-Policy")!;
     expect(other.match(/nonce-([^']+)/)![1]).not.toBe(csp.match(/nonce-([^']+)/)![1]); // fresh nonce per request
+  });
+
+  it("production forces HTTPS (HSTS + upgrade-insecure-requests), except a single-computer LOCAL_MODE installation", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    try {
+      const prod = proxy(new NextRequest("https://itopmed.example/login"));
+      expect(prod.headers.get("Strict-Transport-Security")).toContain("max-age=63072000");
+      expect(prod.headers.get("Content-Security-Policy")).toContain("upgrade-insecure-requests");
+      vi.stubEnv("LOCAL_MODE", "1");
+      const local = proxy(new NextRequest("http://127.0.0.1:3000/login"));
+      expect(local.headers.get("Strict-Transport-Security")).toBeNull();
+      expect(local.headers.get("Content-Security-Policy")).not.toContain("upgrade-insecure-requests");
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("static headers: no sniffing, no framing, no referrer, locked-down features, and no caching of pages", async () => {

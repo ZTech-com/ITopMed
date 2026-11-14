@@ -9,9 +9,8 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "no-referrer" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()" },
-  ...(process.env.NODE_ENV === "production"
-    ? [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }]
-    : []),
+  // HSTS is added per request in src/proxy.ts (not here: these headers are fixed at build
+  // time, and a single-computer installation must not pin HTTPS on localhost).
 ];
 
 const config: NextConfig = {

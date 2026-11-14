@@ -26,7 +26,10 @@
     "backup": "tsx scripts/backup.ts",
     "backup:verify": "tsx scripts/restore-verify.ts",
     "local": "tsx scripts/local.ts",
-    "setup": "tsx scripts/setup.ts"
+    "setup": "tsx scripts/setup.ts",
+    "app": "tsx scripts/app.ts start",
+    "app:stop": "tsx scripts/app.ts stop",
+    "app:shortcut": "tsx scripts/app.ts shortcut"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",

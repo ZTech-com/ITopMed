@@ -14,11 +14,18 @@ npm run db:migrate && npm run db:seed
 npm run admin:create -- --email you@example.uz --name "Your Name" --role SUPER_ADMIN
 ```
 
+## Desktop app (Windows)
+```bash
+npm run app:shortcut   # "ITop Med" and "ITop Med - to'xtatish" shortcuts on the Desktop
+npm run app            # start in the background (if needed) and open the app window
+npm run app:stop
+```
+
 ## Run for the whole clinic network (phones, tablets, PCs; installable app)
 ```bash
 npm run local          # database + production build + worker + HTTPS on :3443
 ```
-Each device trusts `.data/certs/itopmed-local-ca.crt` once — see docs/QOLLANMA.md §4.
+Each device trusts `.data/certs/itopmed-local-ca.crt` once — see docs/QOLLANMA.md §4a.
 
 ## Development
 ```bash

@@ -86,6 +86,20 @@ function ensureCertificates(names: string[], ips: string[]) {
   return { key, crt, caCrt };
 }
 
+/** True when there is no production build, or the code changed since it was made (e.g. after `git pull`). */
+function buildIsStale(): boolean {
+  const stamp = path.join(ROOT, ".next", "BUILD_ID");
+  if (!fs.existsSync(stamp)) return true;
+  const built = fs.statSync(stamp).mtimeMs;
+  const newer = (p: string): boolean => {
+    if (!fs.existsSync(p)) return false;
+    const st = fs.statSync(p);
+    if (!st.isDirectory()) return st.mtimeMs > built;
+    return fs.readdirSync(p).some((n) => newer(path.join(p, n)));
+  };
+  return ["src", "messages", "public", "prisma/schema.prisma", "package.json", "next.config.ts"].some((p) => newer(path.join(ROOT, p)));
+}
+
 function portOpen(port: number): Promise<boolean> {
   return new Promise((resolve) => {
     const s = net.connect({ port, host: "127.0.0.1" }, () => (s.end(), resolve(true)));
@@ -134,7 +148,13 @@ async function shutdown(code = 0) {
 process.on("SIGINT", () => void shutdown(0));
 process.on("SIGTERM", () => void shutdown(0));
 
+/** Read by `npm run app:stop` (scripts/app.ts) to stop the whole process tree. */
+const PID_FILE = path.join(ROOT, ".data", "local.pid");
+
 async function main() {
+  fs.mkdirSync(path.dirname(PID_FILE), { recursive: true });
+  fs.writeFileSync(PID_FILE, String(process.pid));
+  process.on("exit", () => fs.rmSync(PID_FILE, { force: true }));
   const ips = lanAddresses();
   const host = os.hostname().toLowerCase();
   const { key, crt, caCrt } = ensureCertificates(["localhost", host], ["127.0.0.1", ...ips]);
@@ -159,7 +179,7 @@ async function main() {
   console.log("Applying database migrations…");
   execFileSync("npx", ["prisma", "migrate", "deploy"], { cwd: ROOT, stdio: "inherit", shell: isWin });
 
-  if (args.includes("--build") || !fs.existsSync(path.join(ROOT, ".next", "BUILD_ID"))) {
+  if (args.includes("--build") || buildIsStale()) {
     console.log("Building the production app (takes a minute)…");
     execFileSync("npx", ["next", "build"], { cwd: ROOT, stdio: "inherit", env, shell: isWin });
   }
@@ -187,7 +207,7 @@ async function main() {
   console.log(`
 ITop Med is running on this computer's network.
 
-  On this computer:   https://localhost:${PUBLIC_PORT}
+  On this computer:   http://127.0.0.1:${APP_PORT}   (or https://localhost:${PUBLIC_PORT})
 ${ips.map((ip) => `  Other devices:      https://${ip}:${PUBLIC_PORT}`).join("\n")}
   Platform console:   ${appUrl}/admin/login
   Clinic sign-in:     ${appUrl}/login

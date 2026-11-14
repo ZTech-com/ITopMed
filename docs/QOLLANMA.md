@@ -91,8 +91,25 @@ Shundan keyin `npm run db:start` oynasini yopishingiz mumkin, chunki `npm run lo
 
 ---
 
-## 4. Ishga tushirish: klinikaning butun tarmog'ida, hamma qurilmada
+## 4. Kompyuterda ilova sifatida (eng oson yo'l)
 
+Bir marta, o'rnatishdan keyin:
+```bash
+npm run app:shortcut
+```
+Ish stolida ikkita yorliq paydo bo'ladi:
+- **ITop Med**: ikki marta bosing. Server orqa fonda o'zi ishga tushadi (baza, tezkor versiya, bildirishnomalar) va ITop Med alohida oynada, manzil satrisiz, oddiy dastur kabi ochiladi. Birinchi marta va kod yangilangandan keyin 1–3 daqiqa kutasiz, keyingi safar 20–30 soniya. Server allaqachon ishlayotgan bo'lsa, oyna darhol ochiladi.
+- **ITop Med - to'xtatish**: serverni to'liq o'chiradi.
+
+Bu kompyuterda sertifikat kerak emas: oyna `http://127.0.0.1:3000` manzilini ochadi, brauzer uni xavfsiz manzil deb hisoblaydi. Oynaning menyusidagi **"Ilovani o'rnatish"** orqali ITop Med'ni Start menyusiga ham qo'shishingiz mumkin.
+
+Terminal orqali ham ishlaydi: `npm run app` (ochish) va `npm run app:stop` (to'xtatish). Server jurnali: `.data/logs/local.log`.
+
+Kompyuter yoqilganda avtomatik ishga tushishi uchun: `Win + R` → `shell:startup` → ochilgan papkaga "ITop Med" yorlig'ining nusxasini qo'ying.
+
+## 4a. Klinikaning butun tarmog'ida, hamma qurilmada
+
+Yorliq (yoki `npm run app`) tarmoq uchun ham HTTPS manzilini ochadi. Terminalda natijani ko'rib ishga tushirish uchun:
 ```bash
 npm run local
 ```
