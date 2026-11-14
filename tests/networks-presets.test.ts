@@ -66,7 +66,7 @@ describe("clinic created ready for its field", () => {
     expect(fresh.roleKeys).toEqual(expect.arrayContaining(["clinic_owner", "doctor", "receptionist", "cashier"]));
     const codes = (await listServices(fresh)).map((s) => s.code);
     expect(codes).toEqual(expect.arrayContaining(["CARD-CONSULT", "ECG", "CARD-ECHO", "CARD-HOLTER"]));
-    expect((await listTemplates(fresh)).length).toBe(5);
+    expect((await listTemplates(fresh)).length).toBe(6);
   });
 
   it("an email that already has an account keeps its own password (invitation instead)", async () => {

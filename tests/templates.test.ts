@@ -21,7 +21,7 @@ async function staff(o: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: s
 describe("clinic templates", () => {
   it("ready-made templates in the clinic language, own templates, permissions, removal", async () => {
     const a = await clinicWithOwner(await platformActor());
-    expect(await addStandardTemplates(a.ctx, META)).toBe(5);
+    expect(await addStandardTemplates(a.ctx, META)).toBe(6);
     expect(await addStandardTemplates(a.ctx, META)).toBe(0); // idempotent by name
     const all = await listTemplates(a.ctx);
     const summary = all.find((x) => x.name === "Qabul xulosasi")!; // clinic language uz-Latn
@@ -31,7 +31,7 @@ describe("clinic templates", () => {
 
     const doctor = await staff(a, ["doctor"]);
     await expect(saveTemplate(doctor.ctx, null, { kind: "DOCUMENT", name: "Mine", body: "x" }, META)).rejects.toThrow("errors.forbidden");
-    expect((await listTemplates(doctor.ctx)).length).toBe(5); // doctors can use them
+    expect((await listTemplates(doctor.ctx)).length).toBe(6); // doctors can use them
 
     const id = await saveTemplate(a.ctx, null, { kind: "DOCUMENT", name: "Synthetic certificate", body: "Hello {{patient.fullName}}" }, META);
     await expect(saveTemplate(a.ctx, null, { kind: "DOCUMENT", name: "Empty", body: "   " }, META)).rejects.toThrow();
@@ -43,6 +43,8 @@ describe("clinic templates", () => {
 
   it("placeholders are filled; unknown ones stay visible", () => {
     expect(renderDocument("{{patient.fullName}} · {{ today }} · {{nope}}", { "patient.fullName": "Sintetik Bemor", today: "14.11.2026" })).toBe("Sintetik Bemor · 14.11.2026 · {{nope}}");
+    // A line whose placeholders are all empty disappears; other lines stay.
+    expect(renderDocument("Tashxis: {{diagnoses.primary}}\nAsorati: {{diagnoses.complications}}\nTavsiya:", { "diagnoses.primary": "I10" })).toBe("Tashxis: I10\nTavsiya:");
     expect(parseNoteContent("not json")).toEqual({ complaints: "", history: "", examination: "", assessment: "", plan: "" });
   });
 

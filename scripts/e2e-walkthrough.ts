@@ -111,7 +111,7 @@ async function main() {
 
   await ok(page, "diagnosis (ICD-10)", async () => {
     await page.fill('input[name="icd10Code"]', "I10");
-    await page.fill('input[name="description"]', "Essential hypertension (synthetic)");
+    await page.fill('form:has(input[name="icd10Code"]) [name="description"]', "Essential hypertension (synthetic)");
     await page.locator('form:has(input[name="icd10Code"]) button[type="submit"]').click();
     await page.getByText("I10").first().waitFor();
   });

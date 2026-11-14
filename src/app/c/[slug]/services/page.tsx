@@ -2,12 +2,13 @@ import { Stethoscope } from "lucide-react";
 import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { ServiceFields } from "@/components/service-form";
-import { Form, SubmitButton } from "@/components/ui/form";
+import { Form, SubmitButton, TextAreaField } from "@/components/ui/form";
 import { Badge, Card, CardBody, CardHeader, EmptyState, PageHeader, Table, Td, Th } from "@/components/ui/primitives";
 import { minorToNumber, wrapCurrency } from "@/lib/money";
 import { requireClinic } from "@/server/auth/guards";
 import { listDepartments, listServices } from "@/server/clinic/resources";
 import { createServiceAction } from "../../../workspace-actions";
+import { priceListAction } from "../../../desk-actions";
 
 export default async function ServicesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -18,6 +19,20 @@ export default async function ServicesPage({ params }: { params: Promise<{ slug:
   return (
     <>
       <PageHeader title={t("clinic.services.title")} description={t("clinic.services.subtitle")} />
+      {canManage ? (
+        <Card className="mb-6">
+          <CardHeader title={t("clinic.services.priceListTitle")} description={t("clinic.services.priceListHint")} />
+          <CardBody>
+            <Form action={priceListAction}>
+              <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+              <TextAreaField name="text" label={t("clinic.services.priceListTitle")} rows={6} placeholder={t("clinic.services.priceListExample")} />
+              <div className="flex justify-end">
+                <SubmitButton>{t("clinic.services.priceListSubmit")}</SubmitButton>
+              </div>
+            </Form>
+          </CardBody>
+        </Card>
+      ) : null}
       <Card className="overflow-hidden">
         {services.length === 0 ? (
           <EmptyState icon={<Stethoscope className="size-6" />} title={t("clinic.services.empty")} description={t("clinic.services.emptyHint")} />

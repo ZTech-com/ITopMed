@@ -67,7 +67,8 @@
     "templates": "Shablonlar",
     "networks": "Tarmoqlar",
     "networkContext": "Tarmoq: {name}",
-    "superAdminContext": "SuperAdmin · bosh boshqaruv"
+    "superAdminContext": "SuperAdmin · bosh boshqaruv",
+    "desk": "Qabulxona"
   },
   "auth": {
     "adminTitle": "ITop Med boshqaruvi",
@@ -366,14 +367,28 @@
       "opsNoSchedule": "Ish vaqti belgilanmagan shifokorlar",
       "opsRooms": "Xonalar",
       "setupServices": "Xizmatlar va narxlarni qoʻshing",
-      "setupDoctors": "Shifokorlar profili va ish vaqtini sozlang"
+      "setupDoctors": "Shifokorlar profili va ish vaqtini sozlang",
+      "incomeTitle": "Tushum",
+      "incomeToday": "Bugun",
+      "incomeWeek": "7 kun",
+      "debtTotal": "Bemorlar qarzi",
+      "chartLabel": "Oxirgi 14 kun tushumi"
     },
     "settings": {
       "title": "Klinika sozlamalari",
       "subtitle": "Xodimlaringizga koʻrsatiladigan va hujjatlarda ishlatiladigan maʼlumotlar.",
       "general": "Umumiy",
       "regional": "Til va hudud",
-      "saved": "Sozlamalar saqlandi."
+      "saved": "Sozlamalar saqlandi.",
+      "letterheadTitle": "Hujjat blanki (sarlavha)",
+      "letterheadHint": "Chop etiladigan hujjatlar, chek va talonlarning yuqorisida chiqadi.",
+      "logo": "Logotip",
+      "logoHint": "PNG, JPG yoki WebP, 300 KB gacha.",
+      "removeLogo": "Logotipni olib tashlash",
+      "license": "Litsenziya / rekvizitlar qatori",
+      "licenseHint": "Masalan: SSV litsenziyasi № …, berilgan sana …",
+      "letterheadSave": "Saqlash",
+      "letterheadSaved": "Blank saqlandi."
     },
     "branches": {
       "title": "Filiallar",
@@ -497,7 +512,12 @@
       "colDoctors": "Shifokorlar",
       "minutes": "{count} daq",
       "back": "Barcha xizmatlar",
-      "priceNotSet": "Narx belgilanmagan"
+      "priceNotSet": "Narx belgilanmagan",
+      "priceListTitle": "Narxlar ro'yxatini tez kiritish",
+      "priceListHint": "Har qatorda bitta xizmat va narxi. Bor xizmatning narxi yangilanadi, yangisi qo'shiladi. Masalan:",
+      "priceListSubmit": "Saqlash",
+      "priceListDone": "Tayyor: {created} ta yangi xizmat, {updated} ta narx yangilandi{skipped, plural, =0 {} other {, # ta qator tushunilmadi}}.",
+      "priceListExample": "Kardiolog ko'ruvi — 100 000\nEXO — 120 ming\nEKG — 30 000"
     },
     "facilities": {
       "title": "Boʻlimlar va xonalar",
@@ -715,7 +735,8 @@
       "allergyAdded": "Allergiya qoʻshildi.",
       "markResolved": "Hal qilingan deb belgilash",
       "markError": "Xato kiritilgan",
-      "statusUpdated": "Yangilandi."
+      "statusUpdated": "Yangilandi.",
+      "icd10Optional": "Ixtiyoriy, masalan I10"
     },
     "record": {
       "title": "Tibbiy karta",
@@ -1200,6 +1221,74 @@
       "tokenHint": "Shifrlangan holda saqlanadi va qayta ko'rsatilmaydi. Tokeni bor odam botni boshqara oladi.",
       "connect": "Botni ulash",
       "notConnected": "Bot ulanmagan."
+    },
+    "desk": {
+      "title": "Qabulxona",
+      "subtitle": "Bemor, xizmatlar, to'lov, o'lchovlar va navbat raqami — bitta ekranda.",
+      "step1": "1. Bemor",
+      "searchHint": "Ism, telefon, karta raqami yoki tug'ilgan yil bo'yicha qidiring. Topilmasa — pastda yangi bemorni yozing.",
+      "newPatient": "1. Yangi bemor",
+      "birth": "Tug'ilgan yili yoki sanasi",
+      "birthHint": "Masalan 1947 yoki 12.03.1947",
+      "confirmNew": "Bu yangi bemor (o'xshash bemor bor bo'lsa ham)",
+      "otherPatient": "Boshqa bemor",
+      "hasDebt": "Qarzi: {amount}",
+      "step2": "2. Xizmatlar va to'lov",
+      "editPrices": "Narxlarni o'zgartirish",
+      "noPrices": "Narxi qo'yilgan xizmat yo'q. Avval «Xizmatlar va narxlar» bo'limida narx qo'ying.",
+      "unpriced": "{count, plural, one {# ta xizmatning narxi qo'yilmagan — u ro'yxatda ko'rinmaydi.} other {# ta xizmatning narxi qo'yilmagan — ular ro'yxatda ko'rinmaydi.}}",
+      "step3": "3. O'lchovlar",
+      "step3Hint": "Kerak bo'lsa: bo'y, vazn, qon bosimi, puls. Shifokor bemor kirmasdan oldin ko'radi.",
+      "height": "Bo'y (sm)",
+      "weight": "Vazn (kg)",
+      "systolic": "Bosim (yuqori)",
+      "diastolic": "Bosim (pastki)",
+      "pulse": "Puls",
+      "bp": "Bosim",
+      "step4": "4. Shifokor",
+      "doctor": "Shifokor",
+      "notToday": "bugun jadvalda yo'q",
+      "noDoctors": "Shifokor qo'shilmagan. «Shifokorlar va jadval» bo'limida shifokor profilini yarating.",
+      "note": "Izoh (shifokor uchun)",
+      "submit": "Navbatga qo'shish",
+      "today": "Bugungi navbat",
+      "emptyToday": "Bugun hali bemor yo'q",
+      "debtShort": "Qarz {amount}",
+      "number": "№",
+      "toDoctor": "Shifokor: {name}",
+      "printTicket": "Navbat talonini chop etish",
+      "printReceipt": "Chekni chop etish",
+      "next": "Keyingi bemor",
+      "duplicateFound": "Bunday bemor allaqachon bor bo'lishi mumkin. Yuqoridagi qidiruvdan uni toping yoki «Bu yangi bemor» belgisini qo'yib qayta yuboring.",
+      "duplicateBlocking": "Bu JShShIR yoki pasport bilan bemor allaqachon bor — uni qidiruvdan toping.",
+      "ticketTitle": "Navbat raqami",
+      "ticketHint": "Raqamingiz chaqirilishini kuting",
+      "room": "Xona: {name}",
+      "paper": {
+        "58": "58 mm",
+        "80": "80 mm",
+        "a4": "A4"
+      },
+      "searchServices": "Xizmatni qidirish…",
+      "services": "Xizmatlar",
+      "total": "Jami",
+      "chosenCount": "{count, plural, =0 {hech narsa tanlanmagan} one {# ta xizmat} other {# ta xizmat}}",
+      "payment": "To'lov",
+      "payMode": {
+        "full": "To'liq to'ladi",
+        "partial": "Qisman",
+        "debt": "Qarzga"
+      },
+      "amountNow": "Hozir to'langan summa",
+      "method": "To'lov usuli",
+      "debtHint": "Hammasi bemorning qarziga yoziladi. Keyin «Hisob va to'lovlar» dan to'lanadi.",
+      "age": "{age} yosh",
+      "paidOf": "To'langan {paid} / {total}",
+      "visitServices": "Xizmatlar va to'lov",
+      "visitServicesHint": "Kerak bo'lsa qo'shimcha xizmat (EXO, EKG …) qo'shing: hozir to'lanadi yoki qarzga yoziladi.",
+      "noServicesToday": "Bugun xizmat yozilmagan.",
+      "addExtra": "Xizmatni qo'shish",
+      "extraAdded": "Xizmat qo'shildi."
     }
   },
   "status": {
@@ -1436,7 +1525,11 @@
     "bookingTooMany": "Sizda onlayn yozilishlar soni maksimal. Bittasini bekor qiling yoki klinikaga qo'ng'iroq qiling.",
     "telegramOff": "Telegram xabarnomalari mavjud emas.",
     "telegramTokenInvalid": "Telegram bu tokenni qabul qilmadi. @BotFather da tekshirib, qayta urinib ko'ring.",
-    "noDraftNote": "To'ldirish uchun qoralama yozuv yo'q."
+    "noDraftNote": "To'ldirish uchun qoralama yozuv yo'q.",
+    "noServicesChosen": "Kamida bitta xizmatni tanlang.",
+    "priceListEmpty": "Ro'yxatda narxli qator topilmadi. Masalan: «EKG — 30 000».",
+    "logoTooLarge": "Logotip juda katta (300 KB gacha).",
+    "logoType": "Logotip PNG, JPG yoki WebP rasm bo'lishi kerak."
   },
   "email": {
     "invitation": {
@@ -1621,7 +1714,8 @@
   },
   "diagnosisKind": {
     "PRIMARY": "Asosiy",
-    "SECONDARY": "Yoʻldosh"
+    "SECONDARY": "Hamroh kasallik",
+    "COMPLICATION": "Asorat"
   },
   "severity": {
     "MILD": "Yengil",
@@ -2252,7 +2346,9 @@
       "noteCardioComplaints": "Ko'krakdagi og'riq/bosim: \nHansirash: \nYurak urib ketishi: \nOyoqlarda shish: ",
       "noteCardioHistory": "Gipertoniya qachondan: \nMaksimal AQB: \nChekish: \nIrsiyat: ",
       "noteCardioExam": "AQB o'ngda __/__, chapda __/__ mm sim. ust. Puls __/daq, ritm: \nYurak tonlari: \nShishlar: \nEKG: ",
-      "noteCardioPlan": "EKG, exokardiografiya, lipidlar, qonda glyukoza.\n2 haftadan keyin nazorat."
+      "noteCardioPlan": "EKG, exokardiografiya, lipidlar, qonda glyukoza.\n2 haftadan keyin nazorat.",
+      "cardioDocName": "Kardiolog ko'ruvi",
+      "cardioDocBody": "Bemor: [[patient.fullName]], [[patient.birthDate]]      Sana: [[visit.date]]\nManzil: [[patient.address]]\n\nTashxis: [[diagnoses.primary]]\nHamroh: [[diagnoses.secondary]]\nAsorati: [[diagnoses.complications]]\nQon bosimi: [[vitals.bp]]   Puls: [[vitals.pulse]]\n\nTavsiya:\n[[prescriptions]]\n[[note.plan]]\n\nShifokor: [[doctor.fullName]]          ______________"
     },
     "ph": {
       "patient_fullName": "bemorning to'liq ismi",
@@ -2272,7 +2368,16 @@
       "note_plan": "reja",
       "diagnoses": "tashxislar (MKB-10)",
       "prescriptions": "faol retseptlar",
-      "today": "bugungi sana"
+      "today": "bugungi sana",
+      "patient_age": "yoshi",
+      "patient_address": "manzili",
+      "diagnoses_primary": "asosiy tashxis",
+      "diagnoses_secondary": "hamroh kasalliklar",
+      "diagnoses_complications": "asoratlari",
+      "vitals_bp": "qon bosimi (oxirgi)",
+      "vitals_pulse": "puls",
+      "vitals_weight": "vazn",
+      "vitals_height": "bo'y"
     }
   },
   "connect": {

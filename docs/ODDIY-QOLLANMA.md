@@ -25,13 +25,40 @@ Franshiza (bir egada ko'p klinika): **Tarmoqlar → Yangi tarmoq** → klinikala
 5. **Xodimlar → Taklif qilish** → shifokor, hamshira, kassir, registrator.
 6. **Sozlamalar → Nazorat qoidalari** → chegirma chegarasi (masalan 10%).
 
-## D. Kundalik ish
-| Kim | Nima qiladi |
-|---|---|
-| Registrator | **Bemorlar → Yangi bemor** → **Navbat** (shifokorni tanlang) yoki **Qabulga yozish** |
-| Shifokor | **Bugungi bemorlarim** → bemorni bosing → **Shablondan to'ldirish** → yozing → **Imzolash** → tashxis, retsept → **Qabulni yakunlash** |
-| Kassir | **Kassa** → smenani oching → **Hisob va to'lovlar** → bemor → **Chiqarish** → to'lov → kvitansiya → kechqurun smenani yoping |
-| Ega | **Nazorat markazi** — pul, kassa, chegirmalar, kim nima qildi |
+## D. Kundalik ish (masalan, kardiologiya markazi)
+
+### Bir marta: narxlar va blank
+- **Xizmatlar va narxlar** → yuqoridagi katta maydonga ro'yxatni yozing (har qatorda bittadan) → **Saqlash**:
+  ```
+  Kardiolog ko'ruvi — 100 000
+  Umumiy ayollar — 100 000
+  EXO — 120 000
+  EKG — 30 000
+  ```
+  Narx o'zgarsa — shu ro'yxatni yangi narx bilan qayta yozing, eski xizmatning narxi yangilanadi.
+- **Sozlamalar → Hujjat blanki**: logotip va litsenziya qatori — chop etiladigan hamma qog'ozning tepasida chiqadi.
+
+### Registrator — **Qabulxona** (bitta ekran)
+1. **Bemor**: qidiring (ism, telefon, tug'ilgan yil) yoki yangisini yozing — tug'ilgan **yilning o'zi** (1947) yetadi.
+2. **Xizmatlar**: kerakli xizmatlarni belgilang — jami summa o'zi hisoblanadi.
+3. **To'lov**: *To'liq* / *Qisman* (summani yozing) / *Qarzga*; naqd, karta, Payme, Click…
+4. **O'lchovlar** (ixtiyoriy): bo'y, vazn, qon bosimi, puls.
+5. **Shifokor** → **Navbatga qo'shish** → katta **navbat raqami** chiqadi → **Navbat taloni** va **Chek** (80 mm / 58 mm yoki A4).
+O'ng tomonda bugungi navbat: kim, qaysi shifokorga, qancha to'lagan, qancha qarzi bor.
+
+### Shifokor — **Bugungi bemorlarim**
+- Bemor kirmasdan oldin ko'rinadi: yoshi, manzili, xizmatlari, **bosim/puls/vazn/bo'y**, to'lagan va qarzi.
+- **Qabulni boshlash** → yozing → **tashxis** (kod shart emas; turi: *Asosiy* / *Hamroh* / *Asorat*) → **retsept** → **Imzolash**.
+- **Xizmatlar va to'lov** kartasi: kerak bo'lsa **EXO, EKG** qo'shing → to'ladi yoki **qarzga**.
+- **Hujjatlar → Kardiolog ko'ruvi** → chop etish (blank, tashxis, asorati, bosim, tavsiyalar; **narx chiqmaydi**).
+
+Shifokor registratura va kassa ishlarini ham qilishi uchun: **Xodimlar** → shifokorga *Registrator* va *Kassir* rollarini ham bering. O'lchov yozishi uchun registratorga *Hamshira* rolini qo'shing.
+
+### Ega
+- **Bosh sahifa**: bugungi va 7 kunlik tushum, bemorlar qarzi, 14 kunlik grafik.
+- **Nazorat markazi**: kassa, chegirmalar, kim nima qildi.
+
+**Printerlar:** oddiy (A4) va chek printeri (80/58 mm) Windows'ga odatdagidek ulanadi; chop etish oynasida kerakli printerni tanlaysiz. Chek **fiskal emas** (OFD/fiskal kassa ulanmagan).
 
 ## E. Telefon va planshetni ulash (har biriga 2 daqiqa)
 1. Telefon klinika Wi-Fi'siga ulangan bo'lsin.

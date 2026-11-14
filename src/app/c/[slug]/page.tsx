@@ -12,6 +12,9 @@ import { redirect } from "next/navigation";
 import { applyPendingSetup, practiceProfile } from "@/server/clinic/practice";
 import { requestMeta } from "@/server/http";
 import { formatHm, isoWeekday, todayIn } from "@/server/scheduling/time";
+import { BarChart } from "@/components/bar-chart";
+import { moneyFormatter } from "@/components/money";
+import { incomeSummary } from "@/server/reception/desk";
 
 /**
  * One dashboard, composed from role-specific sections:
@@ -61,6 +64,7 @@ export default async function ClinicDashboard({ params, searchParams }: { params
       ]
     : [];
 
+  const [income, money] = await Promise.all([incomeSummary(ctx), moneyFormatter()]);
   const isOwner = ctx.roleKeys.includes("clinic_owner") && ctx.permissions.has("clinic.settings.manage");
   const setupParam = (await searchParams).setup;
   const setupDone = setupParam === "done" || setupParam === "ready";
@@ -88,6 +92,22 @@ export default async function ClinicDashboard({ params, searchParams }: { params
       ) : null}
 
       <div className="space-y-6">
+        {income ? (
+          <Card>
+            <CardHeader title={t("clinic.dashboard.incomeTitle")} action={has("queue.manage") ? <ButtonLink href={`${base}/desk`} size="sm">{t("nav.desk")}</ButtonLink> : undefined} />
+            <CardBody className="space-y-5">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Stat label={t("clinic.dashboard.incomeToday")} value={money(income.todayMinor, income.currency)} />
+                <Stat label={t("clinic.dashboard.incomeWeek")} value={money(income.weekMinor, income.currency)} />
+                <Stat label={t("clinic.dashboard.debtTotal")} value={money(income.debtMinor, income.currency)} />
+              </div>
+              <BarChart
+                label={t("clinic.dashboard.chartLabel")}
+                bars={income.days.map((d) => ({ key: d.date, short: d.date.slice(8), value: Number(d.amountMinor), display: money(d.amountMinor, income.currency) as unknown as string, highlight: d.date === today }))}
+              />
+            </CardBody>
+          </Card>
+        ) : null}
         {myDetail ? (
           <Card>
             <CardHeader title={t("clinic.dashboard.myDay")} action={<ButtonLink href={`${base}/my-schedule`} variant="ghost" size="sm">{t("clinic.dashboard.openMySchedule")}</ButtonLink>} />

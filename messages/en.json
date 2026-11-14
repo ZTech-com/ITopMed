@@ -67,7 +67,8 @@
     "templates": "Templates",
     "networks": "Networks",
     "networkContext": "Network: {name}",
-    "superAdminContext": "SuperAdmin · platform control"
+    "superAdminContext": "SuperAdmin · platform control",
+    "desk": "Front desk"
   },
   "auth": {
     "adminTitle": "ITop Med Administration",
@@ -366,14 +367,28 @@
       "opsNoSchedule": "Doctors without working hours",
       "opsRooms": "Rooms",
       "setupServices": "Add services and prices",
-      "setupDoctors": "Set up doctors’ profiles and working hours"
+      "setupDoctors": "Set up doctors’ profiles and working hours",
+      "incomeTitle": "Income",
+      "incomeToday": "Today",
+      "incomeWeek": "7 days",
+      "debtTotal": "Patients' debt",
+      "chartLabel": "Income, last 14 days"
     },
     "settings": {
       "title": "Clinic settings",
       "subtitle": "Details shown to your staff and used on documents.",
       "general": "General",
       "regional": "Language and region",
-      "saved": "Settings saved."
+      "saved": "Settings saved.",
+      "letterheadTitle": "Document letterhead",
+      "letterheadHint": "Printed at the top of documents, receipts and tickets.",
+      "logo": "Logo",
+      "logoHint": "PNG, JPG or WebP, up to 300 KB.",
+      "removeLogo": "Remove the logo",
+      "license": "Licence / details line",
+      "licenseHint": "For example: Ministry of Health licence No. …, issued …",
+      "letterheadSave": "Save",
+      "letterheadSaved": "Letterhead saved."
     },
     "branches": {
       "title": "Branches",
@@ -497,7 +512,12 @@
       "colDoctors": "Doctors",
       "minutes": "{count} min",
       "back": "All services",
-      "priceNotSet": "Price not set"
+      "priceNotSet": "Price not set",
+      "priceListTitle": "Enter a price list quickly",
+      "priceListHint": "One service and price per line. Existing services get the new price; new ones are added. For example:",
+      "priceListSubmit": "Save",
+      "priceListDone": "Done: {created} new services, {updated} prices updated{skipped, plural, =0 {} other {, # lines not understood}}.",
+      "priceListExample": "Cardiologist consultation — 100 000\nEcho — 120 000\nECG — 30 000"
     },
     "facilities": {
       "title": "Departments and rooms",
@@ -715,7 +735,8 @@
       "allergyAdded": "Allergy added.",
       "markResolved": "Mark resolved",
       "markError": "Entered in error",
-      "statusUpdated": "Updated."
+      "statusUpdated": "Updated.",
+      "icd10Optional": "Optional, e.g. I10"
     },
     "record": {
       "title": "Medical record",
@@ -1200,6 +1221,74 @@
       "tokenHint": "Stored encrypted and never shown again. Anyone with the token controls the bot.",
       "connect": "Connect the bot",
       "notConnected": "No bot connected."
+    },
+    "desk": {
+      "title": "Front desk",
+      "subtitle": "Patient, services, payment, measurements and queue number — on one screen.",
+      "step1": "1. Patient",
+      "searchHint": "Search by name, phone, record number or birth year. Not found? Enter a new patient below.",
+      "newPatient": "1. New patient",
+      "birth": "Year or date of birth",
+      "birthHint": "For example 1947 or 12.03.1947",
+      "confirmNew": "This is a new patient (even if a similar one exists)",
+      "otherPatient": "Another patient",
+      "hasDebt": "Owes: {amount}",
+      "step2": "2. Services and payment",
+      "editPrices": "Change prices",
+      "noPrices": "No services with a price yet. Set prices in Services and prices first.",
+      "unpriced": "{count, plural, one {# service has no price yet and is not listed.} other {# services have no price yet and are not listed.}}",
+      "step3": "3. Measurements",
+      "step3Hint": "If needed: height, weight, blood pressure, pulse. The doctor sees them before the patient comes in.",
+      "height": "Height (cm)",
+      "weight": "Weight (kg)",
+      "systolic": "BP (upper)",
+      "diastolic": "BP (lower)",
+      "pulse": "Pulse",
+      "bp": "BP",
+      "step4": "4. Doctor",
+      "doctor": "Doctor",
+      "notToday": "not scheduled today",
+      "noDoctors": "No doctors yet. Create a doctor profile in Doctors and schedule.",
+      "note": "Note (for the doctor)",
+      "submit": "Add to the queue",
+      "today": "Today's queue",
+      "emptyToday": "No patients yet today",
+      "debtShort": "Owes {amount}",
+      "number": "No.",
+      "toDoctor": "Doctor: {name}",
+      "printTicket": "Print queue ticket",
+      "printReceipt": "Print receipt",
+      "next": "Next patient",
+      "duplicateFound": "This patient may already exist. Find them with the search above, or tick “This is a new patient” and submit again.",
+      "duplicateBlocking": "A patient with this PINFL or passport already exists — find them with the search.",
+      "ticketTitle": "Queue number",
+      "ticketHint": "Please wait until your number is called",
+      "room": "Room: {name}",
+      "paper": {
+        "58": "58 mm",
+        "80": "80 mm",
+        "a4": "A4"
+      },
+      "searchServices": "Search services…",
+      "services": "Services",
+      "total": "Total",
+      "chosenCount": "{count, plural, =0 {nothing chosen} one {# service} other {# services}}",
+      "payment": "Payment",
+      "payMode": {
+        "full": "Paid in full",
+        "partial": "Partly",
+        "debt": "On debt"
+      },
+      "amountNow": "Amount paid now",
+      "method": "Payment method",
+      "debtHint": "Everything goes to the patient's debt, to be paid later in Billing.",
+      "age": "{age} y.",
+      "paidOf": "Paid {paid} / {total}",
+      "visitServices": "Services and payment",
+      "visitServicesHint": "Add a service if needed (echo, ECG …): paid now or left as debt.",
+      "noServicesToday": "No services recorded today.",
+      "addExtra": "Add the service",
+      "extraAdded": "Service added."
     }
   },
   "status": {
@@ -1436,7 +1525,11 @@
     "bookingTooMany": "You already have the maximum number of online bookings. Cancel one or call the clinic.",
     "telegramOff": "Telegram notifications are not available.",
     "telegramTokenInvalid": "Telegram did not accept this token. Check it in @BotFather and try again.",
-    "noDraftNote": "There is no draft note to fill."
+    "noDraftNote": "There is no draft note to fill.",
+    "noServicesChosen": "Choose at least one service.",
+    "priceListEmpty": "No line with a price found. For example: “ECG — 30 000”.",
+    "logoTooLarge": "The logo is too large (up to 300 KB).",
+    "logoType": "The logo must be a PNG, JPG or WebP image."
   },
   "email": {
     "invitation": {
@@ -1621,7 +1714,8 @@
   },
   "diagnosisKind": {
     "PRIMARY": "Primary",
-    "SECONDARY": "Secondary"
+    "SECONDARY": "Concomitant",
+    "COMPLICATION": "Complication"
   },
   "severity": {
     "MILD": "Mild",
@@ -2252,7 +2346,9 @@
       "noteCardioComplaints": "Chest pain/pressure: \nShortness of breath: \nPalpitations: \nSwelling of legs: ",
       "noteCardioHistory": "Hypertension since: \nMax BP: \nSmoking: \nFamily history: ",
       "noteCardioExam": "BP right __/__, left __/__ mmHg. HR __/min, rhythm: \nHeart sounds: \nOedema: \nECG: ",
-      "noteCardioPlan": "ECG, echocardiography, lipid profile, glucose.\nFollow-up in 2 weeks."
+      "noteCardioPlan": "ECG, echocardiography, lipid profile, glucose.\nFollow-up in 2 weeks.",
+      "cardioDocName": "Cardiologist's examination",
+      "cardioDocBody": "Patient: [[patient.fullName]], [[patient.birthDate]]      Date: [[visit.date]]\nAddress: [[patient.address]]\n\nDiagnosis: [[diagnoses.primary]]\nConcomitant: [[diagnoses.secondary]]\nComplications: [[diagnoses.complications]]\nBlood pressure: [[vitals.bp]]   Pulse: [[vitals.pulse]]\n\nRecommendations:\n[[prescriptions]]\n[[note.plan]]\n\nDoctor: [[doctor.fullName]]          ______________"
     },
     "ph": {
       "patient_fullName": "patient's full name",
@@ -2272,7 +2368,16 @@
       "note_plan": "plan",
       "diagnoses": "diagnoses (ICD-10)",
       "prescriptions": "active prescriptions",
-      "today": "today's date"
+      "today": "today's date",
+      "patient_age": "age",
+      "patient_address": "address",
+      "diagnoses_primary": "main diagnosis",
+      "diagnoses_secondary": "concomitant diseases",
+      "diagnoses_complications": "complications",
+      "vitals_bp": "blood pressure (latest)",
+      "vitals_pulse": "pulse",
+      "vitals_weight": "weight",
+      "vitals_height": "height"
     }
   },
   "connect": {

@@ -1,7 +1,9 @@
 import { Stethoscope } from "lucide-react";
 import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
+import { moneyFormatter } from "@/components/money";
 import { patientName } from "@/components/patients";
+import { todayMoney, todayVitals } from "@/server/reception/desk";
 import { Form } from "@/components/ui/form";
 import { Alert, Badge, Card, EmptyState, PageHeader, STATUS_TONE, buttonClass } from "@/components/ui/primitives";
 import { listDay } from "@/server/appointments/appointments";
@@ -20,6 +22,9 @@ export default async function MyQueuePage({ params, searchParams }: { params: Pr
   const tz = ctx.tenant.timezone;
   const all = profileId ? await listDay(ctx, todayIn(tz), { doctorProfileId: profileId }) : [];
   const mine = all.filter((a) => a.doctorProfileId === profileId).sort((a, b) => ORDER[a.status]! - ORDER[b.status]! || (a.queueNumber ?? 999) - (b.queueNumber ?? 999) || +a.startsAt - +b.startsAt);
+  const ids = [...new Set(mine.map((a) => a.patientId))];
+  const [{ today: paid, debt }, vitals, money] = await Promise.all([todayMoney(ctx, ids), todayVitals(ctx, ids), moneyFormatter()]);
+  const year = Number(todayIn(tz).slice(0, 4));
   const encounters = new Map(
     (await withAppContext({ tenantId: ctx.tenant.id, userId: ctx.principal.user.id }, (tx) => tx.encounter.findMany({ where: { appointmentId: { in: mine.map((a) => a.id) } }, select: { id: true, appointmentId: true } }))).map((e) => [e.appointmentId!, e.id]),
   );
@@ -37,22 +42,35 @@ export default async function MyQueuePage({ params, searchParams }: { params: Pr
             {mine.map((a) => {
               const enc = encounters.get(a.id);
               return (
-                <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 sm:px-6">
-                  <div className="flex min-w-0 items-center gap-4">
+                <li key={a.id} className="flex flex-col gap-3 px-5 py-3.5 sm:flex-row sm:items-start sm:justify-between sm:px-6">
+                  <div className="flex min-w-0 items-start gap-4 sm:flex-1">
                     <div className="w-16 shrink-0">
                       <p className="text-[15px] font-semibold tabular-nums">{format.dateTime(a.startsAt, { timeStyle: "short", timeZone: tz })}</p>
                       {a.queueNumber ? <p className="text-[12px] font-semibold text-accent">#{a.queueNumber}</p> : null}
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate font-medium">{patientName(a.patient)}</p>
-                      <p className="truncate text-[13px] text-text-2">
-                        {a.patient.mrn}
-                        {a.service ? ` · ${a.service.name}` : ""}
+                      <p className="font-semibold">{patientName(a.patient)}</p>
+                      <p className="text-[13px] text-text-2">
+                        {t("clinic.desk.age", { age: year - a.patient.birthDate.getUTCFullYear() })} ({a.patient.birthDate.getUTCFullYear()}) · {t(`sex.${a.patient.sex}` as never)}
+                        {a.patient.address ? ` · ${a.patient.address}` : ""}
                         {a.room ? ` · ${a.room.name}` : ""}
                       </p>
+                      {paid.get(a.patientId)?.services.length ? <p className="text-[13px] text-text-2">{paid.get(a.patientId)!.services.join(", ")}</p> : a.service ? <p className="text-[13px] text-text-2">{a.service.name}</p> : null}
+                      {vitals.get(a.patientId) ? (
+                        <p className="mt-1 flex flex-wrap gap-x-3 text-[13px] font-medium">
+                          {vitals.get(a.patientId)!.systolic ? <span>{t("clinic.desk.bp")}: {vitals.get(a.patientId)!.systolic}/{vitals.get(a.patientId)!.diastolic ?? "—"}</span> : null}
+                          {vitals.get(a.patientId)!.pulse ? <span>{t("clinic.desk.pulse")}: {vitals.get(a.patientId)!.pulse}</span> : null}
+                          {vitals.get(a.patientId)!.weight ? <span>{t("clinic.desk.weight")}: {vitals.get(a.patientId)!.weight}</span> : null}
+                          {vitals.get(a.patientId)!.height ? <span>{t("clinic.desk.height")}: {vitals.get(a.patientId)!.height}</span> : null}
+                        </p>
+                      ) : null}
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        {paid.get(a.patientId) ? <Badge tone={paid.get(a.patientId)!.paidMinor >= paid.get(a.patientId)!.totalMinor ? "success" : "warning"}>{t("clinic.desk.paidOf", { paid: money(paid.get(a.patientId)!.paidMinor, ctx.tenant.currency), total: money(paid.get(a.patientId)!.totalMinor, ctx.tenant.currency) })}</Badge> : null}
+                        {(debt.get(a.patientId) ?? 0n) > 0n ? <Badge tone="danger">{t("clinic.desk.debtShort", { amount: money(debt.get(a.patientId)!, ctx.tenant.currency) })}</Badge> : null}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <Badge tone={STATUS_TONE[a.status]}>{t(`status.${a.status}`)}</Badge>
                     {enc ? (
                       <Link href={`/c/${ctx.tenant.slug}/encounters/${enc}`} className={buttonClass(a.status === "IN_PROGRESS" ? "primary" : "secondary", "sm")}>

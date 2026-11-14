@@ -97,7 +97,8 @@ export async function exportPatientFhir(ctx: ClinicContext, patientId: string, m
         id: d.id,
         clinicalStatus: { coding: [{ system: SYS.conditionClinical, code: d.status === "RESOLVED" ? "resolved" : "active" }] },
         category: [{ coding: [{ system: SYS.conditionCategory, code: "encounter-diagnosis" }] }],
-        code: { coding: [{ system: SYS.icd10, code: d.icd10Code, display: d.description }], text: d.description },
+        // A text-only diagnosis (no ICD-10 code yet) has no coding, only text.
+        code: d.icd10Code ? { coding: [{ system: SYS.icd10, code: d.icd10Code, display: d.description }], text: d.description } : { text: d.description },
         subject: ref(patient.id),
         ...(d.encounterId ? { encounter: ref(d.encounterId) } : {}),
         recordedDate: iso(d.recordedAt),

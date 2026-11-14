@@ -261,7 +261,7 @@ export async function rescheduleAppointment(ctx: ClinicContext, appointmentId: s
 }
 
 const apptInclude = {
-  patient: { select: { id: true, mrn: true, lastName: true, firstName: true, middleName: true, birthDate: true } },
+  patient: { select: { id: true, mrn: true, lastName: true, firstName: true, middleName: true, birthDate: true, birthYearOnly: true, sex: true, address: true, phone: true } },
   doctor: { select: { id: true, specialty: true, membership: { select: { user: { select: { fullName: true } } } } } },
   service: { select: { name: true } },
   branch: { select: { name: true } },

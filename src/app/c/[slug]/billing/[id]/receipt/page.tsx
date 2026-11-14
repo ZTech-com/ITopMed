@@ -2,39 +2,45 @@ import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { moneyFormatter } from "@/components/money";
 import { patientName } from "@/components/patients";
-import { PrintButton } from "@/components/print-button";
+import Link from "next/link";
+import { Letterhead } from "@/components/letterhead";
+import { PAPER_PREVIEW, PaperStyle, paperFrom } from "@/components/paper";
+import { AutoPrint, PrintButton } from "@/components/print-button";
+import { buttonClass } from "@/components/ui/primitives";
+import { getLetterhead } from "@/server/clinic/branding";
 import { requireClinic } from "@/server/auth/guards";
 import { getInvoice } from "@/server/billing/billing";
-import { withAppContext } from "@/server/db";
 
 /**
  * Printable payment receipt (A5/80 mm friendly). Clearly marked as NOT a
  * fiscal receipt: fiscal (OFD) integration is an external dependency.
  * Contains no clinical information — services and amounts only.
  */
-export default async function ReceiptPage({ params }: { params: Promise<{ slug: string; id: string }> }) {
+export default async function ReceiptPage({ params, searchParams }: { params: Promise<{ slug: string; id: string }>; searchParams: Promise<{ w?: string }> }) {
   const { slug, id } = await params;
+  const width = paperFrom((await searchParams).w);
   const ctx = await requireClinic(slug, "billing.read");
   const inv = await getInvoice(ctx, id);
   if (!inv || inv.status === "DRAFT") notFound();
   const [t, format, money] = await Promise.all([getTranslations(), getFormatter(), moneyFormatter()]);
-  const tenant = await withAppContext({ tenantId: ctx.tenant.id, userId: ctx.principal.user.id }, (tx) =>
-    tx.tenant.findUniqueOrThrow({ where: { id: ctx.tenant.id }, select: { name: true, legalName: true, taxId: true, address: true, contactPhone: true } }),
-  );
+  const head = await getLetterhead(ctx);
   const tz = ctx.tenant.timezone;
 
   return (
-    <div className="mx-auto max-w-md space-y-4 print:max-w-none">
-      <div className="flex justify-end print:hidden">
+    <div className={`mx-auto space-y-4 print:max-w-none ${width === "a4" ? "max-w-md" : PAPER_PREVIEW[width]}`}>
+      <PaperStyle width={width} />
+      <AutoPrint />
+      <div className="flex flex-wrap justify-end gap-2 print:hidden">
+        {(["80", "58", "a4"] as const).map((w) => (
+          <Link key={w} href={`?w=${w}`} className={buttonClass(w === width ? "primary" : "ghost", "sm")}>
+            {t(`clinic.desk.paper.${w}`)}
+          </Link>
+        ))}
         <PrintButton label={t("clinic.billing.printReceipt")} />
       </div>
-      <article className="rounded-[16px] border border-border bg-surface p-6 text-[14px] print:border-0 print:p-0">
-        <header className="border-b border-dashed border-border pb-3 text-center">
-          <p className="text-[16px] font-semibold">{tenant.legalName ?? tenant.name}</p>
-          {tenant.taxId ? <p className="text-[12px] text-text-2">STIR / ИНН {tenant.taxId}</p> : null}
-          {tenant.address ? <p className="text-[12px] text-text-2">{tenant.address}</p> : null}
-          {tenant.contactPhone ? <p className="text-[12px] text-text-2">{tenant.contactPhone}</p> : null}
-        </header>
+      <article className={`rounded-[16px] border border-border bg-surface text-[14px] print:border-0 print:p-0 ${width === "a4" ? "p-6" : "p-3 text-[13px]"}`}>
+        <Letterhead data={head} compact />
+        {head.taxId ? <p className="pt-1 text-center text-[12px] text-text-2">STIR / ИНН {head.taxId}</p> : null}
         <div className="space-y-1 border-b border-dashed border-border py-3">
           <p className="text-center font-semibold">{t("clinic.billing.receiptTitle")}</p>
           <p className="flex justify-between"><span className="text-text-2">{t("clinic.billing.colNumber")}</span><span className="font-mono">{inv.number}</span></p>

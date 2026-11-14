@@ -61,6 +61,8 @@ model PlatformUser {
   tenantsCreated  Tenant[]
   supportGrants   SupportAccessGrant[]
   recoveryCodes   PlatformMfaRecoveryCode[]
+
+  @@index([networkId])
 }
 
 /// Single-use MFA recovery codes. Only a SHA-256 of each (80-bit) code is stored.
@@ -161,6 +163,9 @@ model Tenant {
   practiceType     PracticeType @default(MULTI_SPECIALTY)
   /// Set when the owner finished the setup assistant.
   setupCompletedAt DateTime?
+  /// Letterhead on printed documents: small logo (data URL, PNG/JPEG/WebP) and licence line.
+  logoDataUrl      String?
+  licenseText      String?
   /// Setup chosen by the platform when the clinic was created; applied when the owner first opens the clinic.
   setupPreset      Json?
   /// Network (franchise / group of clinics) this clinic belongs to, if any.
@@ -229,6 +234,7 @@ model Tenant {
   dentalChart          DentalChartEntry[]
 
   @@index([status])
+  @@index([networkId])
 }
 
 model Branch {
@@ -790,6 +796,8 @@ model Patient {
   firstName       String
   middleName      String?
   birthDate       DateTime      @db.Date
+  /// Only the year of birth is known (stored as 1 January of that year).
+  birthYearOnly   Boolean       @default(false)
   sex             Sex
   phone           String?
   email           String?
@@ -1038,7 +1046,10 @@ model ClinicalNoteAmendment {
 
 enum DiagnosisKind {
   PRIMARY
+  /// Concomitant disease ("hamroh kasallik").
   SECONDARY
+  /// Complication of the main disease ("asorati").
+  COMPLICATION
 }
 
 enum ClinicalStatus {

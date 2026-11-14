@@ -32,12 +32,24 @@ export function normalizePhone(v: string | undefined): string | undefined {
   return `+${digits}`;
 }
 
+/**
+ * Date of birth as people give it at the desk: "1947" (year only), "12.03.1947"
+ * or "1947-03-12". Year only is stored as 1 January with birthYearOnly = true.
+ */
+export function parseBirthInput(v: string): { date: string; yearOnly: boolean } | null {
+  const s = v.trim();
+  if (/^\d{4}$/.test(s)) return { date: `${s}-01-01`, yearOnly: true };
+  const dmy = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(s);
+  const iso = dmy ? `${dmy[3]}-${dmy[2]!.padStart(2, "0")}-${dmy[1]!.padStart(2, "0")}` : s;
+  return isLocalDate(iso) ? { date: iso, yearOnly: false } : null;
+}
+
 export const patientSchema = z
   .object({
     lastName: nameField,
     firstName: nameField,
     middleName: optionalText(80),
-    birthDate: z.string().refine(isLocalDate, "validation.date"),
+    birthDate: z.string().refine((v) => parseBirthInput(v) !== null, "validation.date"),
     sex: z.enum(["MALE", "FEMALE", "UNKNOWN"]),
     phone: z.union([z.literal("").transform(() => undefined), phoneSchema]).optional(),
     email: z.union([z.literal("").transform(() => undefined), emailSchema]).optional(),
@@ -46,7 +58,10 @@ export const patientSchema = z
     pinfl: z.union([z.literal("").transform(() => undefined), z.string().trim().regex(/^\d{14}$/, "validation.pinfl")]).optional(),
     passport: z.union([z.literal("").transform(() => undefined), z.string().trim().toUpperCase().regex(/^[A-Z]{2}\d{7}$/, "validation.passport")]).optional(),
   })
-  .transform((v) => ({ ...v, phone: normalizePhone(v.phone) }));
+  .transform((v) => {
+    const b = parseBirthInput(v.birthDate)!;
+    return { ...v, birthDate: b.date, birthYearOnly: b.yearOnly, phone: normalizePhone(v.phone) };
+  });
 
 export type PatientInput = z.infer<typeof patientSchema>;
 
@@ -141,6 +156,7 @@ export async function registerPatient(
         firstName: input.firstName,
         middleName: input.middleName,
         birthDate: localDateToDbDate(input.birthDate),
+        birthYearOnly: input.birthYearOnly,
         sex: input.sex,
         phone: input.phone,
         email: input.email,
@@ -249,6 +265,7 @@ export async function updatePatient(ctx: ClinicContext, id: string, raw: unknown
         firstName: input.firstName,
         middleName: input.middleName ?? null,
         birthDate: localDateToDbDate(input.birthDate),
+        birthYearOnly: input.birthYearOnly,
         sex: input.sex,
         phone: input.phone ?? null,
         email: input.email ?? null,

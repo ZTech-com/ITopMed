@@ -97,7 +97,7 @@ function routes(ids: Awaited<ReturnType<typeof sampleIds>>): string[] {
   const list = [
     "/admin", "/admin/clinics", "/admin/clinics/new", `/admin/clinics/${ids.tenant}`, "/admin/networks", ...(ids.network ? [`/admin/networks/${ids.network}`] : []), "/admin/staff", "/admin/audit", "/admin/security",
     "/clinics", "/account/security",
-    c, `${c}/control`, `${c}/setup`, `${c}/patients`, `${c}/patients/new`, `${c}/appointments`, `${c}/queue`, `${c}/my-queue`, `${c}/my-schedule`, `${c}/nurse`,
+    c, `${c}/control`, `${c}/setup`, `${c}/patients`, `${c}/patients/new`, `${c}/appointments`, `${c}/queue`, `${c}/desk`, `${c}/my-queue`, `${c}/my-schedule`, `${c}/nurse`,
     `${c}/lab`, `${c}/lab/tests`, `${c}/billing`, `${c}/cash`, `${c}/reports`, `${c}/expenses`, `${c}/inventory`, `${c}/inventory/suppliers`,
     `${c}/hr`, `${c}/doctors`, `${c}/services`, `${c}/staff`, `${c}/roles`, `${c}/facilities`, `${c}/branches`, `${c}/integrations`,
     `${c}/settings`, `${c}/audit`, `${c}/support-access`, `${c}/templates`, `${c}/templates/new?kind=DOCUMENT`, `${c}/templates/new?kind=NOTE`,

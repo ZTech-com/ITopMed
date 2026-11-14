@@ -9,11 +9,14 @@ import { moduleAction, policyAction } from "../../../practice-actions";
 import { listClinicModules } from "@/server/clinic/practice";
 import { getClinicPolicy } from "@/server/clinic/policy";
 import { Badge, ButtonLink } from "@/components/ui/primitives";
+import { Letterhead } from "@/components/letterhead";
+import { getLetterhead } from "@/server/clinic/branding";
+import { letterheadAction } from "../../../desk-actions";
 
 export default async function ClinicSettingsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const ctx = await requireClinic(slug, "clinic.settings.read");
-  const [t, s, modules, policy] = await Promise.all([getTranslations(), getClinicSettings(ctx), listClinicModules(ctx), getClinicPolicy(ctx)]);
+  const [t, s, modules, policy, head] = await Promise.all([getTranslations(), getClinicSettings(ctx), listClinicModules(ctx), getClinicPolicy(ctx), getLetterhead(ctx)]);
   const isOwner = ctx.roleKeys.includes("clinic_owner");
   const canEdit = ctx.permissions.has("clinic.settings.manage");
   const optional = t("common.optional");
@@ -109,6 +112,34 @@ export default async function ClinicSettingsPage({ params }: { params: Promise<{
             </li>
           ))}
         </ul>
+      </Card>
+      <Card className="mt-6">
+        <CardHeader title={t("clinic.settings.letterheadTitle")} description={t("clinic.settings.letterheadHint")} />
+        <CardBody className="space-y-5">
+          <div className="rounded-[12px] border border-border bg-surface p-4">
+            <Letterhead data={head} />
+          </div>
+          {canEdit ? (
+            <Form action={letterheadAction}>
+              <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+              <label className="block">
+                <span className="mb-1.5 block text-[14px] font-medium">{t("clinic.settings.logo")}</span>
+                <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" className="block w-full text-[14px] file:mr-3 file:rounded-[var(--radius-control)] file:border file:border-border-strong file:bg-surface file:px-3 file:py-2 file:text-[14px]" />
+                <span className="mt-1 block text-[13px] text-text-2">{t("clinic.settings.logoHint")}</span>
+              </label>
+              {head.logo ? (
+                <label className="flex items-center gap-2 text-[14px]">
+                  <input type="checkbox" name="removeLogo" className="size-4 accent-[var(--accent)]" />
+                  {t("clinic.settings.removeLogo")}
+                </label>
+              ) : null}
+              <TextField name="licenseText" label={t("clinic.settings.license")} hint={t("clinic.settings.licenseHint")} defaultValue={head.license ?? ""} optionalLabel={optional} />
+              <div className="flex justify-end">
+                <SubmitButton>{t("clinic.settings.letterheadSave")}</SubmitButton>
+              </div>
+            </Form>
+          ) : null}
+        </CardBody>
       </Card>
     </div>
   );

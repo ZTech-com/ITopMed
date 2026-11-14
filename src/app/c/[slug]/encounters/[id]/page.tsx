@@ -16,6 +16,11 @@ import { DentalChart, DentalHistory, ToothForm } from "@/components/dental";
 import { toothAction } from "../../../../dental-actions";
 import { listLabTests } from "@/server/lab/lab";
 import { listTemplates } from "@/server/clinic/templates";
+import { listServices } from "@/server/clinic/resources";
+import { todayMoney } from "@/server/reception/desk";
+import { moneyFormatter } from "@/components/money";
+import { ServicePicker } from "@/components/service-picker";
+import { extraServicesAction } from "../../../../desk-actions";
 
 /** The doctor's visit workspace. Every load is an audited record access. */
 export default async function EncounterPage({ params, searchParams }: { params: Promise<{ slug: string; id: string }>; searchParams: Promise<{ tooth?: string; dentition?: string }> }) {
@@ -39,13 +44,21 @@ export default async function EncounterPage({ params, searchParams }: { params: 
   const hasDraft = e.notes.some((n) => n.status === "DRAFT" && n.authorId === ctx.principal.user.id);
   const authors = new Map([[ctx.principal.user.id, ctx.principal.user.fullName]]);
   const s = ctx.tenant.slug;
+  const canBill = ctx.permissions.has("billing.invoice");
+  const [priced, money, billing] = await Promise.all([
+    canBill ? listServices(ctx).then((l) => l.filter((x) => x.priceMinor > 0n).map((x) => ({ id: x.id, name: x.name, priceMinor: x.priceMinor.toString(), currency: x.currency }))) : Promise.resolve([]),
+    moneyFormatter(),
+    todayMoney(ctx, [e.patient.id]),
+  ]);
+  const paidToday = billing.today.get(e.patient.id);
+  const owes = billing.debt.get(e.patient.id) ?? 0n;
 
   return (
     <div className="max-w-5xl space-y-6">
       <PageHeader
         eyebrow={`${t("clinic.visit.encounter")} · ${format.dateTime(e.startedAt, { dateStyle: "medium", timeStyle: "short", timeZone: tz })}`}
         title={patientName(e.patient)}
-        description={`${e.patient.mrn} · ${await formatBirthDate(e.patient.birthDate)} · ${t(`sex.${e.patient.sex}`)}`}
+        description={`${e.patient.mrn} · ${await formatBirthDate(e.patient.birthDate, e.patient.birthYearOnly)} · ${t(`sex.${e.patient.sex}`)}${e.patient.address ? ` · ${e.patient.address}` : ""}`}
         action={
           <>
             <Badge tone={STATUS_TONE[e.status]}>{t(`status.${e.status}`)}</Badge>
@@ -117,10 +130,10 @@ export default async function EncounterPage({ params, searchParams }: { params: 
                 <input type="hidden" name="$slug" value={s} />
                 <input type="hidden" name="encounterId" value={e.id} />
                 <div className="grid gap-3 sm:grid-cols-[120px_1fr]">
-                  <TextField name="icd10Code" label={t("clinic.visit.icd10")} hint={t("clinic.visit.icd10Hint")} required />
-                  <TextField name="description" label={t("clinic.visit.description")} required />
+                  <TextField name="icd10Code" label={t("clinic.visit.icd10")} hint={t("clinic.visit.icd10Optional")} optionalLabel={t("common.optional")} />
+                  <TextAreaField name="description" label={t("clinic.visit.description")} rows={2} />
                 </div>
-                <SelectField name="kind" label={t("clinic.visit.kind")} options={(["PRIMARY", "SECONDARY"] as const).map((k) => ({ value: k, label: t(`diagnosisKind.${k}`) }))} />
+                <SelectField name="kind" label={t("clinic.visit.kind")} options={(["PRIMARY", "SECONDARY", "COMPLICATION"] as const).map((k) => ({ value: k, label: t(`diagnosisKind.${k}`) }))} />
                 <SubmitButton variant="secondary">{t("clinic.visit.addDiagnosis")}</SubmitButton>
               </Form>
             ) : null}
@@ -172,6 +185,36 @@ export default async function EncounterPage({ params, searchParams }: { params: 
                 </ButtonLink>
               ))}
             </div>
+          </CardBody>
+        </Card>
+      ) : null}
+
+      {canBill || paidToday || owes > 0n ? (
+        <Card id="services">
+          <CardHeader title={t("clinic.desk.visitServices")} description={canBill ? t("clinic.desk.visitServicesHint") : undefined} />
+          <CardBody className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {paidToday ? (
+                <>
+                  <span className="text-[14px] text-text-2">{paidToday.services.join(", ")}</span>
+                  <Badge tone={paidToday.paidMinor >= paidToday.totalMinor ? "success" : "warning"}>{t("clinic.desk.paidOf", { paid: money(paidToday.paidMinor, paidToday.currency), total: money(paidToday.totalMinor, paidToday.currency) })}</Badge>
+                </>
+              ) : (
+                <span className="text-[14px] text-text-2">{t("clinic.desk.noServicesToday")}</span>
+              )}
+              {owes > 0n ? <Badge tone="danger">{t("clinic.desk.debtShort", { amount: money(owes, ctx.tenant.currency) })}</Badge> : null}
+            </div>
+            {canBill && priced.length ? (
+              <Form action={extraServicesAction} className="border-t border-border pt-4">
+                <input type="hidden" name="$slug" value={s} />
+                <input type="hidden" name="$back" value={`/c/${s}/encounters/${e.id}`} />
+                <input type="hidden" name="patientId" value={e.patient.id} />
+                <input type="hidden" name="branchId" value={e.branchId} />
+                {e.appointmentId ? <input type="hidden" name="appointmentId" value={e.appointmentId} /> : null}
+                <ServicePicker services={priced} withPayment={ctx.permissions.has("billing.payment")} />
+                <SubmitButton>{t("clinic.desk.addExtra")}</SubmitButton>
+              </Form>
+            ) : null}
           </CardBody>
         </Card>
       ) : null}

@@ -7,6 +7,7 @@ import type { RequestMeta } from "../auth/platform-auth";
 import { auditClinic, inClinic } from "../clinic/context";
 import type { Tx } from "../db";
 import { uuidv7 } from "../security/crypto";
+import { instantToLocalDate, localToInstant } from "../scheduling/time";
 import { DomainError } from "../tenancy/provisioning";
 import { withRecordAccess, type BreakGlassReason } from "./access";
 import { labOrdersForRecord } from "../lab/lab";
@@ -135,7 +136,7 @@ export async function getEncounter(ctx: ClinicContext, encounterId: string, meta
       tx.encounter.findUniqueOrThrow({
         where: { id: enc.id },
         include: {
-          patient: { select: { id: true, mrn: true, lastName: true, firstName: true, middleName: true, birthDate: true, sex: true } },
+          patient: { select: { id: true, mrn: true, lastName: true, firstName: true, middleName: true, birthDate: true, birthYearOnly: true, sex: true, address: true } },
           notes: { include: { amendments: true }, orderBy: { createdAt: "asc" } },
           diagnoses: { where: { status: { not: "ENTERED_IN_ERROR" } }, orderBy: { recordedAt: "asc" } },
           vitals: { orderBy: { measuredAt: "desc" } },
@@ -146,6 +147,11 @@ export async function getEncounter(ctx: ClinicContext, encounterId: string, meta
       tx.allergy.findMany({ where: { patientId: enc.patientId, status: "ACTIVE" } }),
       labOrdersForRecord(tx, enc.patientId, enc.id),
     ]);
+    // Measurements taken at the desk on the visit day (before the visit existed) belong to this visit too.
+    // Vital signs are append-only, so they are shown with the visit rather than re-linked.
+    const dayStart = localToInstant(instantToLocalDate(encounter.startedAt, ctx.tenant.timezone), 0, ctx.tenant.timezone);
+    const desk = await tx.vitalSign.findMany({ where: { patientId: enc.patientId, encounterId: null, measuredAt: { gte: dayStart, lte: encounter.closedAt ?? new Date() } }, orderBy: { measuredAt: "desc" } });
+    encounter.vitals = [...encounter.vitals, ...desk].sort((a, b) => +b.measuredAt - +a.measuredAt);
     const dental = ctx.modules.has("dental") ? await dentalChartForRecord(tx, enc.patientId) : null;
     return { encounter, allergies, labOrders, dental, isOwn: access.doctorProfileId === enc.doctorProfileId };
   });
@@ -237,9 +243,15 @@ export async function amendNote(ctx: ClinicContext, noteId: string, raw: unknown
 // ───────────── Diagnoses, allergies, vitals ─────────────
 
 export const diagnosisSchema = z.object({
-  icd10Code: z.string().trim().toUpperCase().regex(/^[A-Z][0-9]{2}(\.[0-9A-Z]{1,4})?$/, "validation.icd10"),
-  description: z.string().trim().min(2, "validation.required").max(300, "validation.tooLong"),
-  kind: z.enum(["PRIMARY", "SECONDARY"]),
+  // The ICD-10 code is optional: many diagnoses are written as text first.
+  icd10Code: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .default("")
+    .refine((v) => v === "" || /^[A-Z][0-9]{2}(\.[0-9A-Z]{1,4})?$/.test(v), "validation.icd10"),
+  description: z.string().trim().min(2, "validation.required").max(1000, "validation.tooLong"),
+  kind: z.enum(["PRIMARY", "SECONDARY", "COMPLICATION"]).default("PRIMARY"),
 });
 
 export async function ownOpenEncounter(tx: Tx, encounterId: string, doctorProfileId: string | null) {

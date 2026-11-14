@@ -23,6 +23,8 @@ export const PLACEHOLDERS = [
   "patient.birthDate",
   "patient.mrn",
   "patient.sex",
+  "patient.age",
+  "patient.address",
   "visit.date",
   "doctor.fullName",
   "doctor.specialty",
@@ -35,14 +37,34 @@ export const PLACEHOLDERS = [
   "note.assessment",
   "note.plan",
   "diagnoses",
+  "diagnoses.primary",
+  "diagnoses.secondary",
+  "diagnoses.complications",
+  "vitals.bp",
+  "vitals.pulse",
+  "vitals.weight",
+  "vitals.height",
   "prescriptions",
   "today",
 ] as const;
 export type Placeholder = (typeof PLACEHOLDERS)[number];
 
-/** Replaces {{placeholder}} with values; unknown placeholders stay visible so mistakes are noticed. */
+/**
+ * Replaces {{placeholder}} with values; unknown placeholders stay visible so
+ * mistakes are noticed. A line whose placeholders are ALL known and empty is
+ * dropped ("Asorati: {{diagnoses.complications}}" disappears when there is none).
+ */
 export function renderDocument(content: string, values: Partial<Record<Placeholder, string>>): string {
-  return content.replace(/\{\{\s*([a-zA-Z.]+)\s*\}\}/g, (m, key: string) => ((PLACEHOLDERS as readonly string[]).includes(key) ? (values[key as Placeholder] ?? "") : m));
+  const known = (key: string) => (PLACEHOLDERS as readonly string[]).includes(key);
+  const re = /\{\{\s*([a-zA-Z.]+)\s*\}\}/g;
+  return content
+    .split("\n")
+    .flatMap((line) => {
+      const keys = [...line.matchAll(re)].map((m) => m[1]!);
+      if (keys.length && keys.every((k) => known(k) && !(values[k as Placeholder] ?? "").trim())) return [];
+      return [line.replace(re, (m, key: string) => (known(key) ? (values[key as Placeholder] ?? "") : m))];
+    })
+    .join("\n");
 }
 
 const sectionText = z.string().max(10_000, "validation.tooLong").default("");
@@ -141,6 +163,7 @@ export async function addStandardTemplates(ctx: ClinicContext, meta: RequestMeta
     { kind: "DOCUMENT", name: t("summaryName"), specialty: null, content: t("summaryBody") },
     { kind: "DOCUMENT", name: t("referralName"), specialty: null, content: t("referralBody") },
     { kind: "DOCUMENT", name: t("certificateName"), specialty: null, content: t("certificateBody") },
+    { kind: "DOCUMENT", name: t("cardioDocName"), specialty: "cardiology", content: t("cardioDocBody") },
     {
       kind: "NOTE",
       name: t("noteGeneralName"),

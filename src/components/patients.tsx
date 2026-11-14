@@ -8,8 +8,9 @@ export function patientName(p: { lastName: string; firstName: string; middleName
   return [p.lastName, p.firstName, p.middleName].filter(Boolean).join(" ");
 }
 
-/** Birth dates are calendar dates (no time zone): always format in UTC. */
-export async function formatBirthDate(d: Date) {
+/** Birth dates are calendar dates (no time zone): always format in UTC. Year-only births show just the year. */
+export async function formatBirthDate(d: Date, yearOnly = false) {
+  if (yearOnly) return String(d.getUTCFullYear());
   const format = await getFormatter();
   return format.dateTime(d, { dateStyle: "medium", timeZone: "UTC" });
 }
