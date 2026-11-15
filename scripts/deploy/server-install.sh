@@ -100,7 +100,11 @@ EOF
   chown root:itopmed "$ETC/itopmed.env" && chmod 0640 "$ETC/itopmed.env"
 fi
 
-ln -sfn "$REL" "$BASE/current.new" && mv -Tf "$BASE/current.new" "$BASE/current"
+swap_current() { ln -sfn "$REL" "$BASE/current.new" && mv -Tf "$BASE/current.new" "$BASE/current"; }
+# First install: the services need "current" from the start. Updates swap only after the
+# new release has started and migrated the database (a broken release never goes live).
+UPDATE=0; [ -L "$BASE/current" ] && UPDATE=1
+[ "$UPDATE" = 0 ] && swap_current
 PGBIN="$BASE/current/node_modules/@embedded-postgres/linux-x64/native/bin"
 
 log "systemd units"
@@ -182,11 +186,15 @@ systemctl daemon-reload
 
 log "Database"
 if [ ! -f "$HOME_DIR/pg/PG_VERSION" ]; then
-  ( set -a; . "$ETC/itopmed.env"; set +a; cd "$BASE/current/app"; runuser -p -u itopmed -- "$NODE" tasks.mjs db-init )
+  ( set -a; . "$ETC/itopmed.env"; set +a; cd "$REL/app"; runuser -p -u itopmed -- "$NODE" tasks.mjs db-init )
 fi
 systemctl enable --now itopmed-db.service
 for i in $(seq 1 30); do (exec 3<>"/dev/tcp/127.0.0.1/$DB_PORT") 2>/dev/null && break; sleep 1; done
-( set -a; . "$ETC/itopmed.env"; set +a; cd "$BASE/current/app"; runuser -p -u itopmed -- "$NODE" tasks.mjs migrate )
+if ! ( set -a; . "$ETC/itopmed.env"; set +a; cd "$REL/app"; runuser -p -u itopmed -- "$NODE" tasks.mjs migrate ); then
+  echo "Migration with the new release failed: the running version stays live; $REL removed." >&2
+  rm -rf "$REL"; exit 1
+fi
+[ "$UPDATE" = 1 ] && swap_current
 
 log "Starting the app and worker"
 systemctl enable itopmed-app.service itopmed-worker.service itopmed-backup.timer >/dev/null

@@ -11,6 +11,7 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { stripPrivate } from "./strip-private";
 import { build } from "esbuild";
 
 const ROOT = process.cwd();
@@ -116,6 +117,7 @@ async function main() {
   const app = path.join(OUT, "app");
   copy(path.join(ROOT, ".next-pkg", "standalone"), app);
   materializeLinks(path.join(ROOT, ".next-pkg", "standalone"), app);
+  stripPrivate(app);
   copy(path.join(ROOT, ".next-pkg", "static"), path.join(app, ".next-pkg", "static"));
   copy(path.join(ROOT, "public"), path.join(app, "public"));
   copy(path.join(ROOT, "prisma", "migrations"), path.join(OUT, "migrations"));

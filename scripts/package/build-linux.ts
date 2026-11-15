@@ -11,6 +11,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { build } from "esbuild";
+import { stripPrivate } from "./strip-private";
 
 const ROOT = process.cwd();
 const DIST = path.join(ROOT, "dist");
@@ -67,6 +68,7 @@ async function main() {
   const app = path.join(OUT, "app");
   fs.cpSync(path.join(ROOT, ".next-pkg", "standalone"), app, { recursive: true, dereference: true });
   materializeLinks(path.join(ROOT, ".next-pkg", "standalone"), app);
+  stripPrivate(app);
   fs.cpSync(path.join(ROOT, ".next-pkg", "static"), path.join(app, ".next-pkg", "static"), { recursive: true });
   fs.cpSync(path.join(ROOT, "public"), path.join(app, "public"), { recursive: true });
   fs.cpSync(path.join(ROOT, "prisma", "migrations"), path.join(app, "migrations"), { recursive: true });
