@@ -57,3 +57,21 @@ For a practice without a hosted server: one Windows/macOS/Linux computer runs th
 * Watch the worker log line `worker.pass` (sent / failed / skipped notifications).
 * Platform console → Audit → "Verify integrity" checks the audit hash chains on demand.
 * Incident response outline: docs/SECURITY-AND-PRIVACY.md.
+
+## 7. Linux server next to other projects (systemd + Nginx)
+
+Used for `itopmed.itoppos.uz` (Ubuntu 20.04, Nginx + certbot already serving other sites).
+
+1. On a Windows dev machine: `npm run package:linux` → `dist/itopmed-linux.tar.gz` (built here, so the server never runs a memory-hungry build).
+2. Copy it and the installer: `scp dist/itopmed-linux.tar.gz scripts/deploy/server-install.sh scripts/deploy/itopmed-admin.sh root@SERVER:/root/`
+3. On the server: `bash /root/server-install.sh /root/itopmed-linux.tar.gz DOMAIN` — the same command updates later.
+
+What it creates (and nothing else): user `itopmed`; `/opt/itopmed` (own Node.js, releases, `current` symlink, last 3 kept); `/var/lib/itopmed/pg` (own PostgreSQL, `127.0.0.1:54329`); `/etc/itopmed/itopmed.env` (secrets, 0640 root:itopmed — back it up, without it backups cannot be decrypted); `/var/backups/itopmed` (daily 03:30, 14 kept); units `itopmed-db`, `itopmed-app` (`127.0.0.1:3100`, MemoryMax 1.2 G), `itopmed-worker`, `itopmed-backup.timer`; one Nginx site file for the domain (tested with `nginx -t`, then only reloaded) and a certbot certificate for that domain only. Nginx overwrites `X-Forwarded-For` with `$remote_addr` (the app trusts the first address).
+
+- First SuperAdmin: `sudo /opt/itopmed/bin/itopmed-admin EMAIL "Full Name"` (asks for the password).
+- Email is `EMAIL_TRANSPORT=disabled` until an SMTP account exists: set `EMAIL_TRANSPORT=smtp` and `SMTP_URL=…` in `/etc/itopmed/itopmed.env`, then `systemctl restart itopmed-app itopmed-worker`.
+- Status/logs: `systemctl status itopmed-app` · `journalctl -u itopmed-app -n 100`.
+- Rollback: point `/opt/itopmed/current` at the previous folder in `/opt/itopmed/releases` and restart the three services (migrations are additive; restore a backup if a migration must be undone).
+
+### Automatic deploy from GitHub (`.github/workflows/deploy.yml`)
+Every push to `main` (or "Run workflow" in the Actions tab): lint, typecheck, i18n, tests → `npm run package:linux` on GitHub's runner → the release is piped over SSH to the server. The deploy key's public half sits in root's `authorized_keys` with `command="/opt/itopmed/bin/itopmed-deploy"` (no shell, no forwarding): it can only hand over a release, which is size- and SHA-256-checked before the bundled installer runs. Repository secret needed: `DEPLOY_SSH_KEY` (private half). Without it the workflow still checks and builds, and skips the deploy with a warning. The server's host key is pinned in the workflow.

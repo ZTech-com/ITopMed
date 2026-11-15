@@ -1,0 +1,65 @@
+# Push to main -> checks -> Linux release -> deploy to itopmed.itoppos.uz.
+# The server never builds (it shares its memory with other projects): it only
+# receives the release over SSH. The deploy key can do nothing but deploy: on the
+# server it is bound to /opt/itopmed/bin/itopmed-deploy (forced command).
+# Needs ONE repository secret: DEPLOY_SSH_KEY (Settings -> Secrets and variables -> Actions).
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Checks
+        run: |
+          npm run lint
+          npm run typecheck
+          npm run i18n:check
+          npm test
+
+      - name: Build the Linux release
+        run: |
+          npm run setup   # throwaway .env for the build only (random keys, never used on the server)
+          npm run package:linux
+
+      - name: Deploy
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "$DEPLOY_SSH_KEY" ]; then
+            echo "::warning::DEPLOY_SSH_KEY is not set - the release was built and checked but not deployed."
+            exit 0
+          fi
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          # Pinned host key of the server (no trust-on-first-use).
+          echo "45.138.158.60 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIATQ1nylZz37RohdrHeQsdG+06qkSt/hYiDmInDHWtNO" > ~/.ssh/known_hosts
+          f=dist/itopmed-linux.tar.gz
+          # Header "<bytes> <sha256>" lets the server reject a broken upload before installing.
+          { echo "$(stat -c %s "$f") $(sha256sum "$f" | cut -d' ' -f1)"; cat "$f"; } | ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes -o ServerAliveInterval=15 root@45.138.158.60
+          for i in $(seq 1 30); do curl -fsS https://itopmed.itoppos.uz/api/health && exit 0; sleep 4; done
+          echo "::error::The site does not answer after the deploy"; exit 1

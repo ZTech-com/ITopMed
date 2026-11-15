@@ -14,7 +14,7 @@ const schema = z.object({
   PORTAL_DATABASE_URL: z.string().startsWith("postgres"),
   APP_ENCRYPTION_KEY: base64Key,
   AUDIT_HMAC_KEY: base64Key,
-  EMAIL_TRANSPORT: z.enum(["dev-mailbox", "smtp"]).default("dev-mailbox"),
+  EMAIL_TRANSPORT: z.enum(["dev-mailbox", "smtp", "disabled"]).default("dev-mailbox"),
   SMTP_URL: z.string().optional(),
   EMAIL_FROM: z.string().default("ITop Med <no-reply@itopmed.example>"),
   /** "none" = SMS channel off. "dev-outbox" = SIMULATED (writes files locally). No real SMS provider is connected yet. */

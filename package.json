@@ -36,6 +36,7 @@
     "app:autostart": "tsx scripts/app.ts autostart",
     "docs:pdf": "tsx scripts/docs/build-pdf.ts",
     "package:win": "tsx scripts/package/build-win.ts",
+    "package:linux": "tsx scripts/package/build-linux.ts",
     "ui:audit": "tsx scripts/ui-audit.ts",
     "e2e:walkthrough": "tsx scripts/e2e-walkthrough.ts"
   },

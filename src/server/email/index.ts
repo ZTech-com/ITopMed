@@ -18,12 +18,18 @@ export interface EmailMessage {
  *  - dev-mailbox: SIMULATED delivery for local development. Messages are written
  *    to ./.dev-mailbox (git-ignored). Refused in production by env validation.
  *  - smtp: real delivery through the configured SMTP relay.
+ *  - disabled: no email is sent (a server without a mail account yet). Callers
+ *    get delivered = false, so the UI says the email was not sent.
  *
  * Emails must never contain clinical information. Invitation links are the
  * only secret they carry; those tokens are single-use and expire.
  */
 export async function sendEmail(msg: EmailMessage): Promise<{ delivered: boolean }> {
   const e = env();
+  if (e.EMAIL_TRANSPORT === "disabled") {
+    logger.info("email.disabled", { kind: "skipped" });
+    return { delivered: false };
+  }
   try {
     if (e.EMAIL_TRANSPORT === "smtp") {
       if (!e.SMTP_URL) throw new Error("SMTP_URL is not configured");
