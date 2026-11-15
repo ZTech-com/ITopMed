@@ -155,6 +155,53 @@ export async function addExtraServices(ctx: ClinicContext, raw: Record<string, u
   return (await billServices(ctx, { patientId: input.patientId, branchId: input.branchId, appointmentId: attach, billing: input, services }, meta))!;
 }
 
+export const payDebtSchema = z.object({
+  patientId: uuid,
+  amount: z.string().trim().default(""),
+  method: z.enum(PAYMENT_METHODS).default("CASH"),
+});
+
+/**
+ * Takes the patient's debt in one step at the desk: the amount (default: all of
+ * it) is spread over the open invoices, oldest first, as ordinary payments -
+ * so receipts, cash shift and audit work as for any payment. Cash opens the
+ * cashier's shift if needed. Returns what was paid and what is still owed.
+ */
+export async function payPatientDebt(ctx: ClinicContext, raw: Record<string, unknown>, meta: RequestMeta): Promise<{ paidMinor: bigint; leftMinor: bigint; invoiceIds: string[] }> {
+  requirePermission(ctx, "billing.payment");
+  const input = payDebtSchema.parse(raw);
+  const open = await inClinic(ctx, (tx) =>
+    tx.invoice.findMany({
+      where: { patientId: input.patientId, status: { in: ["ISSUED", "PARTIALLY_PAID"] }, ...(ctx.branchIds ? { branchId: { in: ctx.branchIds } } : {}) },
+      select: { id: true, branchId: true, totalMinor: true, paidMinor: true, currency: true },
+      orderBy: { issuedAt: "asc" },
+    }),
+  );
+  if (!open.length) throw new DomainError("errors.noDebt");
+  const currency = open[0]!.currency;
+  if (open.some((i) => i.currency !== currency)) throw new DomainError("errors.currencyMismatch");
+  const owed = open.reduce((s, i) => s + (i.totalMinor - i.paidMinor), 0n);
+  const amount = input.amount ? parseMoney(input.amount, currency) : owed;
+  if (amount === null || amount <= 0n) throw new DomainError("errors.invalidAmount");
+  if (amount > owed) throw new DomainError("errors.overpayment");
+
+  let left = amount;
+  const paidOn: string[] = [];
+  for (const inv of open) {
+    if (left === 0n) break;
+    const part = inv.totalMinor - inv.paidMinor < left ? inv.totalMinor - inv.paidMinor : left;
+    if (part <= 0n) continue;
+    if (input.method === "CASH" && ctx.permissions.has("cash.shift")) {
+      const shift = await inClinic(ctx, (tx) => tx.cashShift.findFirst({ where: { branchId: inv.branchId, cashierId: ctx.principal.user.id, status: "OPEN" }, select: { id: true } }));
+      if (!shift) await openShift(ctx, { branchId: inv.branchId, openingFloat: "0", currency }, meta);
+    }
+    await recordPayment(ctx, inv.id, { amount: minorToDecimalString(part, currency), method: input.method, idempotencyKey: uuidv7() }, meta);
+    paidOn.push(inv.id);
+    left -= part;
+  }
+  return { paidMinor: amount, leftMinor: owed - amount, invoiceIds: paidOn };
+}
+
 export interface MoneyStatus {
   totalMinor: bigint;
   paidMinor: bigint;

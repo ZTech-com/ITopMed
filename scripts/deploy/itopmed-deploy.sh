@@ -17,5 +17,5 @@ timeout 900 head -c "$size" > "$dir/release.tar.gz" || true
 got="$(stat -c %s "$dir/release.tar.gz")"
 [ "$got" = "$size" ] || { echo "Upload incomplete ($got of $size bytes); nothing installed" >&2; exit 3; }
 echo "$sum  $dir/release.tar.gz" | sha256sum -c --quiet - || { echo "Checksum mismatch; nothing installed" >&2; exit 3; }
-tar -xzf "$dir/release.tar.gz" -C "$dir" ./server-install.sh ./itopmed-admin.sh
+tar -xzf "$dir/release.tar.gz" -C "$dir" ./server-install.sh ./itopmed-admin.sh ./itopmed-clinic.sh
 bash "$dir/server-install.sh" "$dir/release.tar.gz" itopmed.itoppos.uz

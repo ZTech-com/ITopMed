@@ -1,0 +1,24 @@
+{
+  "name": "Farhod MedServis",
+  "slug": "farhod-medservis",
+  "practiceType": "MULTI_SPECIALTY",
+  "focusSpecialty": "cardiology",
+  "ownerIsDoctor": true,
+  "ownerFrontDesk": true,
+  "ownerHeadDoctor": true,
+  "address": "",
+  "contactPhone": "",
+  "planCode": "enterprise",
+  "priceList": [
+    "Kardiolog ko'ruvi — 100 000",
+    "Umumiy ayollar UZI — 100 000",
+    "Umumiy erkaklar UZI — 100 000",
+    "EXO (yurak UZI) — 120 000",
+    "Buyraklar UZI — 70 000",
+    "Hazm tizimi UZI — 70 000",
+    "Moyaklar UZI — 70 000",
+    "Qalqonsimon bez UZI — 70 000",
+    "Prostata bezi UZI — 70 000",
+    "EKG — 30 000"
+  ]
+}

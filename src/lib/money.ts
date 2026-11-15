@@ -38,3 +38,22 @@ export function minorToNumber(minor: bigint, currency = "UZS"): number {
 export function wrapCurrency(formatted: string): string {
   return formatted.replace(/[  ](?=[^\d  ]+$)/, " ").replace(/^([^\d\s  -]+)[  ]/, "$1 ");
 }
+
+const SOM: Record<string, string> = { "uz-Latn": "soʻm", "uz-Cyrl": "сўм", ru: "сум" };
+
+/**
+ * Same text in the browser as on the server ("70 000 soʻm"). Browsers ship
+ * without Uzbek number data and would print "UZS 70,000"; so'm amounts are
+ * therefore grouped here (no-break spaces inside the digits). Other
+ * currencies and English use Intl as usual.
+ */
+export function formatMoneyText(minor: bigint, currency: string, locale: string): string {
+  const value = minorToNumber(minor, currency);
+  const label = currency === "UZS" ? SOM[locale] : undefined;
+  if (!label) return wrapCurrency(new Intl.NumberFormat(locale, { style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value));
+  const negative = value < 0;
+  const [int, frac] = Math.abs(value).toFixed(2).split(".") as [string, string];
+  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  const decimals = frac === "00" ? "" : `,${frac}`;
+  return `${negative ? "−" : ""}${grouped}${decimals} ${label}`;
+}

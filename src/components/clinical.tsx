@@ -1,7 +1,7 @@
 import { AlertTriangle, ShieldCheck, ShieldX } from "lucide-react";
 import { getFormatter, getTranslations } from "next-intl/server";
 import type { FormState } from "@/lib/form-state";
-import { VITALS, VITAL_KINDS } from "@/server/emr/record";
+import { VITAL_KINDS } from "@/server/emr/record";
 import { Form, SelectField, SubmitButton, TextAreaField, TextField } from "./ui/form";
 import { Badge } from "./ui/primitives";
 
@@ -123,7 +123,7 @@ export async function VitalsTable({ vitals, timeZone }: { vitals: { id: string; 
         <li key={v.id} className="rounded-[12px] bg-sunken px-3 py-2">
           <p className="text-[12px] text-text-3">{t(`vital.${v.kind}` as never)}</p>
           <p className="text-[16px] font-semibold tabular-nums">
-            {v.value.toString()} <span className="text-[12px] font-normal text-text-3">{v.unit}</span>
+            {v.value.toString().replace(/.0+$/, "")} <span className="text-[12px] font-normal text-text-3">{t(`vitalUnit.${v.kind}` as never)}</span>
           </p>
           <p className="text-[11.5px] text-text-3">{format.dateTime(v.measuredAt, { dateStyle: "short", timeStyle: "short", timeZone })}</p>
         </li>
@@ -141,7 +141,7 @@ export async function VitalsForm({ action, slug, patientId, encounterId }: { act
       {encounterId ? <input type="hidden" name="encounterId" value={encounterId} /> : null}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {VITAL_KINDS.map((k) => (
-          <TextField key={k} name={k} label={`${t(`vital.${k}`)} (${VITALS[k].unit})`} inputMode="decimal" optionalLabel={undefined} />
+          <TextField key={k} name={k} label={`${t(`vital.${k}`)} (${t(`vitalUnit.${k}`)})`} inputMode="decimal" optionalLabel={undefined} />
         ))}
       </div>
       <SubmitButton variant="secondary">{t("clinic.visit.recordVitals")}</SubmitButton>

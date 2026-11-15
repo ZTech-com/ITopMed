@@ -67,8 +67,6 @@ export interface FileClinic {
   locale: string;
 }
 
-const UNIT_LABEL: Record<string, string> = { "mm[Hg]": "mmHg", Cel: "°C", "/min": "/min", "%": "%", kg: "kg", cm: "cm", "mmol/L": "mmol/L" };
-
 async function labels(locale: string) {
   const l: Locale = isLocale(locale) ? locale : DEFAULT_LOCALE;
   const messages = (await import(`../../../messages/${l}.json`)).default;
@@ -195,7 +193,7 @@ export async function patientWorkbook(d: PatientFileData, clinic: FileClinic): P
 
   // ── Vital signs ──
   const vRows: XRow[] = [{ cells: [L("date"), L("indicator"), L("value"), L("unit")], style: "header", height: 22 }];
-  for (const v of d.vitals) vRows.push({ cells: [at(v.measuredAt), { v: t(`vital.${v.kind}` as never), s: "cell" }, { v: Number(v.value), s: "number" }, { v: UNIT_LABEL[v.unit] ?? v.unit, s: "cell" }] });
+  for (const v of d.vitals) vRows.push({ cells: [at(v.measuredAt), { v: t(`vital.${v.kind}` as never), s: "cell" }, { v: Number(v.value), s: "number" }, { v: t(`vitalUnit.${v.kind}` as never) as string, s: "cell" }] });
   if (!d.vitals.length) vRows.push({ cells: [{ v: L("none"), s: "muted" }] });
   sheets.push({ name: L("sheetVitals"), columns: [17, 30, 10, 10], rows: vRows, freezeRows: 1 });
 

@@ -2,6 +2,7 @@ import { ConciergeBell, Printer, Receipt, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { moneyFormatter } from "@/components/money";
+import { minorToDecimalString } from "@/lib/money";
 import { PatientPicker, formatBirthDate, patientName } from "@/components/patients";
 import { ServicePicker } from "@/components/service-picker";
 import { Form, SelectField, SubmitButton, TextField } from "@/components/ui/form";
@@ -15,7 +16,8 @@ import { withAppContext } from "@/server/db";
 import { searchPatients } from "@/server/patients/patients";
 import { todayMoney } from "@/server/reception/desk";
 import { todayIn } from "@/server/scheduling/time";
-import { deskCheckInAction } from "../../../desk-actions";
+import { deskCheckInAction, payDebtAction } from "../../../desk-actions";
+import { PAYMENT_METHODS } from "@/server/billing/billing";
 
 /**
  * Qabulxona - the reception desk on one screen: find or register the patient,
@@ -23,7 +25,7 @@ import { deskCheckInAction } from "../../../desk-actions";
  * height/weight/blood pressure, choose the doctor -> queue number and print.
  * Today's queue with who paid what is on the right.
  */
-export default async function DeskPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ q?: string; patient?: string; done?: string; doctor?: string }> }) {
+export default async function DeskPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ q?: string; patient?: string; done?: string; doctor?: string; paid?: string }> }) {
   const { slug } = await params;
   const ctx = await requireClinic(slug, "queue.manage");
   const sp = await searchParams;
@@ -65,6 +67,8 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
   return (
     <div className="space-y-6">
       <PageHeader title={t("clinic.desk.title")} description={t("clinic.desk.subtitle")} />
+
+      {sp.paid && /^[d ]{1,20}$/.test(sp.paid) ? <Alert tone="success">{t("clinic.desk.debtPaid", { paid: sp.paid })}</Alert> : null}
 
       {done ? (
         <Card className="border-accent">
@@ -218,6 +222,18 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
                         {m ? <Badge tone={m.paidMinor >= m.totalMinor ? "success" : "warning"}>{money(m.paidMinor, m.currency)} / {money(m.totalMinor, m.currency)}</Badge> : null}
                         {owes > 0n ? <Badge tone="danger">{t("clinic.desk.debtShort", { amount: money(owes, ctx.tenant.currency) })}</Badge> : null}
                       </div>
+                      {owes > 0n && canPay ? (
+                        <details className="mt-2">
+                          <summary className="cursor-pointer text-[13px] font-medium text-accent">{t("clinic.desk.takeDebt")}</summary>
+                          <Form action={payDebtAction} className="mt-2 space-y-2">
+                            <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+                            <input type="hidden" name="patientId" value={a.patientId} />
+                            <TextField name="amount" label={t("clinic.desk.debtAmount")} hint={t("clinic.desk.debtAmountHint")} inputMode="decimal" placeholder={minorToDecimalString(owes, ctx.tenant.currency).replace(/.00$/, "")} />
+                            <SelectField name="method" label={t("clinic.desk.method")} defaultValue="CASH" options={PAYMENT_METHODS.map((pm) => ({ value: pm, label: t(`paymentMethod.${pm}` as never) }))} />
+                            <SubmitButton variant="secondary">{t("clinic.desk.takeDebtSubmit")}</SubmitButton>
+                          </Form>
+                        </details>
+                      ) : null}
                     </div>
                     <Link href={`${base}/desk/ticket/${a.id}?print=1`} target="_blank" className={buttonClass("ghost", "sm")} aria-label={t("clinic.desk.printTicket")}>
                       <Printer aria-hidden className="size-4" />

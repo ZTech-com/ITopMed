@@ -1304,7 +1304,13 @@
       "visitServicesHint": "Kerak bo'lsa qo'shimcha xizmat (EXO, EKG …) qo'shing: hozir to'lanadi yoki qarzga yoziladi.",
       "noServicesToday": "Bugun xizmat yozilmagan.",
       "addExtra": "Xizmatni qo'shish",
-      "extraAdded": "Xizmat qo'shildi."
+      "extraAdded": "Xizmat qo'shildi.",
+      "takeDebt": "Qarzni olish",
+      "debtAmount": "Summa",
+      "debtAmountHint": "Boʻsh qoldirilsa — butun qarz.",
+      "takeDebtSubmit": "Toʻlovni qabul qilish",
+      "debtPaid": "Qarz toʻlandi: {paid} soʻm.",
+      "debtPartlyPaid": "{paid} soʻm qabul qilindi. Qolgan qarz: {left} soʻm."
     },
     "data": {
       "title": "Maʼlumotlar qayerda saqlanadi",
@@ -1584,7 +1590,8 @@
     "folderNotWritable": "Bu papkaga yozib boʻlmadi. Boshqa papkani tanlang.",
     "localModeNoInternet": "Klinika lokal rejimda: internet xizmatlari oʻchiq. Avval sozlamalarda “Server / internet bilan” rejimini tanlang.",
     "accountExistsUseInvite": "Bu email bilan ITop Med hisobi allaqachon bor. “Email orqali taklif” usulini tanlang.",
-    "passwordOtherClinics": "Bu xodim boshqa klinikada ham ishlaydi — parolini faqat oʻzi “Parolni unutdingizmi?” orqali yoki ITop Med yordami tiklaydi."
+    "passwordOtherClinics": "Bu xodim boshqa klinikada ham ishlaydi — parolini faqat oʻzi “Parolni unutdingizmi?” orqali yoki ITop Med yordami tiklaydi.",
+    "noDebt": "Bu bemorning qarzi yoʻq."
   },
   "email": {
     "invitation": {
@@ -2555,5 +2562,16 @@
     "methods": "Toʻlov usuli",
     "indexFile": "Bemorlar roʻyxati",
     "file": "Fayl"
+  },
+  "vitalUnit": {
+    "SYSTOLIC_BP": "mm sim. ust.",
+    "DIASTOLIC_BP": "mm sim. ust.",
+    "HEART_RATE": "/daq",
+    "RESPIRATORY_RATE": "/daq",
+    "TEMPERATURE": "°C",
+    "SPO2": "%",
+    "WEIGHT": "kg",
+    "HEIGHT": "sm",
+    "BLOOD_GLUCOSE": "mmol/l"
   }
 }

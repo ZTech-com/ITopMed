@@ -1,7 +1,9 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { useFormResult } from "@/components/ui/form";
+import { formatMoneyText } from "@/lib/money";
 
 export interface PickerService {
   id: string;
@@ -26,9 +28,20 @@ export function ServicePicker({ services, withPayment, initial = [] }: { service
   const [chosen, setChosen] = useState<Set<string>>(new Set(initial));
   const [q, setQ] = useState("");
   const [mode, setMode] = useState<"full" | "partial" | "debt">("full");
+  // After a successful submit the same page stays open (e.g. extra services in a visit):
+  // clear the choice so a second click cannot bill the same services twice.
+  const result = useFormResult();
+  const [seenNonce, setSeenNonce] = useState(result.nonce);
+  if (result.nonce !== seenNonce) {
+    setSeenNonce(result.nonce);
+    if (result.ok) {
+      setChosen(new Set());
+      setMode("full");
+      setQ("");
+    }
+  }
   const currency = services[0]?.currency ?? "UZS";
-  const fmt = useMemo(() => new Intl.NumberFormat(locale, { style: "currency", currency, maximumFractionDigits: 0 }), [locale, currency]);
-  const money = (minor: bigint) => fmt.format(Number(minor / 100n));
+  const money = (minor: bigint) => formatMoneyText(minor, currency, locale);
   const total = services.filter((s) => chosen.has(s.id)).reduce((sum, s) => sum + BigInt(s.priceMinor), 0n);
   const visible = q.trim() ? services.filter((s) => s.name.toLowerCase().includes(q.trim().toLowerCase())) : services;
   const toggle = (id: string) =>

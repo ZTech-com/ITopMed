@@ -8,7 +8,8 @@ import { requireClinic } from "@/server/auth/guards";
 import { saveLetterhead } from "@/server/clinic/branding";
 import { importPriceList } from "@/server/clinic/price-list";
 import { requestMeta } from "@/server/http";
-import { addExtraServices, deskCheckIn } from "@/server/reception/desk";
+import { addExtraServices, deskCheckIn, payPatientDebt } from "@/server/reception/desk";
+import { minorToDecimalString } from "@/lib/money";
 
 async function clinicFrom(fd: FormData) {
   const slug = String(fd.get("$slug") ?? "");
@@ -45,6 +46,22 @@ export async function extraServicesAction(_: FormState, fd: FormData): Promise<F
   const back = String(fd.get("$back") ?? "");
   if (back.startsWith(`/c/${slug}/`)) revalidatePath(back);
   return { ok: true, message: "clinic.desk.extraAdded", nonce: Date.now() };
+}
+
+/** Desk queue: take the patient's debt (all of it by default) in one step. */
+export async function payDebtAction(_: FormState, fd: FormData): Promise<FormState> {
+  const { slug, ctx } = await clinicFrom(fd);
+  let r: Awaited<ReturnType<typeof payPatientDebt>>;
+  try {
+    r = await payPatientDebt(ctx, raw(fd), await requestMeta());
+  } catch (e) {
+    return toFormState(e, fd);
+  }
+  revalidatePath(`/c/${slug}/desk`);
+  const fmt = (m: bigint) => minorToDecimalString(m, ctx.tenant.currency).replace(/.00$/, "").replace(/B(?=(d{3})+(?!d))/g, " ");
+  // Fully paid: the row's form disappears with the debt, so confirm at page level (amount only, no patient data in the URL).
+  if (r.leftMinor === 0n) redirect(`/c/${slug}/desk?paid=${encodeURIComponent(fmt(r.paidMinor))}`);
+  return { ok: true, message: "clinic.desk.debtPartlyPaid", messageValues: { paid: fmt(r.paidMinor), left: fmt(r.leftMinor) }, nonce: Date.now() };
 }
 
 export async function priceListAction(_: FormState, fd: FormData): Promise<FormState> {

@@ -1304,7 +1304,13 @@
       "visitServicesHint": "Add a service if needed (echo, ECG …): paid now or left as debt.",
       "noServicesToday": "No services recorded today.",
       "addExtra": "Add the service",
-      "extraAdded": "Service added."
+      "extraAdded": "Service added.",
+      "takeDebt": "Take debt payment",
+      "debtAmount": "Amount",
+      "debtAmountHint": "Leave empty for the whole debt.",
+      "takeDebtSubmit": "Take payment",
+      "debtPaid": "Debt paid: {paid} UZS.",
+      "debtPartlyPaid": "Received {paid} UZS. Debt left: {left} UZS."
     },
     "data": {
       "title": "Where the data is kept",
@@ -1584,7 +1590,8 @@
     "folderNotWritable": "Could not write to this folder. Choose another one.",
     "localModeNoInternet": "The clinic is in local mode: internet services are off. First choose “With server / internet” in the settings.",
     "accountExistsUseInvite": "An ITop Med account with this email already exists. Choose “Invitation by email”.",
-    "passwordOtherClinics": "This person also works at another clinic — only they (“Forgot password?”) or ITop Med support can reset the password."
+    "passwordOtherClinics": "This person also works at another clinic — only they (“Forgot password?”) or ITop Med support can reset the password.",
+    "noDebt": "This patient has no debt."
   },
   "email": {
     "invitation": {
@@ -2555,5 +2562,16 @@
     "methods": "Payment method",
     "indexFile": "Patient list",
     "file": "File"
+  },
+  "vitalUnit": {
+    "SYSTOLIC_BP": "mmHg",
+    "DIASTOLIC_BP": "mmHg",
+    "HEART_RATE": "/min",
+    "RESPIRATORY_RATE": "/min",
+    "TEMPERATURE": "°C",
+    "SPO2": "%",
+    "WEIGHT": "kg",
+    "HEIGHT": "cm",
+    "BLOOD_GLUCOSE": "mmol/L"
   }
 }

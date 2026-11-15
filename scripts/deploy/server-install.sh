@@ -233,6 +233,7 @@ nginx -t && systemctl reload nginx
 log "Helper commands"
 install -d -m 0755 "$BASE/bin"
 install -m 0755 "$(dirname "$0")/itopmed-admin.sh" "$BASE/bin/itopmed-admin" 2>/dev/null || true
+install -m 0755 "$(dirname "$0")/itopmed-clinic.sh" "$BASE/bin/itopmed-clinic" 2>/dev/null || true
 
 log "Old releases (keep the latest 3)"
 ls -1dt "$BASE"/releases/* | tail -n +4 | xargs -r rm -rf

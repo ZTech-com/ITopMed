@@ -5,7 +5,7 @@ import { importPriceList, parsePriceLine } from "@/server/clinic/price-list";
 import { listServices } from "@/server/clinic/resources";
 import { getInvoice } from "@/server/billing/billing";
 import { getPatient } from "@/server/patients/patients";
-import { addExtraServices, deskCheckIn, todayMoney, todayVitals } from "@/server/reception/desk";
+import { addExtraServices, deskCheckIn, payPatientDebt, todayMoney, todayVitals } from "@/server/reception/desk";
 import { parseBirthInput } from "@/server/patients/patients";
 import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
@@ -107,6 +107,18 @@ describe("reception desk", () => {
     const extra = await addExtraServices(fullDoctor.ctx, { patientId: first.patientId, branchId: branch!.id, appointmentId: first.appointmentId, serviceIds: [sid("EXO")], payMode: "debt" }, META);
     expect(extra).toBeTruthy();
     expect((await todayMoney(fullDoctor.ctx, [first.patientId])).debt.get(first.patientId)).toBe(20_000_000n);
+
+    // The desk takes the debt in one step over both invoices: part first, then the rest.
+    await expect(payPatientDebt(desk.ctx, { patientId: first.patientId, amount: "999999999", method: "CASH" }, META)).rejects.toThrow("errors.overpayment");
+    const part = await payPatientDebt(desk.ctx, { patientId: first.patientId, amount: "100000", method: "CASH" }, META);
+    expect(part.leftMinor).toBe(10_000_000n);
+    expect(part.invoiceIds).toHaveLength(2); // 80 000 of the visit, then 20 000 of the echo
+    const rest = await payPatientDebt(desk.ctx, { patientId: first.patientId, method: "CARD" }, META);
+    expect(rest).toMatchObject({ paidMinor: 10_000_000n, leftMinor: 0n });
+    expect((await todayMoney(desk.ctx, [first.patientId])).debt.get(first.patientId)).toBe(0n);
+    await expect(payPatientDebt(desk.ctx, { patientId: first.patientId }, META)).rejects.toThrow("errors.noDebt");
+    // A doctor without the cashier role cannot take money.
+    await expect(payPatientDebt(doctor.ctx, { patientId: first.patientId }, META)).rejects.toThrow("errors.forbidden");
   });
 
   it("possible duplicates stop registration until confirmed", async () => {
