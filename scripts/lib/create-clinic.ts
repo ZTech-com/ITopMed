@@ -14,6 +14,9 @@ import { loginClinicUser, logoutClinic, resolveClinic, validateClinicSession } f
 import type { PlatformPrincipal, RequestMeta } from "../../src/server/auth/platform-auth";
 import { applyPendingSetup } from "../../src/server/clinic/practice";
 import { importPriceList } from "../../src/server/clinic/price-list";
+import { issuePasswordReset } from "../../src/server/auth/password-reset";
+import { env } from "../../src/server/env";
+import { suggestPassword } from "../../src/server/security/password";
 import { listServices, setServiceArchived } from "../../src/server/clinic/resources";
 import { recordAudit } from "../../src/server/audit";
 import { platformDb, withAppContext, withPlatform } from "../../src/server/db";
@@ -38,7 +41,16 @@ export type ClinicSpec = z.infer<typeof clinicSpecSchema>;
 
 const META: RequestMeta = { ip: "127.0.0.1", userAgent: "itopmed-clinic (server task)", requestId: null };
 
-export async function createClinicFromSpec(specFile: string, ownerEmail: string, ownerName: string, password: string) {
+/** How long the owner's "set your password" link (when no password is given) stays valid. */
+export const ACTIVATION_LINK_HOURS = 72;
+
+/**
+ * With `password` null the owner gets a temporary random password nobody sees,
+ * and the result carries a one-time link where the owner sets their own
+ * password (valid ACTIVATION_LINK_HOURS; sent by the operator, e.g. in Telegram).
+ */
+export async function createClinicFromSpec(specFile: string, ownerEmail: string, ownerName: string, givenPassword: string | null) {
+  const password = givenPassword ?? `${suggestPassword()}-${suggestPassword()}`;
   const spec = clinicSpecSchema.parse(JSON.parse(fs.readFileSync(specFile, "utf8")));
   const admin = await platformDb().platformUser.findFirst({ where: { role: "SUPER_ADMIN", status: "ACTIVE" }, orderBy: { createdAt: "asc" } });
   if (!admin) throw new Error("No active SuperAdmin: create one first (itopmed-admin).");
@@ -101,7 +113,13 @@ export async function createClinicFromSpec(specFile: string, ownerEmail: string,
         }
       }
     }
-    return { slug: created.slug, prices, archived };
+    let activationLink: string | null = null;
+    if (givenPassword === null) {
+      const r = await issuePasswordReset(ownerEmail, META, { ttlMinutes: ACTIVATION_LINK_HOURS * 60 });
+      if (!r) throw new Error("Could not create the owner's activation link");
+      activationLink = `${env().APP_URL.replace(/\/$/, "")}/reset-password/${r.token}`;
+    }
+    return { slug: created.slug, prices, archived, activationLink };
   } finally {
     await logoutClinic(login.token);
   }

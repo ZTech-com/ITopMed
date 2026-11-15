@@ -20,7 +20,7 @@ export const RESET_TTL_MINUTES = 30;
  * endpoint cannot be used to discover which emails have accounts.
  * Platform staff are reset by a SUPER_ADMIN, not by self-service.
  */
-export async function issuePasswordReset(emailRaw: string, meta: RequestMeta) {
+export async function issuePasswordReset(emailRaw: string, meta: RequestMeta, opts: { ttlMinutes?: number } = {}) {
   const parsed = emailSchema.safeParse(emailRaw);
   if (!parsed.success) return null;
   const email = parsed.data;
@@ -39,7 +39,7 @@ export async function issuePasswordReset(emailRaw: string, meta: RequestMeta) {
     // Only the newest link works.
     await tx.passwordReset.updateMany({ where: { userId: user.id, usedAt: null }, data: { usedAt: now } });
     await tx.passwordReset.create({
-      data: { id: uuidv7(), userId: user.id, tokenHash: sha256Hex(token), expiresAt: new Date(now.getTime() + RESET_TTL_MINUTES * 60_000), ipHash },
+      data: { id: uuidv7(), userId: user.id, tokenHash: sha256Hex(token), expiresAt: new Date(now.getTime() + (opts.ttlMinutes ?? RESET_TTL_MINUTES) * 60_000), ipHash },
     });
     await recordAudit(tx, { actorType: "ANONYMOUS", action: "password_reset.requested", entityType: "User", entityId: user.id, ipHash, userAgent: meta.userAgent });
     const u = await tx.user.findUniqueOrThrow({ where: { id: user.id }, select: { fullName: true, locale: true } });

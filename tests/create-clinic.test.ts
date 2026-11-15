@@ -28,4 +28,22 @@ describe("server task: open a clinic ready to work", () => {
     // The owner's session used by the task is signed out again; the owner still signs in normally.
     expect(ctx.tenant.status).toBe("ACTIVE");
   });
+
+  it("with --link: no password is typed; the owner sets it through a one-time link", async () => {
+    await platformActor();
+    const slug = uniq("farhodlink").toLowerCase();
+    const spec = JSON.parse(fs.readFileSync("scripts/deploy/clinics/farhod-medservis.json", "utf8"));
+    const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "itm-spec-")), "spec.json");
+    fs.writeFileSync(file, JSON.stringify({ ...spec, name: "Synthetic Farhod Link", slug }));
+    const email = `${uniq("owner")}@clinic.test`;
+    const r = await createClinicFromSpec(file, email, "Synthetic Owner", null);
+    expect(r.activationLink).toMatch(/\/reset-password\/[a-z2-7]{20,64}$/);
+    const token = r.activationLink!.split("/").pop()!;
+    const { resetPassword, isResetTokenValid } = await import("@/server/auth/password-reset");
+    expect(await isResetTokenValid(token)).toBe(true);
+    await resetPassword(token, { password: PASSWORD, confirmPassword: PASSWORD }, { ip: "127.0.0.1" });
+    expect(await isResetTokenValid(token)).toBe(false); // single use
+    const ctx = await clinicContext(email, slug);
+    expect(ctx.roleKeys).toContain("head_doctor");
+  });
 });

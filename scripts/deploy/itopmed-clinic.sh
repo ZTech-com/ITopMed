@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Open a clinic ready to work from a spec (asks for the owner's password; it is never put on the command line).
-#   sudo /opt/itopmed/bin/itopmed-clinic farhod-medservis owner@example.uz "Owner Full Name"
+#   sudo /opt/itopmed/bin/itopmed-clinic farhod-medservis owner@example.uz "Owner Full Name"          (asks the password)
+#   sudo /opt/itopmed/bin/itopmed-clinic farhod-medservis owner@example.uz "Owner Full Name" --link   (prints a one-time link; the owner sets it)
 set -euo pipefail
 SPEC="${1:?clinic spec name, e.g. farhod-medservis}"; EMAIL="${2:?owner email}"; NAME="${3:?owner full name}"
 FILE="/opt/itopmed/current/clinics/$SPEC.json"
 [ -f "$FILE" ] || { echo "No such clinic spec: $FILE" >&2; ls /opt/itopmed/current/clinics >&2; exit 1; }
 set -a; . /etc/itopmed/itopmed.env; set +a
 cd /opt/itopmed/current/app
-exec runuser -p -u itopmed -- /opt/itopmed/node/bin/node tasks.mjs create-clinic "$FILE" "$EMAIL" "$NAME"
+exec runuser -p -u itopmed -- /opt/itopmed/node/bin/node tasks.mjs create-clinic "$FILE" "$EMAIL" "$NAME" "${4:-}"

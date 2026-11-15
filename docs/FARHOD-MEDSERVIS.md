@@ -2,30 +2,17 @@
 
 Manzil: **https://itopmed.itoppos.uz/login** (internet orqali). Hech narsa o'rnatilmaydi.
 
-## 0. Klinikani ochish (serverda, 1 marta, ~1 daqiqa)
-Serverga kiring (`ssh root@45.138.158.60`) va bitta buyruqni bajaring. Email va ismni Farhod akaniki bilan almashtiring:
+## 0. Klinika ochilgan (15.11.2026)
+- Manzil: **https://itopmed.itoppos.uz/c/farhod-medservis**
+- Egasi va shifokor: **Qoraboyev Farhod**. Login hozircha SuperAdmin'ning emaili — keyin almashtirish mumkin.
+- Parol: Telegram orqali yuborilgan **bir martalik havola** bilan Farhod aka o'zi qo'yadi. Havola 72 soat amal qiladi va faqat bir marta ishlaydi.
+- Havola eskirsa, serverda yangisini chiqaring: **Parolni unutdingizmi?** yoki SuperAdmin'dan so'rang.
+- **Yangilanish:** dastur serverda turadi. Har bir yangi versiya hammaga o'zi yetib boradi, klinikada hech narsa qilish kerak emas.
+
+Boshqa klinikani shu tarzda ochish (serverda):
 ```bash
-/opt/itopmed/bin/itopmed-clinic farhod-medservis farhod-email@example.uz "Qoraboyev Farhod"
+/opt/itopmed/bin/itopmed-clinic farhod-medservis email@example.uz "Ism Familiya" --link
 ```
-- Buyruq Farhod aka uchun **parol** so'raydi (2 marta). Parol kamida 12 belgidan iborat bo'lsin va ichida harf ham, raqam ham bo'lsin. Yozganda ekranda ko'rinmaydi — bu normal.
-- Klinika tayyor holda ochiladi:
-  - **Xizmatlar va narxlar**:
-    - Kardiolog ko'ruvi — 100 000
-    - Umumiy ayollar UZI — 100 000
-    - Umumiy erkaklar UZI — 100 000
-    - EXO — 120 000
-    - Buyraklar UZI — 70 000
-    - Hazm tizimi UZI — 70 000
-    - Moyaklar UZI — 70 000
-    - Qalqonsimon bez UZI — 70 000
-    - Prostata bezi UZI — 70 000
-    - EKG — 30 000
-  - **"Kardiolog ko'ruvi"** blanki (narxsiz chop etiladi) va ko'rik shablonlari.
-  - **Farhod aka** quyidagi rollarni oladi:
-    - klinika egasi;
-    - shifokor (kardiolog);
-    - bosh shifokor;
-    - registrator va kassir — ya'ni qabulxona funksiyalari ham, to'lovlar ham unda bor.
 
 ## 1. Klinikada — Farhod akaning kompyuterida (10 daqiqa)
 1. Chrome yoki Edge'da **itopmed.itoppos.uz/login** ni oching → email va parol bilan kiring.
