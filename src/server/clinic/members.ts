@@ -5,6 +5,7 @@ import type { ClinicContext } from "../auth/clinic-auth";
 import type { RequestMeta } from "../auth/platform-auth";
 import { withAppContext, type Tx } from "../db";
 import { hashIp } from "../security/crypto";
+import { hashPassword, passwordSchema } from "../security/password";
 import { DomainError } from "../tenancy/provisioning";
 
 const OWNER = "clinic_owner";
@@ -112,6 +113,25 @@ export async function setMemberStatus(ctx: ClinicContext, membershipId: string, 
     if (isOwner && action !== "reactivate" && (await activeOwnerCount(tx, ctx, target.id)) === 0) throw new DomainError("errors.lastOwner");
     await tx.membership.update({ where: { id: membershipId }, data: { status: next } });
     await audit(tx, ctx, meta, `membership.${action}`, membershipId, { from: target.status, to: next });
+  });
+}
+
+/**
+ * Gives a member a new password chosen by the administrator (who hands it
+ * over in person). Same guardrails as the MFA reset, re-checked in the
+ * database; all of the member's sessions are signed out. Audited.
+ */
+export async function setMemberPassword(ctx: ClinicContext, membershipId: string, raw: unknown, meta: RequestMeta) {
+  const password = passwordSchema.parse((raw as { password?: unknown })?.password);
+  const hash = await hashPassword(password);
+  await inClinic(ctx, async (tx) => {
+    const target = await loadTarget(tx, ctx, membershipId);
+    assertCanModify(ctx, target);
+    if (target.status === "REMOVED") throw new DomainError("errors.invalidTransition");
+    const rows = await tx.$queryRaw<{ result: string }[]>`SELECT app_set_member_password(${target.userId}::uuid, ${hash}) AS result`;
+    const result = rows[0]?.result ?? "forbidden";
+    if (result !== "ok") throw new DomainError(result === "other_clinics" ? "errors.passwordOtherClinics" : (RESET_ERRORS[result] ?? "errors.forbidden"));
+    await audit(tx, ctx, meta, "membership.password_set", membershipId);
   });
 }
 

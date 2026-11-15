@@ -415,7 +415,17 @@
       "colName": "Ism",
       "colRoles": "Rollar",
       "colStatus": "Holat",
-      "colLastLogin": "Soʻnggi kirish"
+      "colLastLogin": "Soʻnggi kirish",
+      "addHint": "Har bir xodim oʻz email va paroli bilan kiradi. Bitta hisobdan bir nechta kishi foydalanmasin.",
+      "access": "Kirish usuli",
+      "accessPassword": "Parolni hozir beraman",
+      "accessPasswordHint": "Hisob darhol yaratiladi. Parolni xodimga oʻzingiz bering (email kerak emas).",
+      "accessInvite": "Email orqali taklif",
+      "accessInviteHint": "Xodimga xat boradi va u parolni oʻzi qoʻyadi. Email sozlangan boʻlishi kerak.",
+      "password": "Xodimning paroli",
+      "passwordHint": "Kamida 12 belgi, harf va raqam. Shu parolni xodimga yozib bering.",
+      "add": "Xodimni qoʻshish",
+      "created": "Tayyor: {email} hisobi yaratildi. Endi u shu email va siz bergan parol bilan kiradi."
     },
     "audit": {
       "title": "Faoliyat jurnali",
@@ -463,7 +473,11 @@
       "mfaResetHint": "Xodim telefonini yo'qotgan va tiklash kodlari qolmagan bo'lsa foydalaning. Avval uning shaxsini yuzma-yuz tasdiqlang. Uning seanslari yakunlanadi va keyingi kirishda yangi autentifikatorni sozlaydi.",
       "mfaResetConfirm": "Men bu xodimning shaxsini yuzma-yuz tasdiqladim.",
       "mfaResetSubmit": "Ikki bosqichli tekshiruvni qayta o'rnatish",
-      "mfaResetDone": "Ikki bosqichli tekshiruv qayta o'rnatildi."
+      "mfaResetDone": "Ikki bosqichli tekshiruv qayta o'rnatildi.",
+      "passwordTitle": "Yangi parol berish",
+      "passwordHint": "Xodim parolini unutsa: yangi parol bering va uni xodimga oʻzingiz yetkazing. Uning barcha ochiq seanslari yopiladi.",
+      "passwordSubmit": "Parolni almashtirish",
+      "passwordSet": "Parol almashtirildi. Yangi parolni xodimga bering."
     },
     "supportAccess": {
       "title": "Qoʻllab-quvvatlash kirishi",
@@ -1568,7 +1582,9 @@
     "needsHeadDoctor": "Buning uchun “Bosh shifokor” roli kerak.",
     "folderInvalid": "Papkaning toʻliq manzilini yozing (masalan C:\\...).",
     "folderNotWritable": "Bu papkaga yozib boʻlmadi. Boshqa papkani tanlang.",
-    "localModeNoInternet": "Klinika lokal rejimda: internet xizmatlari oʻchiq. Avval sozlamalarda “Server / internet bilan” rejimini tanlang."
+    "localModeNoInternet": "Klinika lokal rejimda: internet xizmatlari oʻchiq. Avval sozlamalarda “Server / internet bilan” rejimini tanlang.",
+    "accountExistsUseInvite": "Bu email bilan ITop Med hisobi allaqachon bor. “Email orqali taklif” usulini tanlang.",
+    "passwordOtherClinics": "Bu xodim boshqa klinikada ham ishlaydi — parolini faqat oʻzi “Parolni unutdingizmi?” orqali yoki ITop Med yordami tiklaydi."
   },
   "email": {
     "invitation": {

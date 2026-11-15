@@ -1,13 +1,14 @@
 import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
-import { Form, SubmitButton } from "@/components/ui/form";
+import { Form, SubmitButton, TextField } from "@/components/ui/form";
 import { Alert, Badge, Card, CardBody, CardHeader, DescriptionList, PageHeader, STATUS_TONE, buttonClass } from "@/components/ui/primitives";
 import { requireClinic } from "@/server/auth/guards";
 import { listOperationalBranches } from "@/server/clinic/context";
 import { getMember } from "@/server/clinic/members";
 import { listRoles } from "@/server/clinic/roles";
 import { DomainError } from "@/server/tenancy/provisioning";
-import { memberAccessAction, memberMfaResetAction, memberStatusAction } from "../../../../clinic-actions";
+import { memberAccessAction, memberMfaResetAction, memberPasswordAction, memberStatusAction } from "../../../../clinic-actions";
+import { suggestPassword } from "@/server/security/password";
 
 const choice =
   "flex min-h-11 cursor-pointer items-center gap-3 rounded-[var(--radius-control)] border border-border bg-surface-2 px-3 text-[14px] has-[:checked]:border-accent has-[:checked]:bg-accent-soft";
@@ -118,6 +119,22 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
                   <button name="op" value="remove" className={buttonClass("danger")}>{t("clinic.member.remove")}</button>
                 ) : null}
               </div>
+            </Form>
+          </CardBody>
+        </Card>
+      ) : null}
+
+      {canEdit && member.status !== "REMOVED" ? (
+        <Card className="mt-6">
+          <CardHeader title={t("clinic.member.passwordTitle")} description={t("clinic.member.passwordHint")} />
+          <CardBody>
+            <Form action={memberPasswordAction}>
+              <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+              <input type="hidden" name="membershipId" value={member.id} />
+              <div className="max-w-sm">
+                <TextField name="password" label={t("clinic.staff.password")} hint={t("clinic.staff.passwordHint")} defaultValue={suggestPassword()} autoComplete="new-password" />
+              </div>
+              <SubmitButton variant="secondary">{t("clinic.member.passwordSubmit")}</SubmitButton>
             </Form>
           </CardBody>
         </Card>

@@ -18,13 +18,13 @@ import {
 } from "@/server/auth/clinic-auth";
 import { clearClinicCookie, readClinicToken, setClinicSessionCookie } from "@/server/auth/cookies";
 import { requireClinic } from "@/server/auth/guards";
-import { createBranch, inviteStaff, updateClinicSettings } from "@/server/clinic/admin";
+import { createBranch, createStaffWithPassword, inviteStaff, updateClinicSettings } from "@/server/clinic/admin";
 import { requestMeta } from "@/server/http";
 import { acceptInvitation, acceptInvitationAsExistingUser } from "@/server/tenancy/invitations";
 import { safeNext } from "@/lib/safe-next";
 import { requestPasswordReset, resetPassword } from "@/server/auth/password-reset";
 import { createRole, deleteRole, updateRole } from "@/server/clinic/roles";
-import { resetMemberMfa, setMemberStatus, updateMemberAccess, type MemberStatusAction } from "@/server/clinic/members";
+import { resetMemberMfa, setMemberPassword, setMemberStatus, updateMemberAccess, type MemberStatusAction } from "@/server/clinic/members";
 import { decideGrant, type GrantDecision } from "@/server/support/access";
 import { getClinicPrincipal, requireClinicUser } from "@/server/auth/guards";
 
@@ -138,7 +138,14 @@ export async function inviteStaffAction(_: FormState, fd: FormData): Promise<For
   const slug = String(fd.get("$slug"));
   const ctx = await requireClinic(slug, "staff.manage");
   try {
-    const r = await inviteStaff(ctx, { fullName: fd.get("fullName"), email: fd.get("email"), roleKeys: fd.getAll("roleKeys") }, await requestMeta());
+    const input = { fullName: fd.get("fullName"), email: fd.get("email"), roleKeys: fd.getAll("roleKeys") };
+    if (fd.get("access") !== "invite") {
+      await createStaffWithPassword(ctx, { ...input, password: fd.get("password") }, await requestMeta());
+      revalidatePath(`/c/${slug}/staff`);
+      // The password is not echoed back: the administrator has just typed or copied it.
+      return { ok: true, message: "clinic.staff.created", messageValues: { email: String(fd.get("email") ?? "") }, nonce: Date.now() };
+    }
+    const r = await inviteStaff(ctx, input, await requestMeta());
     revalidatePath(`/c/${slug}/staff`);
     // The invitation token is delivered only by email and never returned to the browser.
     return { ok: true, message: r.delivered ? "clinic.staff.invited" : "clinic.staff.invitedNoEmail", nonce: Date.now() };
@@ -259,6 +266,17 @@ export async function memberStatusAction(_: FormState, fd: FormData): Promise<Fo
   }
   revalidatePath(`/c/${slug}/staff`, "layout");
   return { ok: true, message: "clinic.member.statusChanged", nonce: Date.now() };
+}
+
+export async function memberPasswordAction(_: FormState, fd: FormData): Promise<FormState> {
+  const slug = String(fd.get("$slug"));
+  const ctx = await requireClinic(slug, "staff.manage");
+  try {
+    await setMemberPassword(ctx, String(fd.get("membershipId")), { password: fd.get("password") }, await requestMeta());
+  } catch (e) {
+    return toFormState(e);
+  }
+  return { ok: true, message: "clinic.member.passwordSet", nonce: Date.now() };
 }
 
 export async function memberMfaResetAction(_: FormState, fd: FormData): Promise<FormState> {

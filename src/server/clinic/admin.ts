@@ -7,6 +7,8 @@ import type { RequestMeta } from "../auth/platform-auth";
 import type { Permission } from "../authz/permissions";
 import { withAppContext, type Tx } from "../db";
 import { hashIp, randomToken, sha256Hex, uuidv7 } from "../security/crypto";
+import { passwordSchema } from "../security/password";
+import { acceptInvitation } from "../tenancy/invitations";
 import { DomainError, INVITATION_TTL_HOURS, deliverInvitation } from "../tenancy/provisioning";
 
 export function can(ctx: ClinicContext, permission: Permission) {
@@ -89,7 +91,7 @@ export const inviteStaffSchema = z.object({
 });
 
 /** Individual accounts only: each staff member gets a personal, expiring invitation. */
-export async function inviteStaff(ctx: ClinicContext, raw: unknown, meta: RequestMeta) {
+export async function inviteStaff(ctx: ClinicContext, raw: unknown, meta: RequestMeta, opts: { deliver?: boolean } = {}) {
   require(ctx, "staff.manage");
   const input = inviteStaffSchema.parse(raw);
   if (input.roleKeys.includes("clinic_owner") && !ctx.roleKeys.includes("clinic_owner")) throw new DomainError("errors.forbidden");
@@ -116,9 +118,28 @@ export async function inviteStaff(ctx: ClinicContext, raw: unknown, meta: Reques
     });
     await audit(tx, ctx, meta, { action: "invitation.created", entityType: "Invitation", entityId: id, metadata: { roles: input.roleKeys } });
   });
-  const { delivered } = await deliverInvitation({ to: input.email, name: input.fullName, clinicName: ctx.tenant.name, locale: ctx.tenant.defaultLocale, token });
+  const { delivered } = opts.deliver === false ? { delivered: false } : await deliverInvitation({ to: input.email, name: input.fullName, clinicName: ctx.tenant.name, locale: ctx.tenant.defaultLocale, token });
   // `token` is returned for automated tests only; server actions must never send it to the browser.
   return { invitationId: id, delivered, token };
+}
+
+export const staffPasswordSchema = z.object({ password: passwordSchema });
+
+/**
+ * Creates a staff account right away with a password the administrator gives
+ * to the person (no email needed: the clinic's own computer, or a server without
+ * SMTP). Same checks as an invitation; the password is never stored in clear
+ * and never shown again. Only for e-mail addresses without an ITop Med account.
+ */
+export async function createStaffWithPassword(ctx: ClinicContext, raw: unknown, meta: RequestMeta) {
+  require(ctx, "staff.manage");
+  const input = inviteStaffSchema.parse(raw);
+  const { password } = staffPasswordSchema.parse(raw);
+  const exists = await inClinic(ctx, (tx) => tx.$queryRaw<{ id: string }[]>`SELECT id FROM app_auth_lookup_user(${input.email})`);
+  if (exists.length > 0) throw new DomainError("errors.accountExistsUseInvite");
+  const r = await inviteStaff(ctx, input, meta, { deliver: false });
+  await acceptInvitation(r.token, { fullName: input.fullName, password, confirmPassword: password }, meta);
+  return { invitationId: r.invitationId };
 }
 
 export async function listClinicAudit(ctx: ClinicContext, take = 100) {

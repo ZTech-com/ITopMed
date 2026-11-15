@@ -415,7 +415,17 @@
       "colName": "Name",
       "colRoles": "Roles",
       "colStatus": "Status",
-      "colLastLogin": "Last sign-in"
+      "colLastLogin": "Last sign-in",
+      "addHint": "Every staff member signs in with their own email and password. Do not share one account between people.",
+      "access": "How they get access",
+      "accessPassword": "Give a password now",
+      "accessPasswordHint": "The account is created right away. Hand the password to the person yourself (no email needed).",
+      "accessInvite": "Invitation by email",
+      "accessInviteHint": "The person gets an email and sets their own password. Email must be configured.",
+      "password": "Staff member's password",
+      "passwordHint": "At least 12 characters, letters and digits. Write it down for the person.",
+      "add": "Add staff member",
+      "created": "Done: the account {email} was created. They sign in with this email and the password you gave."
     },
     "audit": {
       "title": "Activity log",
@@ -463,7 +473,11 @@
       "mfaResetHint": "Use this when the employee has lost their phone and has no recovery codes left. Confirm their identity in person first. Their sessions end and they set up a new authenticator at the next sign-in.",
       "mfaResetConfirm": "I have verified this employee's identity in person.",
       "mfaResetSubmit": "Reset two-step verification",
-      "mfaResetDone": "Two-step verification was reset."
+      "mfaResetDone": "Two-step verification was reset.",
+      "passwordTitle": "Give a new password",
+      "passwordHint": "If the person forgot their password: set a new one and hand it over yourself. All their open sessions are signed out.",
+      "passwordSubmit": "Change password",
+      "passwordSet": "Password changed. Give the new password to the staff member."
     },
     "supportAccess": {
       "title": "Support access",
@@ -1568,7 +1582,9 @@
     "needsHeadDoctor": "This needs the Head doctor role.",
     "folderInvalid": "Enter the full path of the folder (e.g. C:\\...).",
     "folderNotWritable": "Could not write to this folder. Choose another one.",
-    "localModeNoInternet": "The clinic is in local mode: internet services are off. First choose “With server / internet” in the settings."
+    "localModeNoInternet": "The clinic is in local mode: internet services are off. First choose “With server / internet” in the settings.",
+    "accountExistsUseInvite": "An ITop Med account with this email already exists. Choose “Invitation by email”.",
+    "passwordOtherClinics": "This person also works at another clinic — only they (“Forgot password?”) or ITop Med support can reset the password."
   },
   "email": {
     "invitation": {
