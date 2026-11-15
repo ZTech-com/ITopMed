@@ -1810,6 +1810,11 @@ model NotificationSettings {
 // ───────────── Practice profiles & dentistry (Phase 8e) ─────────────
 
 /// What kind of practice the clinic is; drives the setup presets (modules, starter services).
+enum DataMode {
+  LOCAL
+  CONNECTED
+}
+
 enum PracticeType {
   MULTI_SPECIALTY
   SOLO_PRACTICE
@@ -1870,19 +1875,28 @@ model RateLimitBucket {
 
 /// Owner-defined control rules of a clinic (one row per clinic, created on first save).
 model ClinicPolicy {
-  tenantId                 String   @id @db.Uuid
+  tenantId                 String    @id @db.Uuid
   /// Highest discount (percent of a line) anyone except the clinic owner may give. 100 = no limit.
-  maxDiscountPercent       Int      @default(100)
+  maxDiscountPercent       Int       @default(100)
   /// A written reason is required for every discount.
-  discountReasonRequired   Boolean  @default(false)
+  discountReasonRequired   Boolean   @default(false)
   /// Patient portal self-booking: how many days ahead patients may book.
-  onlineBookingDays        Int      @default(30)
+  onlineBookingDays        Int       @default(30)
   /// Earliest online booking, in minutes from now.
-  onlineBookingLeadMinutes Int      @default(120)
+  onlineBookingLeadMinutes Int       @default(120)
   /// Most future online visits one patient may hold at once (abuse protection).
-  onlineBookingMaxActive   Int      @default(3)
-  updatedById              String?  @db.Uuid
-  updatedAt                DateTime @updatedAt
+  onlineBookingMaxActive   Int       @default(3)
+  /// Where the clinic works: LOCAL = only on this computer, nothing is sent over the internet
+  /// (patient messages off). Null = the default of the installation (local app: LOCAL).
+  dataMode                 DataMode?
+  /// Local app only: keep one Excel file per patient in a folder on this computer.
+  patientFilesEnabled      Boolean   @default(false)
+  patientFilesDir          String?
+  /// Who turned the files on (needs oversight access to medical records).
+  patientFilesEnabledById  String?   @db.Uuid
+  patientFilesSyncedAt     DateTime?
+  updatedById              String?   @db.Uuid
+  updatedAt                DateTime  @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 }

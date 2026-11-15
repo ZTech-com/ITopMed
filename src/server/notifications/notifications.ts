@@ -6,6 +6,7 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/config";
 import type { ClinicContext } from "../auth/clinic-auth";
 import type { RequestMeta } from "../auth/platform-auth";
 import { auditClinic, inClinic, requirePermission } from "../clinic/context";
+import { isLocalOnly } from "../clinic/data-mode";
 import { escapeHtml, sendEmail } from "../email";
 import { env } from "../env";
 import { withAppContext, type Tx } from "../db";
@@ -210,6 +211,8 @@ async function dispatchOne(tx: Tx, tenantId: string, id: string, now: Date): Pro
 
   const tenant = await tx.tenant.findUnique({ where: { id: tenantId }, select: { name: true, slug: true, timezone: true, defaultLocale: true, status: true } });
   if (!tenant || (tenant.status !== "ACTIVE" && tenant.status !== "TRIAL")) return skip("clinic_inactive");
+  // Local-only clinic: nothing leaves this computer.
+  if (await isLocalOnly(tx, tenantId)) return skip("local_mode");
   const patient = await tx.patient.findUnique({ where: { id: n.patientId }, select: { phone: true, email: true, preferredLocale: true, status: true } });
   if (!patient || patient.status !== "ACTIVE") return skip("patient_inactive");
   const consent = await tx.patientConsent.findFirst({ where: { patientId: n.patientId, purpose: CONSENT_FOR[n.channel], withdrawnAt: null }, select: { id: true } });

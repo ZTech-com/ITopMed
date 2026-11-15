@@ -6,6 +6,7 @@ import { recordAudit } from "../audit";
 import type { ClinicContext } from "../auth/clinic-auth";
 import type { RequestMeta } from "../auth/platform-auth";
 import { auditClinic, inClinic, requirePermission } from "../clinic/context";
+import { isLocalOnly } from "../clinic/data-mode";
 import { withAppContext, withPortal, type Tx } from "../db";
 import { telegramTransport } from "../env";
 import { DomainError } from "../errors";
@@ -61,6 +62,7 @@ export const botTokenSchema = z.string().trim().regex(TOKEN_RE, "validation.tele
 export async function connectTelegramBot(ctx: ClinicContext, tokenRaw: unknown, meta: RequestMeta) {
   requirePermission(ctx, "clinic.settings.manage");
   if (!telegramEnabled()) throw new DomainError("errors.telegramOff");
+  if (await inClinic(ctx, (tx) => isLocalOnly(tx, ctx.tenant.id))) throw new DomainError("errors.localModeNoInternet");
   const token = botTokenSchema.parse(tokenRaw);
   let username: string;
   if (telegramTransport() === "api") {
@@ -161,6 +163,7 @@ async function botToken(tx: Tx, tenantId: string): Promise<string | null> {
 export async function pollTelegram(tenantId: string): Promise<number> {
   if (telegramTransport() !== "api") return 0;
   const state = await withAppContext({ tenantId }, async (tx) => {
+    if (await isLocalOnly(tx, tenantId)) return null; // local-only clinic: no internet calls
     const b = await tx.telegramBot.findUnique({ where: { tenantId }, select: { tokenEnc: true, enabled: true, updateOffset: true } });
     return b?.enabled ? { token: decryptField(b.tokenEnc, ctxKey(tenantId)), offset: b.updateOffset } : null;
   });

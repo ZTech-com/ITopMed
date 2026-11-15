@@ -69,6 +69,14 @@ Shifokor registratura va kassa ishlarini ham qilishi uchun: **Xodimlar** → shi
 - **Bemor portali**: bemor o'zi qabulga yoziladi, natija va hisoblarini ko'radi.
 - **Telegram**: Integratsiyalar → @BotFather'dan olingan tokenni joylang → bemorlarga eslatma boradi.
 
+## F2. Lokal yoki server — va har bir bemor Excel faylda
+**Sozlamalar → «Ma'lumotlar qayerda saqlanadi»**
+- **Lokal** (faqat Windows ilovasida): hamma narsa shu kompyuterda. Internetga hech narsa ketmaydi, bemorlarga SMS, Telegram va e-pochta xabarlari o'chadi. Ilova o'rnatilganda shu rejim avtomatik yoqiladi.
+- **Server / internet bilan**: Windows ilovasida ma'lumotlar baribir kompyuterda qoladi, faqat bemorlarga xabarlar internet orqali ketadi. Saytda (itopmed.itoppos.uz) har doim shu rejim ishlaydi, chunki ma'lumotlar serverda turadi.
+- **Har bir bemor alohida Excel faylda** (faqat Windows ilovasida): yoqing → papkani tanlang (odatda `Hujjatlar\ITopMed\<klinika>`). Har bir bemor uchun `P-000001 - Familiya Ism.xlsx` fayli paydo bo'ladi: karta, qabullar, tashxislar, retseptlar, bosim va boshqa ko'rsatkichlar, tahlillar, to'lovlar va qarz. Yana `Bemorlar roʻyxati.xlsx` ham bo'ladi. Biror narsa o'zgarsa, fayl 2 daqiqa ichida o'zi yangilanadi. Ochiq turgan fayl Excel yopilgandan keyin yangilanadi.
+  - Buni **Bosh shifokor** roli bor xodim yoqadi, chunki fayllarda tibbiy yozuvlar bor. Fayllar shifrlanmagan, shuning uchun kompyuterga parol qo'ying.
+- **Bitta bemor**: Tibbiy karta → **Excel** tugmasi. **Hammasi birdan**: Sozlamalar → «Barcha bemorlarni Excel'da yuklab olish (ZIP)». Bu sayt va ilovaning ikkalasida ishlaydi.
+
 ## G. Xavfsizlik — unutmang
 - Har kuni zaxira: terminalda `npm run backup`, faylni fleshkaga ham ko'chiring.
 - `.env` faylini hech kimga bermang, nusxasini xavfsiz saqlang.

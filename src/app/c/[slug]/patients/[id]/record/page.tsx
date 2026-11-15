@@ -86,6 +86,13 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={access.mode === "break_glass" ? "danger" : "neutral"}>{t("clinic.record.accessAs", { mode: t(`accessMode.${access.mode}`) })}</Badge>
             {access.mode === "care" || access.mode === "oversight" ? (
+              <form method="post" action={`/c/${s}/patients/${patient.id}/record/xlsx`}>
+                <button type="submit" className={buttonClass("secondary", "sm")} title={t("clinic.record.excelHint")}>
+                  {t("clinic.record.excelExport")}
+                </button>
+              </form>
+            ) : null}
+            {access.mode === "care" || access.mode === "oversight" ? (
               <form method="post" action={`/c/${s}/patients/${patient.id}/record/fhir`}>
                 <button type="submit" className={buttonClass("ghost", "sm")} title={t("clinic.record.fhirHint")}>
                   {t("clinic.record.fhirExport")}

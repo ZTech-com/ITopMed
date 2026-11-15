@@ -12,6 +12,7 @@ import { Badge, ButtonLink } from "@/components/ui/primitives";
 import { Letterhead } from "@/components/letterhead";
 import { getLetterhead } from "@/server/clinic/branding";
 import { letterheadAction } from "../../../desk-actions";
+import { DataCard } from "./data-card";
 
 export default async function ClinicSettingsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -55,6 +56,8 @@ export default async function ClinicSettingsPage({ params }: { params: Promise<{
           </div>
         ) : null}
       </Form>
+
+      <DataCard ctx={ctx} />
 
       <Card className="mt-6">
         <CardHeader title={t("clinic.policy.title")} description={isOwner ? t("clinic.policy.hint") : t("clinic.policy.ownerOnly")} />
