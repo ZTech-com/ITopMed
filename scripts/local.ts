@@ -153,6 +153,38 @@ async function databaseAnswers(): Promise<boolean> {
 const PG_DIR = process.env.DEV_PG_DIR ?? (PACKAGED ? path.join(DATA, "pg") : path.join(os.homedir(), ".itopmed-dev", "pg"));
 
 /**
+ * True when the process listening on the database port runs OUR data directory.
+ * A second ITop Med on this computer (the packaged app next to a source
+ * checkout, or two program folders) uses the same port with another data
+ * directory: that database must never be stopped by us.
+ */
+function portHeldByOurDatabase(): boolean | null {
+  try {
+    if (isWin) {
+      const out = execFileSync(
+        "powershell",
+        [
+          "-NoProfile",
+          "-NonInteractive",
+          "-Command",
+          `$own = @(Get-NetTCPConnection -LocalPort ${DB_PORT} -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique); Get-CimInstance Win32_Process -Filter "Name='postgres.exe'" | Where-Object { $own -contains $_.ProcessId } | ForEach-Object { $_.CommandLine }`,
+        ],
+        { encoding: "utf8", windowsHide: true },
+      ).trim();
+      if (!out) return null; // unknown owner (not postgres, or no rights to see it)
+      const norm = (p: string) => p.replace(/\\/g, "/").toLowerCase();
+      return norm(out).includes(norm(PG_DIR));
+    }
+    const out = execFileSync("pgrep", ["-af", "postgres"], { encoding: "utf8" });
+    return out.includes(PG_DIR);
+  } catch {
+    return null;
+  }
+}
+
+class ForeignDatabase extends Error {}
+
+/**
  * After a crash or power cut, PostgreSQL helper processes can survive their
  * main process and keep the port open without answering. Stop the ones that
  * belong to OUR data directory so the database can start again.
@@ -188,6 +220,8 @@ async function ensureDatabase(graceSeconds = 15) {
     return v;
   };
   if (await portOpen(DB_PORT)) {
+    // Another installation's database on our port: never touch it, and do not fight over the port.
+    if (portHeldByOurDatabase() === false) throw new ForeignDatabase(`Port ${DB_PORT} is used by another ITop Med (another data folder). Close the other ITop Med first (its "stop" shortcut), then start this one again.`);
     // Something holds the port but does not answer: give a starting/recovering server 15 s, then clear leftovers.
     for (let i = 0; i < graceSeconds; i++) {
       if (await databaseAnswers()) return;
@@ -416,7 +450,11 @@ async function main() {
       log("The database does not answer; starting it again…");
       dbSilent = 0;
       db = null;
-      await ensureDatabase(2).catch((e) => log(`Database restart failed: ${e instanceof Error ? e.message : e}`));
+      await ensureDatabase(2).catch(async (e) => {
+        log(`Database restart failed: ${e instanceof Error ? e.message : e}`);
+        // Two installations fighting over one port would restart each other forever (and open windows): stop this one.
+        if (e instanceof ForeignDatabase) await shutdown(1);
+      });
     }
     const answered = await new Promise<boolean>((resolve) => {
       const r = http.get({ host: "127.0.0.1", port: APP_PORT, path: "/api/health", timeout: 10_000, agent }, (res) => (res.resume(), resolve(true)));

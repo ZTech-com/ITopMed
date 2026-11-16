@@ -55,7 +55,9 @@ if (cmd === "start") ensureShortcuts();
 
 const child = spawn(node, [path.join(root, "app-control.mjs"), cmd, ...(args.includes("--admin") ? ["--admin"] : [])], {
   cwd: root,
-  detached: true,
+  // A detached console process on Windows shows a terminal window (windowsHide is ignored);
+  // without detaching it is hidden and still outlives this exe.
+  detached: process.platform !== "win32",
   windowsHide: true,
   stdio: "ignore",
   env: { ...process.env, ITM_PACKAGED: "1", ITM_ROOT: root, ITM_HOME: home },

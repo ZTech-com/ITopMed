@@ -140,7 +140,9 @@ async function start() {
       const out = fs.openSync(LOG, "a");
       const tsx = path.join(ROOT, "node_modules", "tsx", "dist", "cli.mjs");
       const argv = PACKAGED ? [path.join(ROOT, "launcher.mjs")] : [tsx, "scripts/local.ts"];
-      const child = spawn(process.execPath, argv, { cwd: ROOT, detached: true, windowsHide: true, stdio: ["ignore", out, out], env: process.env });
+      // Windows: a detached console child always gets a visible console window (windowsHide is ignored),
+      // and a non-detached child keeps running after this controller exits anyway.
+      const child = spawn(process.execPath, argv, { cwd: ROOT, detached: !isWin, windowsHide: true, stdio: ["ignore", out, out], env: process.env });
       child.unref();
       console.log("ITop Med ishga tushmoqda… (birinchi marta yoki yangilanishdan keyin 1–3 daqiqa)");
     } else {
