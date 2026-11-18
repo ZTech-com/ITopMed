@@ -832,7 +832,12 @@
       "discountReason": "Discount reason",
       "discountReasonHint": "Recommended when you give a discount.",
       "discountReasonRequiredHint": "Required by the clinic rules when you give a discount.",
-      "discountLimit": "Your discount limit: {percent}% of a line."
+      "discountLimit": "Your discount limit: {percent}% of a line.",
+      "debtTitle": "Allow debt",
+      "debtHint": "The patient pays the rest later: once allowed, the desk can print the final document.",
+      "debtApprovedAt": "Debt allowed: {date}",
+      "approveDebt": "Allow debt",
+      "debtApproved": "Debt allowed."
     },
     "cash": {
       "title": "Cash desk",
@@ -1310,7 +1315,18 @@
       "debtAmountHint": "Leave empty for the whole debt.",
       "takeDebtSubmit": "Take payment",
       "debtPaid": "Debt paid: {paid} UZS.",
-      "debtPartlyPaid": "Received {paid} UZS. Debt left: {left} UZS."
+      "debtPartlyPaid": "Received {paid} UZS. Debt left: {left} UZS.",
+      "referral": "Referred by",
+      "referralDetail": "Which doctor / which advert",
+      "referralDetailHint": "E.g. Dr Karimov or Instagram",
+      "benefit": "Privileged category",
+      "noBenefit": "No privilege",
+      "followUpFree": "Free follow-up until {date} — the visit is free automatically.",
+      "freeVisit": "Exception: free follow-up",
+      "freeVisitConfirm": "This visit is free although the free follow-up period is over",
+      "freeVisitReason": "Reason",
+      "freeVisitReasonHint": "Required. Who allowed it is recorded automatically.",
+      "printDocument": "Print: {name}"
     },
     "data": {
       "title": "Where the data is kept",
@@ -1343,6 +1359,33 @@
       "downloadAllHint": "Each patient in a separate file plus a list. The download is recorded in the audit log.",
       "filesWritten": "Done: {count} patient files written.",
       "filesOff": "Patient files turned off. Existing files stay in the folder."
+    },
+    "pricing": {
+      "title": "Discounts and packages",
+      "subtitle": "Privileged categories, service packages and the free follow-up visit. Discounts are applied to the invoice automatically, with their reason.",
+      "followUpTitle": "Free follow-up visit",
+      "followUpHint": "Within this many days after the first (paid) visit, the same visit is free. 0 = off. Only the clinic owner changes it.",
+      "days": "Days",
+      "benefitsTitle": "Privileged categories",
+      "benefitsHint": "When a category is set on the patient, its discount applies to all of their services automatically.",
+      "noBenefits": "No categories yet.",
+      "benefitName": "Category name",
+      "benefitExample": "E.g. Person with a disability",
+      "percent": "Discount, %",
+      "add": "Add",
+      "archive": "Remove",
+      "packagesTitle": "Service packages",
+      "packagesHint": "When all services of a package are chosen together, the package discount applies automatically.",
+      "noPackages": "No packages yet.",
+      "packageName": "Package name",
+      "packageExample": "E.g. Heart check (visit + ECG + echo)",
+      "packageServices": "Services in the package (at least 2)",
+      "addPackage": "Save package",
+      "saved": "Saved.",
+      "archived": "Removed."
+    },
+    "deskPrint": {
+      "title": "The document cannot be printed yet"
     }
   },
   "status": {
@@ -1474,7 +1517,8 @@
     "telegramToken": "This does not look like a bot token (numbers:letters).",
     "bookingDays": "Enter 1 to 180 days.",
     "leadHours": "Enter 0 to 168 hours.",
-    "maxActive": "Enter 1 to 20."
+    "maxActive": "Enter 1 to 20.",
+    "packageTwoServices": "Choose at least 2 services for a package."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -1591,7 +1635,13 @@
     "localModeNoInternet": "The clinic is in local mode: internet services are off. First choose “With server / internet” in the settings.",
     "accountExistsUseInvite": "An ITop Med account with this email already exists. Choose “Invitation by email”.",
     "passwordOtherClinics": "This person also works at another clinic — only they (“Forgot password?”) or ITop Med support can reset the password.",
-    "noDebt": "This patient has no debt."
+    "noDebt": "This patient has no debt.",
+    "deskPrint": {
+      "notFinished": "The doctor has not finished the visit yet.",
+      "notToday": "The desk prints documents of today's visits only. Ask the doctor for older documents.",
+      "unpaid": "The cashier has not confirmed payment yet: the bill must be paid or the cashier must “Allow debt”."
+    },
+    "freeVisitReasonRequired": "Write the reason for the free follow-up visit."
   },
   "email": {
     "invitation": {
@@ -2573,5 +2623,11 @@
     "WEIGHT": "kg",
     "HEIGHT": "cm",
     "BLOOD_GLUCOSE": "mmol/L"
+  },
+  "referralSource": {
+    "SELF": "Came by themselves",
+    "DOCTOR": "Referred by a doctor",
+    "ADVERTISING": "Through advertising",
+    "OTHER": "Other"
   }
 }

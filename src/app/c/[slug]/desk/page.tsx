@@ -1,4 +1,4 @@
-import { ConciergeBell, Printer, Receipt, UserPlus } from "lucide-react";
+import { ConciergeBell, FileText, Printer, Receipt, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { moneyFormatter } from "@/components/money";
@@ -15,6 +15,9 @@ import { listServices } from "@/server/clinic/resources";
 import { withAppContext } from "@/server/db";
 import { searchPatients } from "@/server/patients/patients";
 import { todayMoney } from "@/server/reception/desk";
+import { followUpStatus } from "@/server/billing/rules";
+import { listBenefitCategories } from "@/server/clinic/pricing";
+import { listTemplates } from "@/server/clinic/templates";
 import { todayIn } from "@/server/scheduling/time";
 import { deskCheckInAction, payDebtAction } from "../../../desk-actions";
 import { PAYMENT_METHODS } from "@/server/billing/billing";
@@ -38,12 +41,16 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
   const canMeasure = ctx.permissions.has("vitals.write");
   const db = { tenantId: ctx.tenant.id, userId: ctx.principal.user.id };
 
-  const [branches, doctors, working, services, day] = await Promise.all([
+  const canFreeVisit = ctx.permissions.has("billing.free_visit");
+  const canPrint = ctx.permissions.has("documents.print") || ctx.permissions.has("emr.read");
+  const [branches, doctors, working, services, day, benefits, docTemplates] = await Promise.all([
     listOperationalBranches(ctx),
     listDoctors(ctx),
     doctorsWorkingOn(ctx, today),
     canBill ? listServices(ctx) : Promise.resolve([]),
     listDay(ctx, today),
+    listBenefitCategories(ctx),
+    canPrint ? listTemplates(ctx, { kind: "DOCUMENT" }) : Promise.resolve([]),
   ]);
   const withProfile = doctors.filter((d) => d.profile && !d.profile.archivedAt);
   const workingIds = new Set(working.map((w) => w.profileId));
@@ -62,6 +69,9 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
   const queue = day.filter((a) => a.queueNumber !== null || a.status !== "CANCELLED").sort((a, b) => (a.queueNumber ?? 999) - (b.queueNumber ?? 999) || +a.startsAt - +b.startsAt);
   const { today: paidToday, debt } = await todayMoney(ctx, [...new Set([...queue.map((a) => a.patientId), ...(chosen ? [chosen.id] : [])])]);
   const done = sp.done ? queue.find((a) => a.id === sp.done) : undefined;
+  const finished = queue.filter((a) => a.status === "COMPLETED").map((a) => a.id);
+  const encounters = canPrint && finished.length ? new Map((await withAppContext(db, (tx) => tx.encounter.findMany({ where: { appointmentId: { in: finished } }, select: { id: true, appointmentId: true } }))).map((e) => [e.appointmentId!, e.id])) : new Map<string, string>();
+  const followUp = chosen && canBill ? await followUpStatus(ctx, chosen.id) : null;
   const doneInvoice = done ? await withAppContext(db, (tx) => tx.invoice.findUnique({ where: { appointmentId: done.id }, select: { id: true } })).catch(() => null) : null;
 
   return (
@@ -145,6 +155,16 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
                     <SelectField name="sex" label={t("clinic.patients.sex")} defaultValue="UNKNOWN" options={(["FEMALE", "MALE", "UNKNOWN"] as const).map((s) => ({ value: s, label: t(`sex.${s}`) }))} />
                     <TextField name="phone" type="tel" label={t("clinic.patients.phone")} inputMode="tel" placeholder="+998" autoComplete="off" optionalLabel={t("common.optional")} />
                     <TextField name="address" label={t("clinic.patients.address")} autoComplete="off" optionalLabel={t("common.optional")} className="sm:col-span-3" />
+                    <SelectField
+                      name="referralSource"
+                      label={t("clinic.desk.referral")}
+                      defaultValue="SELF"
+                      options={(["SELF", "DOCTOR", "ADVERTISING", "OTHER"] as const).map((r) => ({ value: r, label: t(`referralSource.${r}`) }))}
+                    />
+                    <TextField name="referralDetail" label={t("clinic.desk.referralDetail")} hint={t("clinic.desk.referralDetailHint")} autoComplete="off" optionalLabel={t("common.optional")} />
+                    {benefits.length ? (
+                      <SelectField name="benefitCategoryId" label={t("clinic.desk.benefit")} defaultValue="" options={[{ value: "", label: t("clinic.desk.noBenefit") }, ...benefits.map((b) => ({ value: b.id, label: `${b.name} (−${b.discountPercent}%)` }))]} />
+                    ) : null}
                   </div>
                   <label className="flex items-start gap-2 text-[13px] text-text-2">
                     <input type="checkbox" name="confirmNotDuplicate" className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]" />
@@ -164,6 +184,19 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
               <CardBody className="space-y-3">
                 {priced.length ? <ServicePicker services={priced} withPayment={canPay} /> : <Alert tone="warning">{t("clinic.desk.noPrices")}</Alert>}
                 {unpriced > 0 ? <p className="text-[12.5px] text-text-3">{t("clinic.desk.unpriced", { count: unpriced })}</p> : null}
+                {followUp?.freeUntil ? <Alert tone="success">{t("clinic.desk.followUpFree", { date: format.dateTime(followUp.freeUntil, { dateStyle: "medium", timeZone: tz }) })}</Alert> : null}
+                {canFreeVisit ? (
+                  <details className="rounded-[12px] border border-border px-3 py-2">
+                    <summary className="cursor-pointer text-[13px] font-medium">{t("clinic.desk.freeVisit")}</summary>
+                    <div className="mt-2 space-y-2">
+                      <label className="flex items-start gap-2 text-[13px]">
+                        <input type="checkbox" name="freeVisit" className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]" />
+                        <span>{t("clinic.desk.freeVisitConfirm")}</span>
+                      </label>
+                      <TextField name="freeVisitReason" label={t("clinic.desk.freeVisitReason")} hint={t("clinic.desk.freeVisitReasonHint")} />
+                    </div>
+                  </details>
+                ) : null}
               </CardBody>
             </Card>
           ) : null}
@@ -235,6 +268,11 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
                         </details>
                       ) : null}
                     </div>
+                    {encounters.get(a.id) && docTemplates[0] ? (
+                      <Link href={`${base}/encounters/${encounters.get(a.id)}/document/${docTemplates[0].id}?print=1`} target="_blank" className={buttonClass("ghost", "sm")} aria-label={t("clinic.desk.printDocument", { name: docTemplates[0].name })} title={docTemplates[0].name}>
+                        <FileText aria-hidden className="size-4" />
+                      </Link>
+                    ) : null}
                     <Link href={`${base}/desk/ticket/${a.id}?print=1`} target="_blank" className={buttonClass("ghost", "sm")} aria-label={t("clinic.desk.printTicket")}>
                       <Printer aria-hidden className="size-4" />
                     </Link>

@@ -6,6 +6,7 @@ import type { ClinicContext } from "../auth/clinic-auth";
 import type { RequestMeta } from "../auth/platform-auth";
 import { addInvoiceLine, createInvoice, issueInvoice, PAYMENT_METHODS, recordPayment } from "../billing/billing";
 import { openShift } from "../billing/cash";
+import { applyPriceRules } from "../billing/rules";
 import { inClinic, requirePermission } from "../clinic/context";
 import { recordVitals, VITAL_KINDS } from "../emr/record";
 import { DomainError } from "../errors";
@@ -32,6 +33,9 @@ export const billingSchema = z.object({
   payMode: z.enum(["full", "partial", "debt"]).default("full"),
   amount: z.string().trim().default(""),
   method: z.enum(PAYMENT_METHODS).default("CASH"),
+  /** Free follow-up outside the free period (exception; needs billing.free_visit and a reason). */
+  freeVisit: checkbox.default(false),
+  freeVisitReason: z.string().trim().max(200, "validation.tooLong").default(""),
 });
 
 export const deskSchema = billingSchema.extend({
@@ -80,14 +84,18 @@ async function billServices(
   if (!a.services.length) return null;
   const currency = a.services[0]!.currency;
   if (a.services.some((s) => s.currency !== currency)) throw new DomainError("errors.currencyMismatch");
-  const total = a.services.reduce((s, x) => s + x.priceMinor, 0n);
-  const pay = amountToPay(a.billing, total, currency);
 
   const invoiceId = await createInvoice(ctx, { patientId: a.patientId, branchId: a.branchId, appointmentId: a.appointmentId ?? "" }, meta);
   // createInvoice copies the appointment's own service; add the rest.
   const already = await inClinic(ctx, (tx) => tx.invoiceLine.findMany({ where: { invoiceId }, select: { serviceId: true } }));
   const have = new Set(already.map((l) => l.serviceId));
   for (const s of a.services) if (!have.has(s.id)) await addInvoiceLine(ctx, invoiceId, { serviceId: s.id, quantity: "1" }, meta);
+  // Clinic rules (benefit category, package, free follow-up) before the invoice is issued.
+  await applyPriceRules(ctx, invoiceId, a.billing.freeVisit ? { freeVisit: { reason: a.billing.freeVisitReason } } : {}, meta);
+  const total = (await inClinic(ctx, (tx) => tx.invoice.findUniqueOrThrow({ where: { id: invoiceId }, select: { totalMinor: true } }))).totalMinor;
+  // The amount was checked against the full price before anything was written; after a
+  // rule discount it can exceed the new total - then the total is what is paid.
+  const pay = total > 0n ? (a.billing.payMode === "partial" ? minBig(amountToPay(a.billing, total * 1000n, currency), total) : amountToPay(a.billing, total, currency)) : 0n;
   await issueInvoice(ctx, invoiceId, meta);
 
   if (pay > 0n) {
@@ -314,4 +322,8 @@ export async function incomeSummary(ctx: ClinicContext, days = 14): Promise<Inco
       debtMinor: open.reduce((s, i) => s + (i.totalMinor - i.paidMinor), 0n),
     };
   });
+}
+
+function minBig(a: bigint, b: bigint): bigint {
+  return a < b ? a : b;
 }

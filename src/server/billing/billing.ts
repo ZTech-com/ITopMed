@@ -126,6 +126,7 @@ export async function addInvoiceLine(ctx: ClinicContext, invoiceId: string, raw:
         unitPriceMinor: s.priceMinor,
         discountMinor: discount,
         discountReason: discount > 0n ? (input.discountReason ?? null) : null,
+        discountKind: discount > 0n ? "MANUAL" : null,
         createdById: ctx.principal.user.id,
         totalMinor: gross - discount,
       },
@@ -159,12 +160,15 @@ export async function issueInvoice(ctx: ClinicContext, invoiceId: string, meta: 
     const inv = await lockInvoice(tx, invoiceId);
     assertBranch(ctx, inv.branchId);
     if (inv.status !== "DRAFT") throw new DomainError("errors.invoiceNotDraft");
-    if (inv.totalMinor <= 0n) throw new DomainError("errors.emptyInvoice");
+    // A bill with services but nothing to pay (e.g. a free follow-up visit) is issued as paid.
+    const lineCount = await tx.invoiceLine.count({ where: { invoiceId: inv.id } });
+    if (lineCount === 0 || inv.totalMinor < 0n) throw new DomainError("errors.emptyInvoice");
+    const settled = inv.totalMinor === 0n;
     const year = instantToLocalDate(new Date(), ctx.tenant.timezone).slice(0, 4);
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`invoice-number:${ctx.tenant.id}:${year}`}, 0))`;
     const last = await tx.$queryRaw<{ n: number | null }[]>`SELECT max(split_part(number, '-', 3)::int) AS n FROM "Invoice" WHERE number LIKE ${`INV-${year}-%`}`;
     const number = `INV-${year}-${String((last[0]?.n ?? 0) + 1).padStart(6, "0")}`;
-    await tx.invoice.update({ where: { id: inv.id }, data: { status: "ISSUED", number, issuedAt: new Date() } });
+    await tx.invoice.update({ where: { id: inv.id }, data: { status: settled ? "PAID" : "ISSUED", number, issuedAt: new Date() } });
     await auditClinic(tx, ctx, meta, { action: "invoice.issued", entityType: "Invoice", entityId: inv.id, metadata: { number, totalMinor: inv.totalMinor.toString(), currency: inv.currency } });
     return number;
   });
@@ -250,6 +254,23 @@ export async function recordPayment(ctx: ClinicContext, invoiceId: string, raw: 
     await tx.invoice.update({ where: { id: inv.id }, data: { paidMinor: paid, status: statusFor(inv.totalMinor, paid) } });
     await auditClinic(tx, ctx, meta, { action: "payment.recorded", entityType: "Invoice", entityId: inv.id, metadata: { paymentId, amountMinor: amount.toString(), currency: inv.currency, method: input.method } });
     return { paymentId, duplicate: false };
+  });
+}
+
+/**
+ * The cashier accepts that the rest of an issued invoice stays as the patient's
+ * debt (e.g. the patient pays later). Only then may the desk print the visit's
+ * final documents for an unpaid bill. Audited.
+ */
+export async function approveDebt(ctx: ClinicContext, invoiceId: string, meta: RequestMeta) {
+  requirePermission(ctx, "billing.payment");
+  await inClinic(ctx, async (tx) => {
+    const inv = await lockInvoice(tx, invoiceId);
+    assertBranch(ctx, inv.branchId);
+    if (inv.status !== "ISSUED" && inv.status !== "PARTIALLY_PAID") throw new DomainError("errors.invoiceNotPayable");
+    if (inv.debtApprovedAt) return;
+    await tx.invoice.update({ where: { id: inv.id }, data: { debtApprovedAt: new Date(), debtApprovedById: ctx.principal.user.id } });
+    await auditClinic(tx, ctx, meta, { action: "invoice.debt_approved", entityType: "Invoice", entityId: inv.id, metadata: { debtMinor: (inv.totalMinor - inv.paidMinor).toString(), currency: inv.currency } });
   });
 }
 

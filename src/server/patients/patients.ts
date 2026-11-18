@@ -57,6 +57,10 @@ export const patientSchema = z
     preferredLocale: z.union([z.literal("").transform(() => undefined), z.enum(LOCALES)]).optional(),
     pinfl: z.union([z.literal("").transform(() => undefined), z.string().trim().regex(/^\d{14}$/, "validation.pinfl")]).optional(),
     passport: z.union([z.literal("").transform(() => undefined), z.string().trim().toUpperCase().regex(/^[A-Z]{2}\d{7}$/, "validation.passport")]).optional(),
+    /** Who sent the patient; only changed when the form sends it. */
+    referralSource: z.union([z.literal("").transform(() => null), z.enum(["SELF", "DOCTOR", "ADVERTISING", "OTHER"])]).optional(),
+    referralDetail: z.union([z.literal("").transform(() => null), z.string().trim().max(120, "validation.tooLong")]).optional(),
+    benefitCategoryId: z.union([z.literal("").transform(() => null), z.uuid()]).optional(),
   })
   .transform((v) => {
     const b = parseBirthInput(v.birthDate)!;
@@ -64,6 +68,22 @@ export const patientSchema = z
   });
 
 export type PatientInput = z.infer<typeof patientSchema>;
+
+/** Referral and benefit fields that the form actually sent (others are left as they are). */
+async function extraFields(tx: Tx, input: PatientInput) {
+  const out: { referralSource?: "SELF" | "DOCTOR" | "ADVERTISING" | "OTHER" | null; referralDetail?: string | null; benefitCategoryId?: string | null } = {};
+  if (input.referralSource !== undefined) out.referralSource = input.referralSource;
+  if (input.referralDetail !== undefined) out.referralDetail = input.referralDetail;
+  if (input.benefitCategoryId !== undefined) {
+    if (input.benefitCategoryId) {
+      // RLS: only this clinic's (active) categories are visible.
+      const c = await tx.benefitCategory.findFirst({ where: { id: input.benefitCategoryId, archivedAt: null }, select: { id: true } });
+      if (!c) throw new DomainError("errors.notFound");
+    }
+    out.benefitCategoryId = input.benefitCategoryId;
+  }
+  return out;
+}
 
 export interface DuplicateCandidate {
   id: string;
@@ -163,6 +183,7 @@ export async function registerPatient(
         address: input.address,
         preferredLocale: input.preferredLocale,
         createdById: ctx.principal.user.id,
+        ...(await extraFields(tx, input)),
       },
     });
     const identifiers = [
@@ -271,6 +292,7 @@ export async function updatePatient(ctx: ClinicContext, id: string, raw: unknown
         email: input.email ?? null,
         address: input.address ?? null,
         preferredLocale: input.preferredLocale ?? null,
+        ...(await extraFields(tx, input)),
       },
     });
     for (const [type, value] of [["PINFL", input.pinfl], ["PASSPORT", input.passport]] as const) {

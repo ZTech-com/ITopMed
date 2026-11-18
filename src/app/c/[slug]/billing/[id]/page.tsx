@@ -11,7 +11,7 @@ import { requireClinic } from "@/server/auth/guards";
 import { PAYMENT_METHODS, REFUND_REASONS, VOID_REASONS, getInvoice } from "@/server/billing/billing";
 import { DEFAULT_POLICY, getClinicPolicy } from "@/server/clinic/policy";
 import { listServices } from "@/server/clinic/resources";
-import { invoiceLineAction, issueInvoiceAction, paymentAction, refundAction, voidInvoiceAction } from "../../../../billing-actions";
+import { approveDebtAction, invoiceLineAction, issueInvoiceAction, paymentAction, refundAction, voidInvoiceAction } from "../../../../billing-actions";
 
 export default async function InvoicePage({ params }: { params: Promise<{ slug: string; id: string }> }) {
   const { slug, id } = await params;
@@ -231,6 +231,22 @@ export default async function InvoicePage({ params }: { params: Promise<{ slug: 
                   <TextField name="externalRef" label={t("clinic.billing.externalRef")} hint={t("clinic.billing.externalRefHint")} optionalLabel={t("common.optional")} />
                   <SubmitButton full>{t("clinic.billing.recordPayment")}</SubmitButton>
                 </Form>
+              </CardBody>
+            </Card>
+          ) : null}
+
+          {payable && can("billing.payment") ? (
+            <Card>
+              <CardHeader title={t("clinic.billing.debtTitle")} description={t("clinic.billing.debtHint")} />
+              <CardBody>
+                {inv.debtApprovedAt ? (
+                  <Alert tone="success">{t("clinic.billing.debtApprovedAt", { date: format.dateTime(inv.debtApprovedAt, { dateStyle: "short", timeStyle: "short", timeZone: ctx.tenant.timezone }) })}</Alert>
+                ) : (
+                  <Form action={approveDebtAction}>
+                    {hidden}
+                    <SubmitButton variant="secondary">{t("clinic.billing.approveDebt")}</SubmitButton>
+                  </Form>
+                )}
               </CardBody>
             </Card>
           ) : null}

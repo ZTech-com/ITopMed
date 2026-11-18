@@ -24,9 +24,11 @@ const ok = (message: string, messageValues?: Record<string, string | number>): F
 const str = (fd: FormData, k: string) => String(fd.get(k) ?? "");
 
 function patientFields(fd: FormData) {
-  return Object.fromEntries(
-    ["lastName", "firstName", "middleName", "birthDate", "sex", "phone", "email", "address", "preferredLocale", "pinfl", "passport"].map((k) => [k, str(fd, k)]),
-  );
+  return {
+    ...Object.fromEntries(["lastName", "firstName", "middleName", "birthDate", "sex", "phone", "email", "address", "preferredLocale", "pinfl", "passport"].map((k) => [k, str(fd, k)])),
+    // Only when the form has them (otherwise the stored values stay).
+    ...Object.fromEntries(["referralSource", "referralDetail", "benefitCategoryId"].filter((k) => fd.has(k)).map((k) => [k, str(fd, k)])),
+  };
 }
 
 // ───────────── Patients ─────────────

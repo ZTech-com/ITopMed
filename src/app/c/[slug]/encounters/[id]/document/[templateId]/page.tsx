@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { DocumentText } from "@/components/document-text";
 import { Letterhead } from "@/components/letterhead";
 import { PaperStyle } from "@/components/paper";
+import { Alert } from "@/components/ui/primitives";
 import { formatBirthDate, patientName } from "@/components/patients";
 import { AutoPrint, PrintButton } from "@/components/print-button";
 import { requireClinic } from "@/server/auth/guards";
@@ -19,12 +20,27 @@ import { instantToLocalDate } from "@/server/scheduling/time";
  */
 export default async function VisitDocumentPage({ params }: { params: Promise<{ slug: string; id: string; templateId: string }> }) {
   const { slug, id, templateId } = await params;
-  const ctx = await requireClinic(slug, "emr.read");
-  const d = await documentForVisit(ctx, id, templateId, await requestMeta()).catch((e) => {
+  const ctx = await requireClinic(slug);
+  // Doctors (record access) or the desk (documents.print, once the cashier has settled the bill).
+  if (!ctx.permissions.has("emr.read") && !ctx.permissions.has("documents.print")) notFound();
+  const t = await getTranslations();
+  let d: Awaited<ReturnType<typeof documentForVisit>>;
+  try {
+    d = await documentForVisit(ctx, id, templateId, await requestMeta());
+  } catch (e) {
+    if (e instanceof DomainError && e.code.startsWith("errors.deskPrint.")) {
+      return (
+        <div className="mx-auto max-w-xl">
+          <Alert tone="warning" title={t("clinic.deskPrint.title")}>
+            {t(e.code as never)}
+          </Alert>
+        </div>
+      );
+    }
     if (e instanceof DomainError) notFound();
     throw e;
-  });
-  const [t, head] = await Promise.all([getTranslations(), getLetterhead(ctx)]);
+  }
+  const head = await getLetterhead(ctx);
   const tz = ctx.tenant.timezone;
   const e = d.encounter;
   const active = e.diagnoses.filter((x) => x.status === "ACTIVE" || x.status === undefined);

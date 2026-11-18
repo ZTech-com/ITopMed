@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { ServiceFields } from "@/components/service-form";
 import { Form, SubmitButton, TextAreaField } from "@/components/ui/form";
-import { Badge, Card, CardBody, CardHeader, EmptyState, PageHeader, Table, Td, Th } from "@/components/ui/primitives";
+import { Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, PageHeader, Table, Td, Th } from "@/components/ui/primitives";
 import { minorToNumber, wrapCurrency } from "@/lib/money";
 import { requireClinic } from "@/server/auth/guards";
 import { listDepartments, listServices } from "@/server/clinic/resources";
@@ -18,7 +18,15 @@ export default async function ServicesPage({ params }: { params: Promise<{ slug:
 
   return (
     <>
-      <PageHeader title={t("clinic.services.title")} description={t("clinic.services.subtitle")} />
+      <PageHeader
+        title={t("clinic.services.title")}
+        description={t("clinic.services.subtitle")}
+        action={
+          <ButtonLink href={`/c/${ctx.tenant.slug}/services/discounts`} variant="secondary">
+            {t("clinic.pricing.title")}
+          </ButtonLink>
+        }
+      />
       {canManage ? (
         <Card className="mb-6">
           <CardHeader title={t("clinic.services.priceListTitle")} description={t("clinic.services.priceListHint")} />

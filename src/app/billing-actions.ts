@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import type { FormState } from "@/lib/form-state";
 import { toFormState } from "@/server/actions-util";
 import { requireClinic } from "@/server/auth/guards";
-import { addInvoiceLine, createInvoice, issueInvoice, recordPayment, refundPayment, removeInvoiceLine, voidInvoice } from "@/server/billing/billing";
+import { addInvoiceLine, createInvoice, issueInvoice, recordPayment, refundPayment, removeInvoiceLine, approveDebt, voidInvoice } from "@/server/billing/billing";
 import { closeShift, createExpense, openShift, voidExpense } from "@/server/billing/cash";
 import { requestMeta } from "@/server/http";
 
@@ -70,6 +70,17 @@ export async function paymentAction(_: FormState, fd: FormData): Promise<FormSta
     const r = await recordPayment(ctx, invoiceId, { amount: str(fd, "amount"), method: str(fd, "method"), externalRef: str(fd, "externalRef"), idempotencyKey: str(fd, "idempotencyKey") }, await requestMeta());
     revalidatePath(`/c/${slug}/billing`, "layout");
     return ok(r.duplicate ? "clinic.billing.duplicateIgnored" : "clinic.billing.paymentRecorded");
+  } catch (e) {
+    return toFormState(e, fd);
+  }
+}
+
+export async function approveDebtAction(_: FormState, fd: FormData): Promise<FormState> {
+  const { slug, ctx } = await clinicFrom(fd);
+  try {
+    await approveDebt(ctx, str(fd, "invoiceId"), await requestMeta());
+    revalidatePath(`/c/${slug}/billing`, "layout");
+    return ok("clinic.billing.debtApproved");
   } catch (e) {
     return toFormState(e, fd);
   }

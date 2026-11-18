@@ -97,7 +97,7 @@ export function parseNoteContent(content: string): NoteContent {
 }
 
 function canUse(ctx: ClinicContext) {
-  requirePermission(ctx, "clinic.settings.read", "emr.write", "emr.read");
+  requirePermission(ctx, "clinic.settings.read", "emr.write", "emr.read", "documents.print");
 }
 
 export async function listTemplates(ctx: ClinicContext, opts: { kind?: TemplateKind; specialty?: string | null } = {}) {
