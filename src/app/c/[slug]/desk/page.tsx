@@ -1,4 +1,5 @@
 import { ConciergeBell, FileText, Printer, Receipt, UserPlus } from "lucide-react";
+import { AutoRefresh } from "@/components/auto-refresh";
 import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { moneyFormatter } from "@/components/money";
@@ -76,6 +77,7 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
 
   return (
     <div className="space-y-6">
+      <AutoRefresh seconds={20} />
       <PageHeader title={t("clinic.desk.title")} description={t("clinic.desk.subtitle")} />
 
       {sp.paid && /^[d ]{1,20}$/.test(sp.paid) ? <Alert tone="success">{t("clinic.desk.debtPaid", { paid: sp.paid })}</Alert> : null}
@@ -252,6 +254,7 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
                       <p className="truncate text-[12.5px] text-text-2">{a.doctor.membership.user.fullName}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
                         <Badge tone={STATUS_TONE[a.status]}>{t(`status.${a.status}`)}</Badge>
+                        {a.calledAt && a.status === "CHECKED_IN" ? <Badge tone="accent">{t("clinic.call.calledBadge")}</Badge> : null}
                         {m ? <Badge tone={m.paidMinor >= m.totalMinor ? "success" : "warning"}>{money(m.paidMinor, m.currency)} / {money(m.totalMinor, m.currency)}</Badge> : null}
                         {owes > 0n ? <Badge tone="danger">{t("clinic.desk.debtShort", { amount: money(owes, ctx.tenant.currency) })}</Badge> : null}
                       </div>

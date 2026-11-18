@@ -4,7 +4,9 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { moneyFormatter } from "@/components/money";
 import { patientName } from "@/components/patients";
 import { todayMoney, todayVitals } from "@/server/reception/desk";
-import { Form } from "@/components/ui/form";
+import { Form, SubmitButton, TextField } from "@/components/ui/form";
+import { AutoRefresh } from "@/components/auto-refresh";
+import { cabinetAction, callNextAction } from "../../../queue-actions";
 import { Alert, Badge, Card, EmptyState, PageHeader, STATUS_TONE, buttonClass } from "@/components/ui/primitives";
 import { listDay } from "@/server/appointments/appointments";
 import { requireClinic } from "@/server/auth/guards";
@@ -25,6 +27,7 @@ export default async function MyQueuePage({ params, searchParams }: { params: Pr
   const ids = [...new Set(mine.map((a) => a.patientId))];
   const [{ today: paid, debt }, vitals, money] = await Promise.all([todayMoney(ctx, ids), todayVitals(ctx, ids), moneyFormatter()]);
   const year = Number(todayIn(tz).slice(0, 4));
+  const cabinet = profileId ? (await withAppContext({ tenantId: ctx.tenant.id, userId: ctx.principal.user.id }, (tx) => tx.doctorProfile.findUnique({ where: { id: profileId }, select: { cabinet: true } })))?.cabinet : null;
   const encounters = new Map(
     (await withAppContext({ tenantId: ctx.tenant.id, userId: ctx.principal.user.id }, (tx) => tx.encounter.findMany({ where: { appointmentId: { in: mine.map((a) => a.id) } }, select: { id: true, appointmentId: true } }))).map((e) => [e.appointmentId!, e.id]),
   );
@@ -34,6 +37,29 @@ export default async function MyQueuePage({ params, searchParams }: { params: Pr
       <PageHeader title={t("clinic.visit.myQueue")} description={t("clinic.visit.myQueueSubtitle")} />
       {sp.finished ? <Alert tone="success">{t("clinic.visit.finished")}</Alert> : null}
       {!profileId ? <Alert tone="neutral">{t("clinic.mySchedule.noProfile")}</Alert> : null}
+      {profileId ? (
+        <Card>
+          <div className="flex flex-wrap items-end justify-between gap-4 px-5 py-4 sm:px-6">
+            <div className="flex flex-wrap gap-2">
+              <Form action={callNextAction}>
+                <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+                <SubmitButton>{t("clinic.call.next")}</SubmitButton>
+              </Form>
+              <Form action={callNextAction}>
+                <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+                <input type="hidden" name="recall" value="1" />
+                <SubmitButton variant="secondary">{t("clinic.call.recall")}</SubmitButton>
+              </Form>
+            </div>
+            <Form action={cabinetAction} className="flex items-end gap-2">
+              <input type="hidden" name="$slug" value={ctx.tenant.slug} />
+              <TextField name="cabinet" label={t("clinic.call.cabinet")} defaultValue={cabinet ?? ""} placeholder="3-xona" />
+              <SubmitButton variant="secondary">{t("common.save")}</SubmitButton>
+            </Form>
+          </div>
+        </Card>
+      ) : null}
+      <AutoRefresh seconds={20} />
       <Card className="overflow-hidden">
         {mine.length === 0 ? (
           <EmptyState icon={<Stethoscope className="size-6" />} title={t("clinic.visit.emptyQueue")} />
@@ -47,6 +73,7 @@ export default async function MyQueuePage({ params, searchParams }: { params: Pr
                     <div className="w-16 shrink-0">
                       <p className="text-[15px] font-semibold tabular-nums">{format.dateTime(a.startsAt, { timeStyle: "short", timeZone: tz })}</p>
                       {a.queueNumber ? <p className="text-[12px] font-semibold text-accent">#{a.queueNumber}</p> : null}
+                      {a.calledAt && a.status === "CHECKED_IN" ? <p className="text-[11.5px] font-semibold text-accent">{t("clinic.call.calledBadge")}</p> : null}
                     </div>
                     <div className="min-w-0">
                       <p className="font-semibold">{patientName(a.patient)}</p>

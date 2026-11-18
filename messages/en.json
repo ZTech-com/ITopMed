@@ -1386,6 +1386,28 @@
     },
     "deskPrint": {
       "title": "The document cannot be printed yet"
+    },
+    "call": {
+      "next": "Next patient",
+      "recall": "Call again",
+      "cabinet": "My room",
+      "called": "Number {number} called: shown on the screen and announced.",
+      "nobody": "Nobody is waiting in the queue.",
+      "cabinetSaved": "Room saved.",
+      "calledBadge": "Called"
+    },
+    "screens": {
+      "title": "Waiting-room screen (TV)",
+      "hint": "Open this link in the browser of a TV or monitor: the queue, the called patient and the room in large type, announced aloud if wanted. The screen shows only the first name and the surname's initial.",
+      "name": "Screen name",
+      "nameExample": "E.g. Waiting room",
+      "voice": "Voice call (trial: depends on the voices of the browser)",
+      "create": "Create screen link",
+      "created": "Screen link (shown only now — copy it): {link}",
+      "revoke": "Turn off",
+      "revoked": "Screen turned off: the link no longer works.",
+      "voiceOn": "with sound",
+      "voiceOff": "silent"
     }
   },
   "status": {
@@ -2629,5 +2651,19 @@
     "DOCTOR": "Referred by a doctor",
     "ADVERTISING": "Through advertising",
     "OTHER": "Other"
+  },
+  "waitingRoom": {
+    "title": "Queue",
+    "now": "Now calling",
+    "waiting": "Waiting",
+    "number": "Number",
+    "cabinet": "Room",
+    "inVisit": "In visit",
+    "empty": "No calls yet",
+    "soundOn": "Turn sound on",
+    "soundHint": "Click once: the browser allows sound only after that.",
+    "spoken": "Number {number}. {name}. Please go to {cabinet}.",
+    "spokenNoCabinet": "Number {number}. {name}. Please go to the doctor.",
+    "offline": "No connection"
   }
 }

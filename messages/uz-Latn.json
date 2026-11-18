@@ -1386,6 +1386,28 @@
     },
     "deskPrint": {
       "title": "Hujjatni hozircha chop etib boʻlmaydi"
+    },
+    "call": {
+      "next": "Keyingi bemor",
+      "recall": "Qayta chaqirish",
+      "cabinet": "Kabinetim",
+      "called": "{number}-raqam chaqirildi: ekranda va ovozda eʼlon qilindi.",
+      "nobody": "Navbatda kutayotgan bemor yoʻq.",
+      "cabinetSaved": "Kabinet saqlandi.",
+      "calledBadge": "Chaqirildi"
+    },
+    "screens": {
+      "title": "Kutish zali ekrani (televizor)",
+      "hint": "Televizor yoki monitor brauzerida shu havolani oching: navbat, chaqirilgan bemor va kabinet katta koʻrinadi, kerak boʻlsa ovozda aytiladi. Ekranda bemorning faqat ismi va familiyasining birinchi harfi chiqadi.",
+      "name": "Ekran nomi",
+      "nameExample": "Masalan: Kutish zali",
+      "voice": "Ovozli chaqiruv (sinov bosqichida: ovoz brauzerdagi mavjud ovozga bogʻliq)",
+      "create": "Ekran havolasini yaratish",
+      "created": "Ekran havolasi (faqat hozir koʻrsatiladi — nusxalab oling): {link}",
+      "revoke": "Oʻchirish",
+      "revoked": "Ekran oʻchirildi: havola endi ishlamaydi.",
+      "voiceOn": "ovoz yoqilgan",
+      "voiceOff": "ovozsiz"
     }
   },
   "status": {
@@ -2629,5 +2651,19 @@
     "DOCTOR": "Shifokor yubordi",
     "ADVERTISING": "Reklama orqali",
     "OTHER": "Boshqa"
+  },
+  "waitingRoom": {
+    "title": "Navbat",
+    "now": "Chaqirilmoqda",
+    "waiting": "Kutmoqda",
+    "number": "Raqam",
+    "cabinet": "Kabinet",
+    "inVisit": "Qabulda",
+    "empty": "Hozircha chaqiruv yoʻq",
+    "soundOn": "Ovozni yoqish",
+    "soundHint": "Bir marta bosing: brauzer ovozga shundan keyin ruxsat beradi.",
+    "spoken": "{number}-raqam. {name}. {cabinet}ga kiring.",
+    "spokenNoCabinet": "{number}-raqam. {name}. Shifokor xonasiga kiring.",
+    "offline": "Aloqa yoʻq"
   }
 }

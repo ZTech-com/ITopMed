@@ -1,4 +1,5 @@
 import { CalendarClock } from "lucide-react";
+import { AutoRefresh } from "@/components/auto-refresh";
 import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { PatientPicker, patientName } from "@/components/patients";
@@ -43,6 +44,7 @@ export default async function QueuePage({ params, searchParams }: { params: Prom
 
   return (
     <div className="space-y-6">
+      <AutoRefresh seconds={20} />
       <PageHeader
         title={t("clinic.queue.title")}
         description={t("clinic.queue.subtitle")}

@@ -26,6 +26,8 @@ const PUBLIC_PAGES = new Set([
   // Fresh local installation only, while no account exists (see completeFirstRun).
   "(public)/welcome/page.tsx",
   "(public)/reset-password/[token]/page.tsx",
+  // Waiting-room TV: no user on a screen; the secret link (hash stored, revocable) is the credential.
+  "(public)/tv/[token]/page.tsx",
   // Invited ITop Med employee has no account yet; the single-use token is the credential.
   "admin/(auth)/invite/[token]/page.tsx",
 ]);
@@ -79,7 +81,8 @@ describe("authorization sweep", () => {
   it("every route handler authorizes", () => {
     const routes = files.filter((f) => f.endsWith(`${path.sep}route.ts`)).map(rel);
     // Local installation only (LOCAL_MODE=1): the PUBLIC half of the local CA, so devices can trust HTTPS.
-    const PUBLIC_ROUTES = new Set(["api/health/route.ts", "(public)/connect/ca.crt/route.ts", "(public)/connect/ios/route.ts"]);
+    // api/tv: the waiting-room screen's data; its secret link is the credential (see src/server/queue/board.ts).
+    const PUBLIC_ROUTES = new Set(["api/health/route.ts", "(public)/connect/ca.crt/route.ts", "(public)/connect/ios/route.ts", "api/tv/[token]/route.ts"]);
     const missing = routes.filter((r) => !PUBLIC_ROUTES.has(r) && !GUARDS.test(fs.readFileSync(path.join(ROOT, r), "utf8")));
     expect(missing).toEqual([]);
   });

@@ -235,6 +235,7 @@ model Tenant {
   benefitCategories    BenefitCategory[]
   servicePackages      ServicePackage[]
   servicePackageItems  ServicePackageItem[]
+  displayScreens       DisplayScreen[]
 
   @@index([status])
   @@index([networkId])
@@ -265,6 +266,7 @@ model Branch {
   labOrders      LabOrder[]
   stockBatches   StockBatch[]
   stockMovements StockMovement[]
+  displayScreens DisplayScreen[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -697,6 +699,8 @@ model DoctorProfile {
   licenseNumber        String?
   defaultSlotMinutes   Int       @default(20)
   acceptsOnlineBooking Boolean   @default(false)
+  /// Room / cabinet named when the patient is called (e.g. "3-xona").
+  cabinet              String?
   archivedAt           DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
@@ -799,6 +803,25 @@ enum ReferralSource {
 }
 
 /// Privileged patient categories with an automatic discount (set by the clinic owner/admin).
+/// A waiting-room screen (TV) of one branch: opened by a secret link, no sign-in.
+model DisplayScreen {
+  id          String    @id @db.Uuid
+  tenantId    String    @db.Uuid
+  branchId    String    @db.Uuid
+  name        String
+  /// SHA-256 of the secret in the screen's link; the secret itself is never stored.
+  tokenHash   String    @unique
+  voice       Boolean   @default(true)
+  createdById String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId])
+}
+
 model BenefitCategory {
   id              String    @id @db.Uuid
   tenantId        String    @db.Uuid
@@ -1004,6 +1027,9 @@ model Appointment {
   adminNote          String?
   /// Daily per-branch queue number, assigned at check-in.
   queueNumber        Int?
+  /// The doctor pressed "Next patient": shown on the waiting-room screen (and spoken).
+  calledAt           DateTime?
+  calledCount        Int                 @default(0)
   checkedInAt        DateTime?
   startedAt          DateTime?
   completedAt        DateTime?
