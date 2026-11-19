@@ -155,7 +155,7 @@ export async function DiagnosisList({
   slug,
   canEdit,
 }: {
-  diagnoses: { id: string; icd10Code: string; description: string; kind: string; status: string }[];
+  diagnoses: { id: string; icd10Code: string; description: string; kind: string; status: string; stage?: string | null }[];
   statusAction?: (s: FormState, fd: FormData) => Promise<FormState>;
   slug?: string;
   canEdit?: boolean;
@@ -167,7 +167,7 @@ export async function DiagnosisList({
       {diagnoses.map((d) => (
         <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] bg-sunken px-3 py-2">
           <span className="min-w-0 text-[14px]">
-            <span className="font-mono font-semibold">{d.icd10Code}</span> {d.description}{" "}
+            <span className="font-mono font-semibold">{d.icd10Code}</span> {d.description}{d.stage ? <span className="text-text-2"> · {d.stage}</span> : null}{" "}
             <Badge tone={d.kind === "PRIMARY" ? "accent" : "neutral"}>{t(`diagnosisKind.${d.kind}` as never)}</Badge>{" "}
             {d.status !== "ACTIVE" ? <Badge>{t(`status.${d.status}` as never)}</Badge> : null}
           </span>

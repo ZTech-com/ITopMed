@@ -21,6 +21,13 @@ import { todayMoney } from "@/server/reception/desk";
 import { moneyFormatter } from "@/components/money";
 import { ServicePicker } from "@/components/service-picker";
 import { extraServicesAction } from "../../../../desk-actions";
+import { Anamnesis } from "@/components/anamnesis";
+import { Calculators, DiagnosisChips, QuickPhrases } from "@/components/doctor-tools";
+import { bmi as bmiCalc } from "@/lib/calculators";
+import { suggestDiagnoses } from "@/lib/dx-suggest";
+import { frequentDiagnoses } from "@/server/emr/assist";
+import { getPatientHistory } from "@/server/emr/history";
+import { copyPreviousNoteAction, historyAction } from "../../../../care-actions";
 
 /** The doctor's visit workspace. Every load is an audited record access. */
 export default async function EncounterPage({ params, searchParams }: { params: Promise<{ slug: string; id: string }>; searchParams: Promise<{ tooth?: string; dentition?: string }> }) {
@@ -51,6 +58,41 @@ export default async function EncounterPage({ params, searchParams }: { params: 
     todayMoney(ctx, [e.patient.id]),
   ]);
   const paidToday = billing.today.get(e.patient.id);
+  const meta = await requestMeta();
+  const [history, frequent, tv, tdx, tcalc, tan] = await Promise.all([
+    getPatientHistory(ctx, e.patient.id, meta),
+    canWrite ? frequentDiagnoses(ctx) : Promise.resolve([]),
+    getTranslations("clinic.visit"),
+    getTranslations("dxSuggest"),
+    getTranslations("calc"),
+    getTranslations("anamnesis"),
+  ]);
+  // Latest value of each measurement (today's desk / triage values included).
+  const latest = new Map<string, number>();
+  for (const v of [...e.vitals].sort((a, b) => +b.measuredAt - +a.measuredAt)) if (!latest.has(v.kind)) latest.set(v.kind, Number(v.value));
+  const ageYears = (() => {
+    const b = e.patient.birthDate;
+    const now = new Date();
+    let a = now.getUTCFullYear() - b.getUTCFullYear();
+    if (!e.patient.birthYearOnly && (now.getUTCMonth() < b.getUTCMonth() || (now.getUTCMonth() === b.getUTCMonth() && now.getUTCDate() < b.getUTCDate()))) a -= 1;
+    return a;
+  })();
+  const sexForCalc = e.patient.sex === "MALE" || e.patient.sex === "FEMALE" ? e.patient.sex : undefined;
+  const bmiNow = bmiCalc({ weightKg: latest.get("WEIGHT"), heightCm: latest.get("HEIGHT") });
+  const suggestions = canWrite
+    ? suggestDiagnoses({
+        systolic: latest.get("SYSTOLIC_BP"),
+        diastolic: latest.get("DIASTOLIC_BP"),
+        systolicLeft: latest.get("SYSTOLIC_BP_LEFT"),
+        diastolicLeft: latest.get("DIASTOLIC_BP_LEFT"),
+        weightKg: latest.get("WEIGHT"),
+        heightCm: latest.get("HEIGHT"),
+        diabetes: history?.diabetes,
+        priorMyocardialInfarction: history?.priorMyocardialInfarction,
+        smoking: history?.smoking,
+        existing: e.diagnoses.filter((d) => d.status === "ACTIVE").map((d) => d.icd10Code),
+      })
+    : [];
   const owes = billing.debt.get(e.patient.id) ?? 0n;
 
   return (
@@ -84,6 +126,27 @@ export default async function EncounterPage({ params, searchParams }: { params: 
               </div>
               <p className="mt-1 text-[12.5px] text-text-3">{t("templates.applyHint")}</p>
             </Form>
+          ) : null}
+          {canWrite && hasDraft ? (
+            <div className="space-y-3 rounded-[12px] border border-border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[14px] font-semibold">{tv("quickTitle")}</p>
+                <Form action={copyPreviousNoteAction} className="space-y-0">
+                  <input type="hidden" name="$slug" value={s} />
+                  <input type="hidden" name="encounterId" value={e.id} />
+                  <SubmitButton variant="secondary">{tv("copyPrevious")}</SubmitButton>
+                </Form>
+              </div>
+              <QuickPhrases
+                groups={[
+                  { field: "complaints", label: tv("complaintsGroup"), phrases: tv.raw("complaints") as string[] },
+                  { field: "examination", label: tv("heartGroup"), phrases: tv.raw("heart") as string[] },
+                  { field: "examination", label: tv("lungGroup"), phrases: tv.raw("lungs") as string[] },
+                  { field: "examination", label: tv("edemaGroup"), phrases: tv.raw("edema") as string[] },
+                ]}
+              />
+              <p className="text-[12.5px] text-text-3">{tv("copyPreviousHint")}</p>
+            </div>
           ) : null}
           {e.notes.map((n) =>
             n.status === "SIGNED" ? (
@@ -126,6 +189,13 @@ export default async function EncounterPage({ params, searchParams }: { params: 
           <CardBody className="space-y-4">
             <DiagnosisList diagnoses={e.diagnoses} statusAction={clinicalStatusAction} slug={s} canEdit={canWrite} />
             {canWrite ? (
+              <div className="space-y-3 border-t border-border pt-4">
+                <DiagnosisChips title={tv("suggested")} items={suggestions.map((x) => ({ code: x.code, text: tdx(x.code as never), hint: x.reason.key === "history" ? tdx("history") : tdx(x.reason.key, x.reason.values as never) }))} />
+                <DiagnosisChips title={tv("frequent")} items={frequent.map((f) => ({ code: f.icd10Code, text: f.description }))} />
+              </div>
+            ) : null}
+            {canWrite ? (
+              <div data-diagnosis-form>
               <Form action={diagnosisAction} className="border-t border-border pt-4">
                 <input type="hidden" name="$slug" value={s} />
                 <input type="hidden" name="encounterId" value={e.id} />
@@ -133,9 +203,13 @@ export default async function EncounterPage({ params, searchParams }: { params: 
                   <TextField name="icd10Code" label={t("clinic.visit.icd10")} hint={t("clinic.visit.icd10Optional")} optionalLabel={t("common.optional")} />
                   <TextAreaField name="description" label={t("clinic.visit.description")} rows={2} />
                 </div>
-                <SelectField name="kind" label={t("clinic.visit.kind")} options={(["PRIMARY", "SECONDARY", "COMPLICATION"] as const).map((k) => ({ value: k, label: t(`diagnosisKind.${k}`) }))} />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <SelectField name="kind" label={t("clinic.visit.kind")} options={(["PRIMARY", "SECONDARY", "COMPLICATION"] as const).map((k) => ({ value: k, label: t(`diagnosisKind.${k}`) }))} />
+                  <TextField name="stage" label={tv("stage")} hint={tv("stageHint")} optionalLabel={t("common.optional")} />
+                </div>
                 <SubmitButton variant="secondary">{t("clinic.visit.addDiagnosis")}</SubmitButton>
               </Form>
+              </div>
             ) : null}
           </CardBody>
         </Card>
@@ -144,11 +218,46 @@ export default async function EncounterPage({ params, searchParams }: { params: 
           <CardHeader title={t("clinic.visit.vitals")} />
           <CardBody className="space-y-4">
             <VitalsTable vitals={e.vitals} timeZone={tz} />
+            {bmiNow.ok ? (
+              <p className="text-[14px]">
+                <span className="font-semibold">{tv("bmi")}:</span> {bmiNow.value.bmi} kg/m² · {tcalc(`bmiClass.${bmiNow.value.class}` as never)}
+              </p>
+            ) : null}
             {open && ctx.permissions.has("vitals.write") ? (
               <div className="border-t border-border pt-4">
                 <VitalsForm action={vitalsAction} slug={s} patientId={e.patient.id} encounterId={e.id} />
               </div>
             ) : null}
+          </CardBody>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader title={tan("title")} description={canWrite ? tan("hint") : undefined} />
+          <CardBody>
+            <Anamnesis history={history} canEdit={open && isOwn && ctx.permissions.has("emr.write")} action={historyAction} slug={s} patientId={e.patient.id} back={`/c/${s}/encounters/${e.id}`} female={e.patient.sex === "FEMALE"} />
+          </CardBody>
+        </Card>
+        <Card>
+          <CardHeader title={tv("calcTitle")} />
+          <CardBody>
+            <Calculators
+              canInsert={canWrite && hasDraft}
+              defaults={{
+                age: ageYears,
+                sex: sexForCalc,
+                weightKg: latest.get("WEIGHT"),
+                heightCm: latest.get("HEIGHT"),
+                heartRate: latest.get("HEART_RATE"),
+                systolic: latest.get("SYSTOLIC_BP"),
+                diastolic: latest.get("DIASTOLIC_BP"),
+                systolicLeft: latest.get("SYSTOLIC_BP_LEFT"),
+                diabetes: history?.diabetes === "TYPE1" || history?.diabetes === "TYPE2" || history?.diabetes === "OTHER",
+                hypertension: (history?.hypertensionYears ?? 0) > 0,
+                vascularDisease: history?.priorMyocardialInfarction === true,
+              }}
+            />
           </CardBody>
         </Card>
       </div>

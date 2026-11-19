@@ -175,7 +175,7 @@ export const ROLE_TEMPLATES: Record<SystemRoleKey, Permission[]> = {
     "services.read",
     "schedules.read",
   ],
-  nurse: ["patients.read", "appointments.read", "emr.read", "vitals.write", "nursing.write", "documents.read", "queue.manage", "schedules.read", "lab.collect"],
+  nurse: ["patients.read", "appointments.read", "emr.read", "vitals.write", "nursing.write", "documents.read", "queue.manage", "schedules.read", "lab.collect", "billing.invoice", "services.read"],
   lab_staff: ["patients.read", "lab.read", "lab.process", "lab.verify", "lab.collect", "lab.manage"],
   cashier: ["patients.read", "billing.read", "billing.invoice", "billing.payment", "billing.refund", "billing.free_visit", "cash.shift", "services.read"],
   accountant: ["billing.read", "finance.reports", "finance.manage", "reports.operational", "services.read"],

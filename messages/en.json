@@ -750,7 +750,57 @@
       "markResolved": "Mark resolved",
       "markError": "Entered in error",
       "statusUpdated": "Updated.",
-      "icd10Optional": "Optional, e.g. I10"
+      "icd10Optional": "Optional, e.g. I10",
+      "quickTitle": "Quick picks",
+      "complaintsGroup": "Complaints",
+      "heartGroup": "Heart auscultation",
+      "lungGroup": "Lung auscultation",
+      "edemaGroup": "Oedema",
+      "complaints": [
+        "Chest pain",
+        "Chest pressure",
+        "Shortness of breath",
+        "Palpitations",
+        "Irregular heartbeat",
+        "Headache",
+        "Dizziness",
+        "Weakness",
+        "Fainting",
+        "Leg swelling"
+      ],
+      "heart": [
+        "Heart sounds clear, regular",
+        "Heart sounds muffled",
+        "Irregular rhythm",
+        "Systolic murmur at the apex",
+        "Accentuated second sound over the aorta",
+        "Tachycardia",
+        "Bradycardia"
+      ],
+      "lungs": [
+        "Vesicular breathing",
+        "Diminished breath sounds",
+        "Basal crackles",
+        "Wheezes",
+        "No added sounds"
+      ],
+      "edema": [
+        "No oedema",
+        "Mild ankle oedema",
+        "Oedema of legs and feet",
+        "Oedema up to the knees",
+        "Generalised oedema (anasarca)"
+      ],
+      "copyPrevious": "Copy from the previous visit",
+      "copyPreviousHint": "Only empty sections are filled from the last signed note.",
+      "copied": "Previous note copied — edit it.",
+      "noPrevious": "This patient has no earlier signed note.",
+      "stage": "Stage / degree",
+      "stageHint": "E.g. grade II, NYHA III, G3a",
+      "frequent": "Frequent diagnoses",
+      "suggested": "Tentative diagnosis (confirm)",
+      "calcTitle": "Clinical calculators",
+      "bmi": "BMI"
     },
     "record": {
       "title": "Medical record",
@@ -1451,7 +1501,10 @@
     "COLLECTED": "Specimen collected",
     "RESULTED": "Awaiting verification",
     "VERIFIED": "Verified",
-    "MERGED": "Merged"
+    "MERGED": "Merged",
+    "NEVER": "Never",
+    "FORMER": "Former",
+    "CURRENT": "Current"
   },
   "platformRole": {
     "SUPER_ADMIN": "SuperAdmin",
@@ -1540,7 +1593,8 @@
     "bookingDays": "Enter 1 to 180 days.",
     "leadHours": "Enter 0 to 168 hours.",
     "maxActive": "Enter 1 to 20.",
-    "packageTwoServices": "Choose at least 2 services for a package."
+    "packageTwoServices": "Choose at least 2 services for a package.",
+    "pregnancyWeeks": "Weeks only when pregnancy is “Yes”."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -1663,7 +1717,9 @@
       "notToday": "The desk prints documents of today's visits only. Ask the doctor for older documents.",
       "unpaid": "The cashier has not confirmed payment yet: the bill must be paid or the cashier must “Allow debt”."
     },
-    "freeVisitReasonRequired": "Write the reason for the free follow-up visit."
+    "freeVisitReasonRequired": "Write the reason for the free follow-up visit.",
+    "drugRequired": "Enter the drug.",
+    "noPreviousNote": "This patient has no earlier signed note."
   },
   "email": {
     "invitation": {
@@ -1866,7 +1922,10 @@
     "SPO2": "SpO₂",
     "WEIGHT": "Weight",
     "HEIGHT": "Height",
-    "BLOOD_GLUCOSE": "Blood glucose"
+    "BLOOD_GLUCOSE": "Blood glucose",
+    "SYSTOLIC_BP_LEFT": "Systolic blood pressure (left arm)",
+    "DIASTOLIC_BP_LEFT": "Diastolic blood pressure (left arm)",
+    "WAIST": "Waist circumference"
   },
   "noteSection": {
     "complaints": "Complaints",
@@ -2644,7 +2703,10 @@
     "SPO2": "%",
     "WEIGHT": "kg",
     "HEIGHT": "cm",
-    "BLOOD_GLUCOSE": "mmol/L"
+    "BLOOD_GLUCOSE": "mmol/L",
+    "SYSTOLIC_BP_LEFT": "mmHg",
+    "DIASTOLIC_BP_LEFT": "mmHg",
+    "WAIST": "cm"
   },
   "referralSource": {
     "SELF": "Came by themselves",
@@ -2665,5 +2727,151 @@
     "spoken": "Number {number}. {name}. Please go to {cabinet}.",
     "spokenNoCabinet": "Number {number}. {name}. Please go to the doctor.",
     "offline": "No connection"
+  },
+  "calc": {
+    "disclaimer": "Calculators support the doctor; the final clinical decision is the doctor's. Nothing is calculated without enough data.",
+    "missing": "Needed to calculate: {list}",
+    "insert": "Add to conclusion",
+    "male": "Male",
+    "female": "Female",
+    "field": {
+      "age": "Age",
+      "sex": "Sex",
+      "weightKg": "Weight",
+      "heightCm": "Height",
+      "creatinineUmol": "Serum creatinine",
+      "lvef": "LV ejection fraction (EF)",
+      "nyha": "Functional class (NYHA)",
+      "qtMs": "QT interval",
+      "heartRate": "Heart rate",
+      "age>=18": "age 18 or older",
+      "lvefRange": "EF"
+    },
+    "unit": {
+      "years": "years",
+      "cm": "cm",
+      "umol": "µmol/L",
+      "ms": "ms",
+      "perMin": "/min"
+    },
+    "bmiTitle": "Body mass index (BMI)",
+    "bmiLine": "BMI {bmi} kg/m² — {cls}",
+    "bmiClass": {
+      "UNDERWEIGHT": "underweight",
+      "NORMAL": "normal",
+      "OVERWEIGHT": "overweight",
+      "OBESITY_1": "obesity class I",
+      "OBESITY_2": "obesity class II",
+      "OBESITY_3": "obesity class III"
+    },
+    "mapLine": "Mean arterial pressure: {map} mmHg",
+    "armsLine": "Systolic difference between arms: {diff} mmHg",
+    "kidneyTitle": "Kidney function (eGFR)",
+    "egfrLine": "eGFR (CKD-EPI 2021) {egfr} mL/min/1.73 m², KDIGO {stage} (creatinine {creat} µmol/L)",
+    "cgLine": "Creatinine clearance (Cockcroft–Gault): {crcl} mL/min",
+    "chaTitle": "Stroke risk: CHA₂DS₂-VASc (atrial fibrillation)",
+    "cha": {
+      "heartFailure": "Heart failure / LV dysfunction",
+      "hypertension": "Hypertension",
+      "diabetes": "Diabetes",
+      "strokeTiaThromboembolism": "Prior stroke / TIA / thromboembolism",
+      "vascularDisease": "Vascular disease (MI, peripheral artery disease, aortic plaque)"
+    },
+    "chaLine": "CHA₂DS₂-VASc = {score} points",
+    "hasbledTitle": "Bleeding risk: HAS-BLED",
+    "hasbled": {
+      "uncontrolledHypertension": "Uncontrolled hypertension (systolic > 160)",
+      "abnormalRenalFunction": "Abnormal renal function",
+      "abnormalLiverFunction": "Abnormal liver function",
+      "stroke": "Prior stroke",
+      "bleeding": "Bleeding history or predisposition",
+      "labileInr": "Labile INR",
+      "antiplateletOrNsaid": "Antiplatelet drugs or NSAIDs",
+      "alcohol": "Alcohol (≥ 8 drinks a week)"
+    },
+    "hasbledLine": "HAS-BLED = {score} points ({risk})",
+    "riskHigh": "high risk",
+    "riskNotHigh": "not high",
+    "hfTitle": "Heart failure: EF and NYHA",
+    "efLine": "EF {lvef}% — {cat}",
+    "ef": {
+      "HFrEF": "HF with reduced EF (≤ 40%)",
+      "HFmrEF": "HF with mildly reduced EF (41–49%)",
+      "HFpEF": "HF with preserved EF (≥ 50%)"
+    },
+    "nyhaLine": "NYHA {cls} — {text}",
+    "nyha": {
+      "I": "no limitation of physical activity",
+      "II": "slight limitation with ordinary activity",
+      "III": "marked limitation with less than ordinary activity",
+      "IV": "symptoms at rest"
+    },
+    "qtcTitle": "Corrected QT (QTc)",
+    "qtcLine": "QTc: Bazett {bazett} ms, Fridericia {fridericia} ms",
+    "sources": "Sources: WHO TRS 894 (BMI); Inker et al., NEJM 2021 (CKD-EPI 2021); KDIGO 2012; Cockcroft–Gault 1976; Lip 2010 (CHA₂DS₂-VASc); Pisters 2010 (HAS-BLED); 2021 ESC heart failure guidelines; NYHA; Bazett 1920, Fridericia 1920."
+  },
+  "dxSuggest": {
+    "I10": "Essential (primary) hypertension",
+    "E66": "Obesity",
+    "E11": "Type 2 diabetes mellitus",
+    "E10": "Type 1 diabetes mellitus",
+    "I25.2": "Old myocardial infarction",
+    "Z72.0": "Tobacco use",
+    "bp": "Measured BP {bp}",
+    "bmi": "BMI {bmi}",
+    "history": "From the anamnesis"
+  },
+  "anamnesis": {
+    "title": "Anamnesis",
+    "hint": "Filled once per patient and shown at later visits. Drug allergies go under “Add allergy”.",
+    "pregnancy": "Pregnancy",
+    "pregnancyWeeks": "Weeks of pregnancy",
+    "priorMi": "Prior myocardial infarction",
+    "diabetes": "Diabetes",
+    "smoking": "Smoking",
+    "htnYears": "Hypertension for (years)",
+    "hereditary": "Hereditary diseases",
+    "surgeries": "Past operations",
+    "other": "Other",
+    "save": "Save anamnesis",
+    "saved": "Anamnesis saved.",
+    "notFilled": "Anamnesis not filled in yet.",
+    "yes": "Yes",
+    "no": "No",
+    "unknown": "Unknown",
+    "pregnancyV": {
+      "NO": "No",
+      "YES": "Yes",
+      "UNKNOWN": "Unknown"
+    },
+    "diabetesV": {
+      "NO": "No",
+      "TYPE1": "Type 1",
+      "TYPE2": "Type 2",
+      "OTHER": "Other"
+    },
+    "smokingV": {
+      "NEVER": "Never",
+      "FORMER": "Former",
+      "CURRENT": "Current"
+    }
+  },
+  "nursingLog": {
+    "title": "First aid and medication given",
+    "kind": "Type",
+    "kindV": {
+      "FIRST_AID": "First aid",
+      "MEDICATION": "Medication given",
+      "NOTE": "Note"
+    },
+    "text": "What was done",
+    "drug": "Drug",
+    "dose": "Dose",
+    "route": "Route",
+    "save": "Record",
+    "saved": "Recorded.",
+    "none": "No entries today.",
+    "by": "{name}, {time}",
+    "bothArms": "Measure blood pressure on both arms"
   }
 }

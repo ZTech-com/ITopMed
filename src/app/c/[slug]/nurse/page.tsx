@@ -3,13 +3,15 @@ import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { VitalsForm } from "@/components/clinical";
 import { patientName } from "@/components/patients";
-import { Form } from "@/components/ui/form";
+import { Form, SelectField, SubmitButton, TextAreaField, TextField } from "@/components/ui/form";
 import { Badge, Card, CardHeader, EmptyState, PageHeader, STATUS_TONE, buttonClass } from "@/components/ui/primitives";
 import { listDay } from "@/server/appointments/appointments";
 import { requireClinic } from "@/server/auth/guards";
 import { labWorklist } from "@/server/lab/lab";
 import { todayIn } from "@/server/scheduling/time";
-import { vitalsAction } from "../../../care-actions";
+import { nursingAction, vitalsAction } from "../../../care-actions";
+import { listNursingRecords } from "@/server/emr/history";
+import { requestMeta } from "@/server/http";
 import { labStepAction } from "../../../lab-actions";
 
 /** Nurse station: today's patients in the nurse's branches — vital signs and specimen collection. */
@@ -21,6 +23,11 @@ export default async function NurseStationPage({ params }: { params: Promise<{ s
   const [day, toCollect] = await Promise.all([listDay(ctx, todayIn(tz)), ctx.permissions.has("lab.collect") ? labWorklist(ctx, ["ORDERED"]) : Promise.resolve([])]);
   const waiting = day.filter((a) => a.status === "CHECKED_IN" || a.status === "IN_PROGRESS");
   const s = ctx.tenant.slug;
+  const canNurse = ctx.permissions.has("nursing.write");
+  const tn = await getTranslations("nursingLog");
+  const meta = await requestMeta();
+  const logs = new Map<string, Awaited<ReturnType<typeof listNursingRecords>>>();
+  for (const a of waiting) if (!logs.has(a.patient.id)) logs.set(a.patient.id, await listNursingRecords(ctx, a.patient.id, meta, 10).catch(() => []));
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -78,10 +85,44 @@ export default async function NurseStationPage({ params }: { params: Promise<{ s
                 </div>
                 <details>
                   <summary className="cursor-pointer text-[14px] font-medium text-accent">{t("clinic.nurse.recordVitals")}</summary>
-                  <div className="mt-3">
+                  <div className="mt-3 space-y-2">
+                    <p className="text-[13px] text-text-2">{tn("bothArms")}</p>
                     <VitalsForm action={vitalsAction} slug={s} patientId={a.patient.id} />
                   </div>
                 </details>
+                {canNurse ? (
+                  <details>
+                    <summary className="cursor-pointer text-[14px] font-medium text-accent">{tn("title")}</summary>
+                    <div className="mt-3 space-y-3">
+                      {(logs.get(a.patient.id) ?? []).length === 0 ? (
+                        <p className="text-[13px] text-text-2">{tn("none")}</p>
+                      ) : (
+                        <ul className="space-y-1.5">
+                          {(logs.get(a.patient.id) ?? []).map((r) => (
+                            <li key={r.id} className="rounded-[10px] bg-sunken px-3 py-2 text-[13.5px]">
+                              <span className="font-medium">{tn(`kindV.${r.kind}` as never)}:</span> {r.text}
+                              {r.drug ? <span> · {[r.drug, r.dose, r.route].filter(Boolean).join(" ")}</span> : null}
+                              <span className="block text-[12px] text-text-3">{tn("by", { name: r.recordedByName, time: format.dateTime(r.recordedAt, { dateStyle: "short", timeStyle: "short", timeZone: tz }) })}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <Form action={nursingAction}>
+                        <input type="hidden" name="$slug" value={s} />
+                        <input type="hidden" name="patientId" value={a.patient.id} />
+                        <input type="hidden" name="appointmentId" value={a.id} />
+                        <div className="grid gap-3 sm:grid-cols-4">
+                          <SelectField name="kind" label={tn("kind")} options={(["FIRST_AID", "MEDICATION", "NOTE"] as const).map((k) => ({ value: k, label: tn(`kindV.${k}`) }))} />
+                          <TextField name="drug" label={tn("drug")} optionalLabel={t("common.optional")} />
+                          <TextField name="dose" label={tn("dose")} optionalLabel={t("common.optional")} />
+                          <TextField name="route" label={tn("route")} optionalLabel={t("common.optional")} />
+                        </div>
+                        <TextAreaField name="text" label={tn("text")} rows={2} />
+                        <SubmitButton variant="secondary">{tn("save")}</SubmitButton>
+                      </Form>
+                    </div>
+                  </details>
+                ) : null}
               </li>
             ))}
           </ul>

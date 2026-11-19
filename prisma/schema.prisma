@@ -210,6 +210,8 @@ model Tenant {
   diagnoses            Diagnosis[]
   allergies            Allergy[]
   vitalSigns           VitalSign[]
+  patientHistories     PatientHistory[]
+  nursingRecords       NursingRecord[]
   invoices             Invoice[]
   invoiceLines         InvoiceLine[]
   payments             Payment[]
@@ -911,6 +913,8 @@ model Patient {
   diagnoses         Diagnosis[]
   allergies         Allergy[]
   vitals            VitalSign[]
+  history           PatientHistory?
+  nursingRecords    NursingRecord[]
   prescriptions     Prescription[]
   telegramLinks     TelegramLink[]
   telegramLinkCodes TelegramLinkCode[]
@@ -1163,6 +1167,8 @@ model Diagnosis {
   icd10Code    String
   description  String
   kind         DiagnosisKind  @default(PRIMARY)
+  /// Stage or degree ("II daraja", "NYHA III", "G3a").
+  stage        String?
   status       ClinicalStatus @default(ACTIVE)
   recordedById String         @db.Uuid
   recordedAt   DateTime       @default(now())
@@ -1210,6 +1216,77 @@ enum VitalKind {
   WEIGHT
   HEIGHT
   BLOOD_GLUCOSE
+  /// Blood pressure on the left arm (SYSTOLIC_BP / DIASTOLIC_BP are the right arm or the only measurement).
+  SYSTOLIC_BP_LEFT
+  DIASTOLIC_BP_LEFT
+  WAIST
+}
+
+enum Pregnancy {
+  NO
+  YES
+  UNKNOWN
+}
+
+enum DiabetesType {
+  NO
+  TYPE1
+  TYPE2
+  OTHER
+}
+
+enum SmokingStatus {
+  NEVER
+  FORMER
+  CURRENT
+}
+
+enum NursingKind {
+  FIRST_AID
+  MEDICATION
+  NOTE
+}
+
+/// Structured anamnesis of a patient (one row per patient, updated over time). Drug allergies are in Allergy.
+model PatientHistory {
+  patientId                 String         @id @db.Uuid
+  tenantId                  String         @db.Uuid
+  pregnancy                 Pregnancy?
+  pregnancyWeeks            Int?
+  priorMyocardialInfarction Boolean?
+  diabetes                  DiabetesType?
+  smoking                   SmokingStatus?
+  hypertensionYears         Int?
+  hereditary                String?
+  surgeries                 String?
+  otherNotes                String?
+  updatedById               String         @db.Uuid
+  updatedAt                 DateTime       @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId])
+}
+
+/// Triage / nurse's room: first aid given, medication given, notes (append-only).
+model NursingRecord {
+  id            String      @id @db.Uuid
+  tenantId      String      @db.Uuid
+  patientId     String      @db.Uuid
+  appointmentId String?     @db.Uuid
+  kind          NursingKind
+  text          String
+  drug          String?
+  dose          String?
+  route         String?
+  recordedById  String      @db.Uuid
+  recordedAt    DateTime    @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, patientId, recordedAt])
 }
 
 /// One measured value. Units are fixed per kind (UCUM) in src/server/emr/vitals.ts.

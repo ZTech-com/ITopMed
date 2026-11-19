@@ -750,7 +750,57 @@
       "markResolved": "Hal qilingan deb belgilash",
       "markError": "Xato kiritilgan",
       "statusUpdated": "Yangilandi.",
-      "icd10Optional": "Ixtiyoriy, masalan I10"
+      "icd10Optional": "Ixtiyoriy, masalan I10",
+      "quickTitle": "Tezkor tanlash",
+      "complaintsGroup": "Shikoyatlar",
+      "heartGroup": "Yurak auskultatsiyasi",
+      "lungGroup": "Oʻpka auskultatsiyasi",
+      "edemaGroup": "Shishlar",
+      "complaints": [
+        "Koʻkrak qafasida ogʻriq",
+        "Koʻkrak qafasida bosim",
+        "Hansirash",
+        "Yurak urib ketishi",
+        "Yurak ishida uzilishlar",
+        "Bosh ogʻrigʻi",
+        "Bosh aylanishi",
+        "Holsizlik",
+        "Hushdan ketish",
+        "Oyoqlarda shish"
+      ],
+      "heart": [
+        "Yurak tonlari aniq, ritmik",
+        "Yurak tonlari boʻgʻiq",
+        "Ritm notekis (aritmik)",
+        "Choʻqqida sistolik shovqin",
+        "Aortada II ton aksenti",
+        "Taxikardiya",
+        "Bradikardiya"
+      ],
+      "lungs": [
+        "Oʻpkada vezikulyar nafas",
+        "Nafas susaygan",
+        "Pastki boʻlimlarda nam xirillashlar",
+        "Quruq xirillashlar",
+        "Xirillash yoʻq"
+      ],
+      "edema": [
+        "Shish yoʻq",
+        "Boldirlarda yengil shish",
+        "Boldir va oyoq panjalarida shish",
+        "Tizzagacha shish",
+        "Umumiy shish (anasarka)"
+      ],
+      "copyPrevious": "Oldingi koʻrikdan nusxalash",
+      "copyPreviousHint": "Faqat boʻsh boʻlimlar oldingi imzolangan koʻrikdan toʻldiriladi.",
+      "copied": "Oldingi koʻrik nusxalandi — tahrirlang.",
+      "noPrevious": "Bu bemorning oldingi imzolangan koʻrigi yoʻq.",
+      "stage": "Bosqich / daraja",
+      "stageHint": "Masalan: II daraja, NYHA III, G3a",
+      "frequent": "Koʻp ishlatiladigan tashxislar",
+      "suggested": "Taxminiy tashxis (tasdiqlang)",
+      "calcTitle": "Tibbiy kalkulyatorlar",
+      "bmi": "BMI"
     },
     "record": {
       "title": "Tibbiy karta",
@@ -1451,7 +1501,10 @@
     "COLLECTED": "Namuna olingan",
     "RESULTED": "Tasdiq kutilmoqda",
     "VERIFIED": "Tasdiqlangan",
-    "MERGED": "Birlashtirilgan"
+    "MERGED": "Birlashtirilgan",
+    "NEVER": "Chekmagan",
+    "FORMER": "Tashlagan",
+    "CURRENT": "Chekadi"
   },
   "platformRole": {
     "SUPER_ADMIN": "SuperAdmin",
@@ -1540,7 +1593,8 @@
     "bookingDays": "1 dan 180 gacha kun kiriting.",
     "leadHours": "0 dan 168 gacha soat kiriting.",
     "maxActive": "1 dan 20 gacha kiriting.",
-    "packageTwoServices": "Paketga kamida 2 ta xizmat tanlang."
+    "packageTwoServices": "Paketga kamida 2 ta xizmat tanlang.",
+    "pregnancyWeeks": "Muddat faqat homiladorlik «Ha» boʻlganda yoziladi."
   },
   "errors": {
     "generic": "Nimadir notoʻgʻri ketdi. Qayta urinib koʻring.",
@@ -1663,7 +1717,9 @@
       "notToday": "Registratura faqat bugungi qabul hujjatini chop etadi. Eski hujjatlar uchun shifokorga murojaat qiling.",
       "unpaid": "Kassir toʻlovni hali tasdiqlamagan: hisob toʻlanishi yoki kassir «Qarzga ruxsat» berishi kerak."
     },
-    "freeVisitReasonRequired": "Bepul qayta koʻrik sababini yozing."
+    "freeVisitReasonRequired": "Bepul qayta koʻrik sababini yozing.",
+    "drugRequired": "Dori nomini yozing.",
+    "noPreviousNote": "Bu bemorning oldingi imzolangan koʻrigi yoʻq."
   },
   "email": {
     "invitation": {
@@ -1866,7 +1922,10 @@
     "SPO2": "SpO₂",
     "WEIGHT": "Vazn",
     "HEIGHT": "Boʻy",
-    "BLOOD_GLUCOSE": "Qondagi glyukoza"
+    "BLOOD_GLUCOSE": "Qondagi glyukoza",
+    "SYSTOLIC_BP_LEFT": "Sistolik qon bosimi (chap qoʻl)",
+    "DIASTOLIC_BP_LEFT": "Diastolik qon bosimi (chap qoʻl)",
+    "WAIST": "Bel aylanasi"
   },
   "noteSection": {
     "complaints": "Shikoyatlar",
@@ -2644,7 +2703,10 @@
     "SPO2": "%",
     "WEIGHT": "kg",
     "HEIGHT": "sm",
-    "BLOOD_GLUCOSE": "mmol/l"
+    "BLOOD_GLUCOSE": "mmol/l",
+    "SYSTOLIC_BP_LEFT": "mm sim. ust.",
+    "DIASTOLIC_BP_LEFT": "mm sim. ust.",
+    "WAIST": "sm"
   },
   "referralSource": {
     "SELF": "Oʻzi keldi",
@@ -2665,5 +2727,151 @@
     "spoken": "{number}-raqam. {name}. {cabinet}ga kiring.",
     "spokenNoCabinet": "{number}-raqam. {name}. Shifokor xonasiga kiring.",
     "offline": "Aloqa yoʻq"
+  },
+  "calc": {
+    "disclaimer": "Kalkulyatorlar shifokorga yordam beradi; yakuniy klinik qarorni shifokor qabul qiladi. Maʼlumot yetarli boʻlmasa, natija hisoblanmaydi.",
+    "missing": "Hisoblash uchun kerak: {list}",
+    "insert": "Xulosaga qoʻshish",
+    "male": "Erkak",
+    "female": "Ayol",
+    "field": {
+      "age": "Yoshi",
+      "sex": "Jinsi",
+      "weightKg": "Vazn",
+      "heightCm": "Boʻy",
+      "creatinineUmol": "Qondagi kreatinin",
+      "lvef": "Chap qorincha otish fraksiyasi (EF)",
+      "nyha": "Funksional sinf (NYHA)",
+      "qtMs": "QT intervali",
+      "heartRate": "Yurak urishi",
+      "age>=18": "yoshi 18 dan katta",
+      "lvefRange": "EF"
+    },
+    "unit": {
+      "years": "yosh",
+      "cm": "sm",
+      "umol": "mkmol/l",
+      "ms": "ms",
+      "perMin": "/daq"
+    },
+    "bmiTitle": "Tana vazni indeksi (BMI)",
+    "bmiLine": "BMI {bmi} kg/m² — {cls}",
+    "bmiClass": {
+      "UNDERWEIGHT": "vazn yetishmovchiligi",
+      "NORMAL": "meʼyorda",
+      "OVERWEIGHT": "ortiqcha vazn",
+      "OBESITY_1": "semizlik I daraja",
+      "OBESITY_2": "semizlik II daraja",
+      "OBESITY_3": "semizlik III daraja"
+    },
+    "mapLine": "Oʻrtacha arterial bosim: {map} mm sim. ust.",
+    "armsLine": "Qoʻllar orasidagi sistolik farq: {diff} mm sim. ust.",
+    "kidneyTitle": "Buyrak funksiyasi (SKF)",
+    "egfrLine": "SKF (CKD-EPI 2021) {egfr} ml/daq/1,73 m², KDIGO {stage} (kreatinin {creat} mkmol/l)",
+    "cgLine": "Kreatinin klirensi (Cockcroft–Gault): {crcl} ml/daq",
+    "chaTitle": "Insult xavfi: CHA₂DS₂-VASc (miltillovchi aritmiya)",
+    "cha": {
+      "heartFailure": "Yurak yetishmovchiligi / chap qorincha disfunksiyasi",
+      "hypertension": "Arterial gipertoniya",
+      "diabetes": "Qandli diabet",
+      "strokeTiaThromboembolism": "Insult / TIA / tromboemboliya (oldin)",
+      "vascularDisease": "Tomir kasalligi (infarkt, periferik arteriyalar, aorta pilakchasi)"
+    },
+    "chaLine": "CHA₂DS₂-VASc = {score} ball",
+    "hasbledTitle": "Qon ketish xavfi: HAS-BLED",
+    "hasbled": {
+      "uncontrolledHypertension": "Nazoratsiz gipertoniya (sistolik > 160)",
+      "abnormalRenalFunction": "Buyrak funksiyasi buzilgan",
+      "abnormalLiverFunction": "Jigar funksiyasi buzilgan",
+      "stroke": "Insult oʻtkazgan",
+      "bleeding": "Qon ketish anamnezi yoki moyillik",
+      "labileInr": "Beqaror INR",
+      "antiplateletOrNsaid": "Antiagregant yoki NYaQV qabul qiladi",
+      "alcohol": "Spirtli ichimlik (haftasiga ≥ 8)"
+    },
+    "hasbledLine": "HAS-BLED = {score} ball ({risk})",
+    "riskHigh": "yuqori xavf",
+    "riskNotHigh": "yuqori emas",
+    "hfTitle": "Yurak yetishmovchiligi: EF va NYHA",
+    "efLine": "EF {lvef}% — {cat}",
+    "ef": {
+      "HFrEF": "pasaygan EF bilan YY (≤ 40%)",
+      "HFmrEF": "biroz pasaygan EF bilan YY (41–49%)",
+      "HFpEF": "saqlangan EF bilan YY (≥ 50%)"
+    },
+    "nyhaLine": "NYHA {cls} — {text}",
+    "nyha": {
+      "I": "jismoniy faollik cheklanmagan",
+      "II": "oddiy faollikda yengil cheklanish",
+      "III": "oddiydan kam faollikda sezilarli cheklanish",
+      "IV": "tinch holatda ham belgilar"
+    },
+    "qtcTitle": "Tuzatilgan QT (QTc)",
+    "qtcLine": "QTc: Bazett {bazett} ms, Fridericia {fridericia} ms",
+    "sources": "Manbalar: WHO TRS 894 (BMI); Inker va boshq., NEJM 2021 (CKD-EPI 2021); KDIGO 2012; Cockcroft–Gault 1976; Lip 2010 (CHA₂DS₂-VASc); Pisters 2010 (HAS-BLED); ESC 2021 yurak yetishmovchiligi tavsiyalari; NYHA; Bazett 1920, Fridericia 1920."
+  },
+  "dxSuggest": {
+    "I10": "Essensial (birlamchi) gipertenziya",
+    "E66": "Semizlik",
+    "E11": "2-tip qandli diabet (insulinga bogʻliq boʻlmagan)",
+    "E10": "1-tip qandli diabet (insulinga bogʻliq)",
+    "I25.2": "Oʻtkazilgan miokard infarkti",
+    "Z72.0": "Tamaki chekish",
+    "bp": "Oʻlchangan bosim {bp}",
+    "bmi": "BMI {bmi}",
+    "history": "Anamnezdan"
+  },
+  "anamnesis": {
+    "title": "Anamnez",
+    "hint": "Bemor boʻyicha bir marta toʻldiriladi va keyingi tashriflarda koʻrinadi. Dori allergiyalari — «Allergiya qoʻshish» boʻlimida.",
+    "pregnancy": "Homiladorlik",
+    "pregnancyWeeks": "Homiladorlik muddati (hafta)",
+    "priorMi": "Oldin infarkt oʻtkazganmi",
+    "diabetes": "Qandli diabet",
+    "smoking": "Chekish",
+    "htnYears": "Arterial gipertoniya davomiyligi (yil)",
+    "hereditary": "Irsiy kasalliklar",
+    "surgeries": "Oldingi operatsiyalar",
+    "other": "Boshqa",
+    "save": "Anamnezni saqlash",
+    "saved": "Anamnez saqlandi.",
+    "notFilled": "Anamnez hali toʻldirilmagan.",
+    "yes": "Ha",
+    "no": "Yoʻq",
+    "unknown": "Nomaʼlum",
+    "pregnancyV": {
+      "NO": "Yoʻq",
+      "YES": "Ha",
+      "UNKNOWN": "Nomaʼlum"
+    },
+    "diabetesV": {
+      "NO": "Yoʻq",
+      "TYPE1": "1-tip",
+      "TYPE2": "2-tip",
+      "OTHER": "Boshqa"
+    },
+    "smokingV": {
+      "NEVER": "Chekmagan",
+      "FORMER": "Tashlagan",
+      "CURRENT": "Chekadi"
+    }
+  },
+  "nursingLog": {
+    "title": "Birlamchi yordam va dorilar",
+    "kind": "Turi",
+    "kindV": {
+      "FIRST_AID": "Birlamchi yordam",
+      "MEDICATION": "Berilgan dori",
+      "NOTE": "Izoh"
+    },
+    "text": "Nima qilindi",
+    "drug": "Dori",
+    "dose": "Doza",
+    "route": "Yoʻli",
+    "save": "Yozib qoʻyish",
+    "saved": "Yozib qoʻyildi.",
+    "none": "Bugun yozuv yoʻq.",
+    "by": "{name}, {time}",
+    "bothArms": "Bosimni ikkala qoʻlda oʻlchang"
   }
 }

@@ -34,6 +34,10 @@ export const VITALS: Record<VitalKind, { unit: string; loinc: string; min: numbe
   WEIGHT: { unit: "kg", loinc: "29463-7", min: 0.3, max: 400 },
   HEIGHT: { unit: "cm", loinc: "8302-2", min: 20, max: 260 },
   BLOOD_GLUCOSE: { unit: "mmol/L", loinc: "15074-8", min: 0.5, max: 50 },
+  // Left arm (the plain kinds are the right arm or a single measurement); same LOINC codes, laterality is the kind.
+  SYSTOLIC_BP_LEFT: { unit: "mm[Hg]", loinc: "8480-6", min: 40, max: 300 },
+  DIASTOLIC_BP_LEFT: { unit: "mm[Hg]", loinc: "8462-4", min: 20, max: 200 },
+  WAIST: { unit: "cm", loinc: "8280-0", min: 30, max: 250 },
 };
 export const VITAL_KINDS = Object.keys(VITALS) as VitalKind[];
 
@@ -252,6 +256,12 @@ export const diagnosisSchema = z.object({
     .refine((v) => v === "" || /^[A-Z][0-9]{2}(\.[0-9A-Z]{1,4})?$/.test(v), "validation.icd10"),
   description: z.string().trim().min(2, "validation.required").max(1000, "validation.tooLong"),
   kind: z.enum(["PRIMARY", "SECONDARY", "COMPLICATION"]).default("PRIMARY"),
+  stage: z
+    .string()
+    .trim()
+    .max(120, "validation.tooLong")
+    .transform((v) => (v === "" ? undefined : v))
+    .optional(),
 });
 
 export async function ownOpenEncounter(tx: Tx, encounterId: string, doctorProfileId: string | null) {

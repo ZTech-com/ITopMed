@@ -12,6 +12,8 @@ import { addAllergy, addDiagnosis, amendNote, finishEncounter, recordVitals, sav
 import { requestMeta } from "@/server/http";
 import { addPrescription, cancelPrescription } from "@/server/emr/prescriptions";
 import { applyNoteTemplate } from "@/server/emr/documents";
+import { copyPreviousNote } from "@/server/emr/assist";
+import { addNursingRecord, savePatientHistory } from "@/server/emr/history";
 import { cookies } from "next/headers";
 import { BREAK_GLASS_REASONS } from "@/server/emr/access";
 import { CONSENT_METHODS, CONSENT_PURPOSES, recordConsent, registerPatient, updatePatient, withdrawConsent } from "@/server/patients/patients";
@@ -167,7 +169,7 @@ export async function amendAction(_: FormState, fd: FormData): Promise<FormState
 export async function diagnosisAction(_: FormState, fd: FormData): Promise<FormState> {
   const { slug, ctx } = await clinicFrom(fd);
   try {
-    await addDiagnosis(ctx, str(fd, "encounterId"), { icd10Code: str(fd, "icd10Code"), description: str(fd, "description"), kind: str(fd, "kind") }, await requestMeta());
+    await addDiagnosis(ctx, str(fd, "encounterId"), { icd10Code: str(fd, "icd10Code"), description: str(fd, "description"), kind: str(fd, "kind"), stage: str(fd, "stage") }, await requestMeta());
   } catch (e) {
     return toFormState(e, fd);
   }
@@ -292,4 +294,42 @@ export async function applyNoteTemplateAction(_: FormState, fd: FormData): Promi
   }
   revalidatePath(`/c/${slug}/encounters/${encounterId}`);
   return ok("templates.applied");
+}
+
+export async function copyPreviousNoteAction(_: FormState, fd: FormData): Promise<FormState> {
+  const { slug, ctx } = await clinicFrom(fd);
+  const encounterId = str(fd, "encounterId");
+  let copied: boolean;
+  try {
+    copied = await copyPreviousNote(ctx, encounterId, await requestMeta());
+  } catch (e) {
+    return toFormState(e);
+  }
+  if (!copied) return { message: "errors.noPreviousNote", nonce: Date.now() };
+  revalidatePath(`/c/${slug}/encounters/${encounterId}`);
+  return ok("clinic.visit.copied");
+}
+
+export async function historyAction(_: FormState, fd: FormData): Promise<FormState> {
+  const { slug, ctx } = await clinicFrom(fd);
+  const fields = ["pregnancy", "pregnancyWeeks", "priorMyocardialInfarction", "diabetes", "smoking", "hypertensionYears", "hereditary", "surgeries", "otherNotes"] as const;
+  try {
+    await savePatientHistory(ctx, str(fd, "patientId"), Object.fromEntries(fields.map((k) => [k, str(fd, k)])), await requestMeta());
+  } catch (e) {
+    return toFormState(e, fd);
+  }
+  const back = str(fd, "$back");
+  if (back.startsWith(`/c/${slug}/`)) revalidatePath(back);
+  return ok("anamnesis.saved");
+}
+
+export async function nursingAction(_: FormState, fd: FormData): Promise<FormState> {
+  const { slug, ctx } = await clinicFrom(fd);
+  try {
+    await addNursingRecord(ctx, str(fd, "patientId"), { kind: str(fd, "kind"), text: str(fd, "text"), drug: str(fd, "drug"), dose: str(fd, "dose"), route: str(fd, "route"), appointmentId: str(fd, "appointmentId") }, await requestMeta());
+  } catch (e) {
+    return toFormState(e, fd);
+  }
+  revalidatePath(`/c/${slug}/nurse`);
+  return ok("nursingLog.saved");
 }

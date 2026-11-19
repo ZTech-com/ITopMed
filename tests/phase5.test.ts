@@ -43,14 +43,16 @@ describe("services and prices", () => {
     expect(s!.durationMinutes).toBe(30);
   });
 
-  it("receptionists can read but not change services; nurses cannot read prices", async () => {
+  it("receptionists and triage nurses read services (to bill ordered tests) but cannot change them or take money", async () => {
     const a = await clinicWithOwner(await platformActor());
     await createService(a.ctx, { code: "LAB-1", name: "Qon tahlili", kind: "LAB_TEST", durationMinutes: 10, price: "50000", currency: "UZS" }, META);
     const rec = await staff(a, ["receptionist"]);
     expect(await listServices(rec.ctx)).toHaveLength(1);
     await expect(createService(rec.ctx, { code: "LAB-2", name: "X", kind: "OTHER", durationMinutes: 10, price: "1", currency: "UZS" }, META)).rejects.toThrow("errors.forbidden");
     const nurse = await staff(a, ["nurse"]);
-    await expect(listServices(nurse.ctx)).rejects.toThrow("errors.forbidden");
+    expect(await listServices(nurse.ctx)).toHaveLength(1);
+    await expect(createService(nurse.ctx, { code: "LAB-3", name: "Y", kind: "OTHER", durationMinutes: 10, price: "1", currency: "UZS" }, META)).rejects.toThrow("errors.forbidden");
+    expect(nurse.ctx.permissions.has("billing.payment")).toBe(false);
   });
 });
 
