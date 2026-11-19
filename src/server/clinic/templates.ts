@@ -9,6 +9,8 @@ import { DomainError } from "../errors";
 import { NOTE_SECTIONS } from "../emr/record";
 import { SPECIALTIES } from "../scheduling/specialties";
 import { uuidv7 } from "../security/crypto";
+import { DIAGNOSTIC_KINDS } from "@/lib/diagnostics";
+import { parseFieldLines, unknownPlaceholders, type DiagnosticTemplateContent } from "@/lib/diagnostic-template";
 import { auditClinic, inClinic, requirePermission } from "./context";
 
 /**
@@ -77,13 +79,38 @@ export type NoteContent = z.infer<typeof noteContentSchema>;
 
 export const templateSchema = z
   .object({
-    kind: z.enum(["NOTE", "DOCUMENT"]),
+    kind: z.enum(["NOTE", "DOCUMENT", "DIAGNOSTIC"]),
     name: z.string().trim().min(2, "validation.required").max(120, "validation.tooLong"),
     specialty: z.union([z.literal("").transform(() => undefined), z.enum(SPECIALTIES)]).optional(),
     body: z.string().max(20_000, "validation.tooLong").default(""),
     note: noteContentSchema.optional(),
+    /** DIAGNOSTIC: study type, fields (one per line), default conclusion. */
+    study: z.enum(DIAGNOSTIC_KINDS).optional(),
+    fieldsText: z.string().max(20_000, "validation.tooLong").default(""),
+    conclusion: z.string().max(5_000, "validation.tooLong").default(""),
   })
   .transform((v, c) => {
+    if (v.kind === "DIAGNOSTIC") {
+      const { fields, badLines } = parseFieldLines(v.fieldsText);
+      if (badLines.length) {
+        c.addIssue({ code: "custom", message: "validation.templateFieldLines", path: ["fieldsText"], params: { lines: badLines.join(", ") } });
+        return z.NEVER;
+      }
+      if (!fields.length) {
+        c.addIssue({ code: "custom", message: "validation.required", path: ["fieldsText"] });
+        return z.NEVER;
+      }
+      if (!v.body.trim()) {
+        c.addIssue({ code: "custom", message: "validation.required", path: ["body"] });
+        return z.NEVER;
+      }
+      if (unknownPlaceholders(v.body, fields).length) {
+        c.addIssue({ code: "custom", message: "validation.templateUnknownPlaceholders", path: ["body"] });
+        return z.NEVER;
+      }
+      const content: DiagnosticTemplateContent = { study: v.study ?? "OTHER", fields, body: v.body.trim(), ...(v.conclusion.trim() ? { conclusion: v.conclusion.trim() } : {}) };
+      return { kind: "DIAGNOSTIC" as TemplateKind, name: v.name, specialty: v.specialty ?? null, content: JSON.stringify(content) };
+    }
     const content = v.kind === "NOTE" ? JSON.stringify(v.note ?? {}) : v.body.trim();
     if (v.kind === "NOTE" ? Object.values(v.note ?? {}).every((x) => !x.trim()) : !content) {
       c.addIssue({ code: "custom", message: "validation.required", path: [v.kind === "NOTE" ? "complaints" : "body"] });

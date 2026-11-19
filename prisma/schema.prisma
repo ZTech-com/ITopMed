@@ -1272,6 +1272,8 @@ model DiagnosticResult {
   /// Measured values by field key (see src/lib/diagnostics.ts).
   data             Json
   conclusion       String
+  /// Copy of the clinic template used (fields, normals, report text) - past reports never change.
+  templateSnapshot Json?
   performedById    String         @db.Uuid
   performedAt      DateTime       @default(now())
   enteredInErrorAt DateTime?
@@ -2240,6 +2242,8 @@ enum TemplateKind {
   NOTE
   /// A printable document (visit summary, referral, certificate…) with placeholders.
   DOCUMENT
+  /// A diagnostic report (UZI, echo, ECG…): fields with the clinic's normal ranges + report text.
+  DIAGNOSTIC
 }
 
 /// Templates the clinic creates itself. Generic text only — never patient data.

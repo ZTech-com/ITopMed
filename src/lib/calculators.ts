@@ -19,6 +19,7 @@
  *  - NYHA functional classes: The Criteria Committee of the New York Heart Association, 9th ed. (1994).
  *  - QTc: Bazett HC, Heart 1920;7:353-370; Fridericia LS, Acta Med Scand 1920;53:469-486.
  *  - Mean arterial pressure: DBP + (SBP - DBP) / 3 (standard approximation).
+ *  - Body surface area: Mosteller RD, N Engl J Med 1987;317:1098.
  */
 
 export type Sex = "MALE" | "FEMALE";
@@ -169,4 +170,14 @@ export function interArmDifference(i: { rightSystolic?: number; leftSystolic?: n
   const missing = need({ rightSystolic: i.rightSystolic, leftSystolic: i.leftSystolic });
   if (missing.length) return { ok: false, missing };
   return { ok: true, value: { difference: Math.abs(i.rightSystolic! - i.leftSystolic!) }, used: { rightSystolic: i.rightSystolic!, leftSystolic: i.leftSystolic! } };
+}
+
+// ───────────── Body surface area ─────────────
+
+/** Mosteller RD. N Engl J Med 1987;317:1098: BSA (m²) = sqrt(height cm × weight kg / 3600). */
+export function bodySurfaceArea(i: { weightKg?: number; heightCm?: number }): Calc<{ bsa: number }> {
+  const missing = need({ weightKg: i.weightKg, heightCm: i.heightCm });
+  if (missing.length) return { ok: false, missing };
+  if (i.weightKg! <= 0 || i.heightCm! <= 0) return { ok: false, missing: ["heightCm"] };
+  return { ok: true, value: { bsa: round(Math.sqrt((i.heightCm! * i.weightKg!) / 3600), 2) }, used: { weightKg: i.weightKg!, heightCm: i.heightCm! } };
 }

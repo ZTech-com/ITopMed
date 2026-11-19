@@ -1,6 +1,8 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { Prisma } from "@/generated/prisma/client";
+import { parseTemplateContent, parseTemplateValues, type TemplateField } from "@/lib/diagnostic-template";
 import { DIAGNOSTIC_FILE_MAX_BYTES, DIAGNOSTIC_KINDS, parseDiagnosticData, sniffFileType, type DiagnosticKindKey } from "@/lib/diagnostics";
 import type { ClinicContext } from "../auth/clinic-auth";
 import type { RequestMeta } from "../auth/platform-auth";
@@ -23,6 +25,8 @@ const uuid = z.uuid();
 export const resultSchema = z.object({
   encounterId: z.union([z.literal("").transform(() => undefined), uuid]).optional(),
   kind: z.enum(DIAGNOSTIC_KINDS),
+  /** A clinic diagnostic template: its fields replace the built-in ones. */
+  templateId: z.union([z.literal("").transform(() => undefined), uuid]).optional(),
   title: z.string().trim().min(1, "validation.required").max(120, "validation.tooLong"),
   conclusion: z.string().trim().min(1, "validation.required").max(10_000, "validation.tooLong"),
 });
@@ -30,8 +34,23 @@ export const resultSchema = z.object({
 export async function addDiagnosticResult(ctx: ClinicContext, patientId: string, raw: Record<string, string>, meta: RequestMeta): Promise<string> {
   if (!ctx.permissions.has("emr.write")) throw new DomainError("errors.forbidden");
   const input = resultSchema.parse(raw);
-  const { data, errors } = parseDiagnosticData(input.kind as DiagnosticKindKey, raw);
-  if (errors.length) throw new DomainError("errors.diagnosticValue");
+  let kind = input.kind as DiagnosticKindKey;
+  let data: Record<string, string | number>;
+  let snapshot: { name: string; fields: TemplateField[]; body: string } | null = null;
+  if (input.templateId) {
+    const t = await inClinic(ctx, (tx) => tx.clinicTemplate.findFirst({ where: { id: input.templateId, kind: "DIAGNOSTIC", archivedAt: null }, select: { name: true, content: true } }));
+    const content = t ? parseTemplateContent(t.content) : null;
+    if (!t || !content) throw new DomainError("errors.notFound");
+    const parsed = parseTemplateValues(content.fields, raw);
+    if (parsed.errors.length) throw new DomainError("errors.diagnosticValue");
+    kind = content.study;
+    data = parsed.values;
+    snapshot = { name: t.name, fields: content.fields, body: content.body };
+  } else {
+    const parsed = parseDiagnosticData(kind, raw);
+    if (parsed.errors.length) throw new DomainError("errors.diagnosticValue");
+    data = parsed.data;
+  }
   const id = uuidv7();
   await withRecordAccess(ctx, patientId, meta, { auditView: false }, async (tx, access) => {
     if (access.mode === "break_glass") throw new DomainError("errors.forbidden");
@@ -39,8 +58,8 @@ export async function addDiagnosticResult(ctx: ClinicContext, patientId: string,
       const e = await loadEncounter(tx, input.encounterId);
       if (e.patientId !== patientId) throw new DomainError("errors.notFound");
     }
-    await tx.diagnosticResult.create({ data: { id, tenantId: ctx.tenant.id, patientId, encounterId: input.encounterId, kind: input.kind, title: input.title, data, conclusion: input.conclusion, performedById: ctx.principal.user.id } });
-    await auditClinic(tx, ctx, meta, { action: "diagnostic.recorded", entityType: "DiagnosticResult", entityId: id, metadata: { kind: input.kind } });
+    await tx.diagnosticResult.create({ data: { id, tenantId: ctx.tenant.id, patientId, encounterId: input.encounterId, kind, title: input.title, data, conclusion: input.conclusion, performedById: ctx.principal.user.id, ...(snapshot ? { templateSnapshot: JSON.parse(JSON.stringify(snapshot)) as Prisma.InputJsonObject } : {}) } });
+    await auditClinic(tx, ctx, meta, { action: "diagnostic.recorded", entityType: "DiagnosticResult", entityId: id, metadata: { kind, template: Boolean(snapshot) } });
   });
   return id;
 }

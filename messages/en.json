@@ -810,7 +810,8 @@
       "nextVisitDate": "Date",
       "nextVisitSaved": "Next visit date saved.",
       "rxTimes": "Intake times",
-      "rxTimesHint": "E.g. 08:00, 20:00 — printed as a schedule on the conclusion."
+      "rxTimesHint": "E.g. 08:00, 20:00 — printed as a schedule on the conclusion.",
+      "bsa": "Body surface area"
     },
     "record": {
       "title": "Medical record",
@@ -1606,7 +1607,9 @@
     "packageTwoServices": "Choose at least 2 services for a package.",
     "pregnancyWeeks": "Weeks only when pregnancy is “Yes”.",
     "times": "Write times as 08:00, 20:00 (up to 8).",
-    "telegram": "Telegram name: 5–32 Latin letters, digits or _."
+    "telegram": "Telegram name: 5–32 Latin letters, digits or _.",
+    "templateFieldLines": "Some field lines are invalid: check the key (Latin letters/digits), label and min-max format.",
+    "templateUnknownPlaceholders": "The report text uses a '{{'key'}}' that is not among the fields."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -2596,7 +2599,16 @@
       "doctor_telegram": "Doctor's Telegram"
     },
     "qrAlt": "Patient portal QR code",
-    "qrHint": "Scan the QR code to see your results on your phone (patient portal)."
+    "qrHint": "Scan the QR code to see your results on your phone (patient portal).",
+    "studies": "Diagnostic templates (ultrasound, echo, ECG…)",
+    "studiesHint": "From your clinic's own form: fields, your normal ranges and the report text. Chosen when entering a result.",
+    "newStudy": "New diagnostic template",
+    "study": "Study",
+    "fields": "Fields (one per line)",
+    "fieldsHint": "key | Label | unit | min-max | normal text. E.g. fhr | Fetal heart rate, per minute | bpm | 115-160 |. Range and normal text are optional.",
+    "reportText": "Report text",
+    "reportTextHint": "Write '{{'key'}}' where a value goes. A line whose values are all empty is not printed.",
+    "defaultConclusion": "Default conclusion"
   },
   "connect": {
     "title": "Connect this device",
@@ -2981,6 +2993,14 @@
       "ms": "ms",
       "h": "h",
       "W": "W"
-    }
+    },
+    "template": "Template",
+    "noTemplate": "No template (generic fields)",
+    "templateHint": "Checked against the clinic template's normal ranges.",
+    "fillNormal": "Fill normal",
+    "normalRange": "normal {min}–{max}",
+    "high": "high",
+    "low": "low",
+    "abnormalList": "Outside the normal range: {list}"
   }
 }

@@ -23,7 +23,7 @@ import { ServicePicker } from "@/components/service-picker";
 import { extraServicesAction } from "../../../../desk-actions";
 import { Anamnesis } from "@/components/anamnesis";
 import { Calculators, DiagnosisChips, QuickPhrases } from "@/components/doctor-tools";
-import { bmi as bmiCalc } from "@/lib/calculators";
+import { bmi as bmiCalc, bodySurfaceArea } from "@/lib/calculators";
 import { suggestDiagnoses } from "@/lib/dx-suggest";
 import { frequentDiagnoses } from "@/server/emr/assist";
 import { getPatientHistory } from "@/server/emr/history";
@@ -31,6 +31,7 @@ import { copyPreviousNoteAction, diagnosticAction, diagnosticErrorAction, histor
 import { DiagnosticFields } from "@/components/diagnostic-fields";
 import { DIAGNOSTIC_FIELDS, unitKey, type DiagnosticKindKey } from "@/lib/diagnostics";
 import { listDiagnosticResults } from "@/server/emr/diagnostics";
+import { parseTemplateContent } from "@/lib/diagnostic-template";
 
 /** The doctor's visit workspace. Every load is an audited record access. */
 export default async function EncounterPage({ params, searchParams }: { params: Promise<{ slug: string; id: string }>; searchParams: Promise<{ tooth?: string; dentition?: string; files?: string }> }) {
@@ -73,6 +74,12 @@ export default async function EncounterPage({ params, searchParams }: { params: 
     getTranslations("diagnostics"),
   ]);
   const canStudy = open && ctx.permissions.has("emr.write");
+  const studyTemplates = templates
+    .filter((x) => x.kind === "DIAGNOSTIC")
+    .flatMap((x) => {
+      const c = parseTemplateContent(x.content);
+      return c ? [{ id: x.id, name: x.name, study: c.study, fields: c.fields, conclusion: c.conclusion }] : [];
+    });
   // Latest value of each measurement (today's desk / triage values included).
   const latest = new Map<string, number>();
   for (const v of [...e.vitals].sort((a, b) => +b.measuredAt - +a.measuredAt)) if (!latest.has(v.kind)) latest.set(v.kind, Number(v.value));
@@ -85,6 +92,7 @@ export default async function EncounterPage({ params, searchParams }: { params: 
   })();
   const sexForCalc = e.patient.sex === "MALE" || e.patient.sex === "FEMALE" ? e.patient.sex : undefined;
   const bmiNow = bmiCalc({ weightKg: latest.get("WEIGHT"), heightCm: latest.get("HEIGHT") });
+  const bsaNow = bodySurfaceArea({ weightKg: latest.get("WEIGHT"), heightCm: latest.get("HEIGHT") });
   const suggestions = canWrite
     ? suggestDiagnoses({
         systolic: latest.get("SYSTOLIC_BP"),
@@ -227,6 +235,7 @@ export default async function EncounterPage({ params, searchParams }: { params: 
             {bmiNow.ok ? (
               <p className="text-[14px]">
                 <span className="font-semibold">{tv("bmi")}:</span> {bmiNow.value.bmi} kg/m² · {tcalc(`bmiClass.${bmiNow.value.class}` as never)}
+                {bsaNow.ok ? <> · <span className="font-semibold">{tv("bsa")}:</span> {bsaNow.value.bsa} m²</> : null}
               </p>
             ) : null}
             {open && ctx.permissions.has("vitals.write") ? (
@@ -400,8 +409,7 @@ export default async function EncounterPage({ params, searchParams }: { params: 
                 <input type="hidden" name="$back" value={`/c/${s}/encounters/${e.id}`} />
                 <input type="hidden" name="patientId" value={e.patient.id} />
                 <input type="hidden" name="encounterId" value={e.id} />
-                <DiagnosticFields />
-                <TextAreaField name="conclusion" label={tdg("conclusion")} rows={3} />
+                <DiagnosticFields templates={studyTemplates} />
                 <p className="text-[12.5px] text-text-3">{tdg("filesAfter")}</p>
                 <SubmitButton variant="secondary">{tdg("save")}</SubmitButton>
               </Form>

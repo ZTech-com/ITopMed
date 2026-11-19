@@ -5,6 +5,7 @@ import { PaperStyle } from "@/components/paper";
 import { formatBirthDate, patientName } from "@/components/patients";
 import { AutoPrint, PrintButton } from "@/components/print-button";
 import { DIAGNOSTIC_FIELDS, unitKey, type DiagnosticKindKey } from "@/lib/diagnostics";
+import { flagOf, renderReport, type TemplateField } from "@/lib/diagnostic-template";
 import { requireClinic } from "@/server/auth/guards";
 import { getLetterhead } from "@/server/clinic/branding";
 import { diagnosticForPrint } from "@/server/emr/diagnostics";
@@ -23,6 +24,9 @@ export default async function DiagnosticPrintPage({ params }: { params: Promise<
   const r = d.result;
   const fields = DIAGNOSTIC_FIELDS[r.kind as DiagnosticKindKey].filter((f) => r.data[f.key] !== undefined);
   const images = r.files.filter((f) => f.mimeType.startsWith("image/"));
+  const snap = r.templateSnapshot as { fields: TemplateField[]; body: string } | null;
+  const report = snap ? renderReport(snap.body, r.data as Record<string, string>) : null;
+  const byKey = new Map((snap?.fields ?? []).map((f) => [f.key, f]));
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 print:max-w-none">
@@ -40,7 +44,24 @@ export default async function DiagnosticPrintPage({ params }: { params: Promise<
           <br />
           <span className="font-semibold">{t("diagnostics.date")}:</span> {format.dateTime(r.performedAt, { dateStyle: "medium", timeStyle: "short", timeZone: ctx.tenant.timezone })}
         </p>
-        {fields.length ? (
+        {report ? (
+          <div className="space-y-1">
+            {report.parts.map((line, i) => (
+              <p key={i} className="min-h-[1em]">
+                {line.map((p, j) => {
+                  const flag = p.key ? flagOf(byKey.get(p.key)!, p.text) : null;
+                  return flag ? (
+                    <strong key={j} className="underline">{p.text} {flag === "HIGH" ? "↑" : "↓"}</strong>
+                  ) : p.key ? (
+                    <span key={j} className="font-semibold">{p.text}</span>
+                  ) : (
+                    <span key={j}>{p.text}</span>
+                  );
+                })}
+              </p>
+            ))}
+          </div>
+        ) : fields.length ? (
           <table className="w-full border-collapse text-[14px]">
             <tbody>
               {fields.map((f) => (

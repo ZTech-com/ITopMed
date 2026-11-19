@@ -134,3 +134,56 @@ Qo'shimcha:
   - server — internet kerak.
 
   Ikkalasini sinxronlash uchun to'qnashuvlarni hal qilish qoidalari kerak. Shoshilib qilinsa, bemor ma'lumoti yo'qolishi mumkin, shuning uchun alohida loyihalanadi.
+
+---
+
+# Kengaytirilgan spetsifikatsiya (Medical CRM / HIS) — qo'shimcha bandlar
+
+## Tayyor (shu bosqichda)
+- ✅ **Sozlanadigan diagnostika shablonlari:**
+  - qayerda: Shablonlar → «Diagnostika shablonlari»;
+  - tarkibi: maydonlar, birliklar, **klinikaning o'z me'yorlari** va hisobot matni;
+  - me'yorlarni ITop Med o'zi qo'ymaydi — ular faqat klinika bergan hujjatdan olinadi;
+  - natija kiritishda:
+    - «Me'yorni to'ldirish» tugmasi;
+    - me'yordan chetga chiqqan qiymat qizil rangda;
+    - qisqa ro'yxat: «me'yordan tashqari: …»;
+  - chop etishda qiymat qalin harf va ↑/↓ bilan;
+  - natija shablon nusxasi bilan saqlanadi: shablon keyin o'zgartirilsa ham, eski hisobot o'zgarmaydi.
+- ✅ **Farhod MedServis'ning "UTT: homiladorlik II–III trimestri" blankasi** shablonga aylantirildi (kirilldan lotinga). Me'yorlar faqat blankadagilar:
+  - homila yurak urishi 115–160;
+  - yo'ldosh pastki chetidan ichki bo'g'izgacha 50–70 mm.
+
+  Blankadan klinika rekvizitlari ham olindi (litsenziya №102180, manzil, "DOCTORLAR NFF" XK) — faqat bo'sh maydonlarga.
+- ✅ Tana yuzasi (BSA, Mosteller) — BMI bilan birga avtomatik.
+
+## Keyingi bosqichlar
+Navbat bilan:
+1. **ExoKG, EKG va boshqa UZI turlarining blankalari.** Ularni yuborsangiz, xuddi shu usulda shablonga aylantiraman. Segmentlarni (akineziya va boshqalar) yurak sxemasida belgilash va dinamika grafigi ExoKG blankasi kelgach qilinadi.
+2. **Dori bazasi va tayyor davolash sxemalari:**
+   - INN, shakl, doza;
+   - 1/2, 1/4, 1/8 tabletka;
+   - ovqatdan oldin yoki keyin;
+   - dozani bosqichma-bosqich oshirish yoki kamaytirish.
+
+   Dori-dori o'zaro ta'siri va QT ogohlantirishlari faqat tekshirilgan manba bo'lsa qilinadi (litsenziyalangan baza yoki rasmiy qo'llanma). Taxminiy ogohlantirish yozilmaydi.
+3. **Dispanser kuzatuvi:** AG, SYuYe, bo'lmachalar fibrillyatsiyasi, infarktdan keyingi va antikoagulyant qabul qiladigan bemorlar. Reja, keyingi tashrif, tahlillar va eslatmalar bilan.
+4. **Telegram:**
+   - bemor bosim va pulsni yuboradi;
+   - qabulga kelmagan bemorga qayta yozilish taklifi;
+   - 5 kundan keyin holatini so'rash;
+   - dori eslatmalari.
+
+   Qabul eslatmalari allaqachon bor.
+5. **Moliya va statistika:**
+   - shifokor va xizmat bo'yicha daromad;
+   - shifokorga oylik yoki foiz;
+   - yuborgan shifokorga komissiya;
+   - tashxis va dori guruhlari bo'yicha hisobot;
+   - Excel/PDF eksport.
+6. **Navbat:**
+   - "chaqirildi" holatini statistikaga kiritish;
+   - onlayn bemorga taxminiy qabul vaqtini ko'rsatish;
+   - kechikish yoki erta kelishni boshqarish.
+7. **Blankada lokatsiya QR kodi** (sozlama).
+8. **Oflayn ishlash va server bilan sinxronlash.** Alohida loyihalanadi: to'qnashuvlarni hal qilish qoidalari bilan; localStorage taqlidi qilinmaydi.

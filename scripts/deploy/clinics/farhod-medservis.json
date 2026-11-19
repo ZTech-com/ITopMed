@@ -6,7 +6,7 @@
   "ownerIsDoctor": true,
   "ownerFrontDesk": true,
   "ownerHeadDoctor": true,
-  "address": "",
+  "address": "Andijon viloyati, Qo'rg'ontepa tumani, \"Buyuk zamin\" MFY, Mustaqillik ko'chasi, 23a-uy",
   "contactPhone": "",
   "planCode": "enterprise",
   "priceList": [
@@ -20,5 +20,16 @@
     "Qalqonsimon bez UZI — 70 000",
     "Prostata bezi UZI — 70 000",
     "EKG — 30 000"
+  ],
+  "legalName": "\"DOCTORLAR NFF\" XK",
+  "licenseText": "O'zR SSV litsenziyasi №102180, 14.07.2023",
+  "diagnosticTemplates": [
+    {
+      "name": "UTT: homiladorlik II–III trimestri",
+      "study": "ULTRASOUND",
+      "fields": "lmp | Oxirgi hayzning birinchi kuni |  |  | \nedd | Taxminiy tug'ruq vaqti |  |  | \nuterusThickening | Bachadonda mahalliy qalinlashuv |  |  | aniqlanmadi\nfetusCount | Homilalar soni | ta |  | 1\npresentation | Homilaning joylashuvi |  |  | \nfhr | Yurak urishi, 1 daqiqada | marta | 115-160 | \nmovements | Homila harakati |  |  | me'yorda\nbpd | Boshning biparietal o'lchami (BPR) | mm |  | \nofd | Peshona-ensa o'lchami (LZR) | mm |  | \nhc | Bosh aylanasi (HC) | mm |  | \nfl | Son suyagining uzunligi (FL) | mm |  | \nac | Qorin aylanasi (AC) | mm |  | \nplacentaWall | Yo'ldosh joylashgan devor |  |  | \nplacentaToOs | Yo'ldosh pastki cheti - ichki bo'g'izgacha | mm | 50-70 | \nplacentaThickness | Yo'ldosh qalinligi | mm |  | \nplacentaMaturity | Yo'ldoshning yetilish darajasi |  |  | \nafi | Homila atrofi suvi (IAJ) | mm |  | \ncord | Kindik tizimchasi |  |  | homila kindik tizimchasiga o'ralmagan\nuaRi | Bachadon arteriyasi IR |  |  | \nuaPi | Bachadon arteriyasi PI |  |  | \numbRi | Kindik arteriyasi IR |  |  | \numbPi | Kindik arteriyasi PI |  |  | \nmcaRi | Miya o'rta arteriyasi IR |  |  | \nmcaPi | Miya o'rta arteriyasi PI |  |  | \nefw | Homilaning taxminiy vazni | g |  | \nefwError | Taxminiy vazn xatoligi (±) | g |  | \ncervixLength | Bachadon bo'yni uzunligi | mm |  | \nextra | Qo'shimcha ma'lumotlar |  |  | ",
+      "body": "UTT diagnostika. Homiladorlik II–III trimestri\n\nOxirgi hayzning birinchi kuni: {{lmp}}. Taxminiy tug'ruq vaqti: {{edd}}.\nBachadon devori konturlari aniq, tekis, bir xil exostrukturali.\nBachadonda mahalliy qalinlashuv: {{uterusThickening}}.\n\nHomila:\nBachadonda {{fetusCount}} ta homila rivojlanmoqda. Joylashuvi: {{presentation}}.\nYurak urishi ritmik, 1 daqiqada {{fhr}} marta (me'yorda 115–160 marta), harakati {{movements}}.\n\nFetometriya:\nBoshning biparietal o'lchami (BPR): {{bpd}} mm. Peshona-ensa o'lchami (LZR): {{ofd}} mm.\nBosh aylanasi (HC): {{hc}} mm. Son suyagining uzunligi (FL): {{fl}} mm.\nQorin aylanasi (AC): {{ac}} mm.\n\nYo'ldosh va homila atrofi suvi:\nYo'ldosh bachadonning {{placentaWall}} devorida joylashgan, yo'ldoshning pastki cheti bo'yin kanalining ichki teshigidan {{placentaToOs}} mm (me'yorda 50–70 mm).\nYo'ldosh qalinligi: {{placentaThickness}} mm. Yo'ldosh strukturasi bir xil, yetilishi: {{placentaMaturity}} daraja.\nHomila atrofi suvi miqdori (IAJ): {{afi}} mm, mayda dispers.\nKindik tizimchasida ikkita arteriya va bitta vena aniqlanmoqda, {{cord}}.\n\nDoplerometriya:\nBachadon arteriyasi: IR {{uaRi}}, PI {{uaPi}}.\nKindik arteriyasi: IR {{umbRi}}, PI {{umbPi}}.\nMiya o'rta arteriyasi: IR {{mcaRi}}, PI {{mcaPi}}.\n\nHomilaning taxminiy vazni: {{efw}} ± {{efwError}} g.\nBachadon bo'yni: konturlari aniq, tekis, bir xil strukturali, servikal kanal kengaymagan, bachadon bo'yni uzunligi {{cervixLength}} mm.\n\nQo'shimcha ma'lumotlar: {{extra}}",
+      "conclusion": "Xulosa: \nTavsiya: akusher-ginekolog maslahati."
+    }
   ]
 }

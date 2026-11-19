@@ -14,7 +14,7 @@ import { createBackup, backupKey } from "../lib/backup";
 import { startEmbeddedDb } from "../lib/embedded-db";
 import { applyMigrations } from "../lib/migrate";
 import { seedPlans } from "../lib/seed-plans";
-import { createClinicFromSpec } from "../lib/create-clinic";
+import { applyClinicExtras, clinicSpecSchema, createClinicFromSpec } from "../lib/create-clinic";
 
 /** Reads a password without showing it (falls back to a plain prompt when not on a terminal). */
 function askHidden(question: string): Promise<string> {
@@ -107,6 +107,11 @@ async function main() {
       console.log(r.activationLink);
     }
     console.log("Kirish: /login - egasi birinchi kirishda Google Authenticator'ni ulaydi.");
+  } else if (task === "update-clinic") {
+    const specFile = process.argv[3];
+    if (!specFile) throw new Error("Usage: tasks.mjs update-clinic <spec.json>");
+    const r = await applyClinicExtras(clinicSpecSchema.parse(JSON.parse(fs.readFileSync(specFile, "utf8"))));
+    console.log(`Klinika yangilandi: ${r.templatesAdded} ta yangi diagnostika shabloni; blankada to'ldirildi: ${r.letterhead.join(", ") || "-"}`);
   } else if (task === "check-db") {
     const c = new pg.Client({ connectionString: need("MIGRATION_DATABASE_URL") });
     await c.connect();

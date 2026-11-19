@@ -8,6 +8,8 @@ import { NOTE_SECTIONS } from "@/server/emr/record";
 import { DomainError } from "@/server/errors";
 import { SPECIALTIES } from "@/server/scheduling/specialties";
 import { archiveTemplateAction, saveTemplateAction } from "../../../../practice-actions";
+import { DIAGNOSTIC_KINDS } from "@/lib/diagnostics";
+import { fieldLines, parseTemplateContent } from "@/lib/diagnostic-template";
 
 /** Create (`/templates/new?kind=…`) or edit a template. */
 export default async function TemplateEditPage({ params, searchParams }: { params: Promise<{ slug: string; id: string }>; searchParams: Promise<{ kind?: string }> }) {
@@ -23,7 +25,9 @@ export default async function TemplateEditPage({ params, searchParams }: { param
         if (e instanceof DomainError) notFound();
         throw e;
       });
-  const kind = template?.kind ?? ((await searchParams).kind === "NOTE" ? "NOTE" : "DOCUMENT");
+  const requested = (await searchParams).kind;
+  const kind = template?.kind ?? (requested === "NOTE" ? "NOTE" : requested === "DIAGNOSTIC" ? "DIAGNOSTIC" : "DOCUMENT");
+  const study = template && kind === "DIAGNOSTIC" ? parseTemplateContent(template.content) : null;
   const note = template && kind === "NOTE" ? parseNoteContent(template.content) : null;
   const back = `/c/${ctx.tenant.slug}/templates`;
 
@@ -31,7 +35,7 @@ export default async function TemplateEditPage({ params, searchParams }: { param
     <div className="max-w-3xl space-y-6">
       <PageHeader
         eyebrow={t("templates.title")}
-        title={isNew ? t(kind === "NOTE" ? "templates.newNote" : "templates.newDocument") : template!.name}
+        title={isNew ? t(kind === "NOTE" ? "templates.newNote" : kind === "DIAGNOSTIC" ? "templates.newStudy" : "templates.newDocument") : template!.name}
         action={<ButtonLink href={back} variant="secondary">{t("templates.back")}</ButtonLink>}
       />
       <Card>
@@ -50,7 +54,14 @@ export default async function TemplateEditPage({ params, searchParams }: { param
                   options={[{ value: "", label: t("templates.allSpecialties") }, ...SPECIALTIES.map((x) => ({ value: x, label: t(`specialties.${x}`) }))]}
                 />
               </div>
-              {kind === "DOCUMENT" ? (
+              {kind === "DIAGNOSTIC" ? (
+                <>
+                  <SelectField name="study" label={t("templates.study")} defaultValue={study?.study ?? "ULTRASOUND"} options={DIAGNOSTIC_KINDS.map((k) => ({ value: k, label: t(`diagnostics.kind.${k}`) }))} />
+                  <TextAreaField name="fieldsText" label={t("templates.fields")} hint={t("templates.fieldsHint")} rows={12} defaultValue={study ? fieldLines(study.fields) : ""} placeholder={"fhr | Yurak urishi, 1 daqiqada | marta | 115-160 |\nmovements | Harakati |  |  | me'yorda"} />
+                  <TextAreaField name="body" label={t("templates.reportText")} hint={t("templates.reportTextHint")} rows={16} defaultValue={study?.body ?? ""} />
+                  <TextAreaField name="conclusion" label={t("templates.defaultConclusion")} rows={3} defaultValue={study?.conclusion ?? ""} optionalLabel={t("common.optional")} />
+                </>
+              ) : kind === "DOCUMENT" ? (
                 <>
                   <TextAreaField name="body" label={t("templates.body")} rows={14} defaultValue={template?.content} />
                   <details className="rounded-[var(--radius-control)] border border-border bg-sunken p-3 text-[13px]" open={isNew}>

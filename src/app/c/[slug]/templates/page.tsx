@@ -15,7 +15,8 @@ export default async function TemplatesPage({ params }: { params: Promise<{ slug
   const base = `/c/${ctx.tenant.slug}/templates`;
   const docs = list.filter((x) => x.kind === "DOCUMENT");
   const notes = list.filter((x) => x.kind === "NOTE");
-  const section = (title: string, hint: string, items: typeof list, kind: "DOCUMENT" | "NOTE") => (
+  const studies = list.filter((x) => x.kind === "DIAGNOSTIC");
+  const section = (title: string, hint: string, items: typeof list, kind: "DOCUMENT" | "NOTE" | "DIAGNOSTIC") => (
     <Card>
       <CardHeader
         title={title}
@@ -57,6 +58,7 @@ export default async function TemplatesPage({ params }: { params: Promise<{ slug
       ) : null}
       {section(t("templates.documents"), t("templates.documentsHint"), docs, "DOCUMENT")}
       {section(t("templates.notes"), t("templates.notesHint"), notes, "NOTE")}
+      {section(t("templates.studies"), t("templates.studiesHint"), studies, "DIAGNOSTIC")}
       {list.length > 0 && canManage ? (
         <Form action={standardTemplatesAction} className="space-y-0">
           <input type="hidden" name="$slug" value={ctx.tenant.slug} />

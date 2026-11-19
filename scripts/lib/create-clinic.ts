@@ -21,6 +21,9 @@ import { listServices, setServiceArchived } from "../../src/server/clinic/resour
 import { recordAudit } from "../../src/server/audit";
 import { platformDb, withAppContext, withPlatform } from "../../src/server/db";
 import { changeTenantStatus, createClinicWithOwner } from "../../src/server/tenancy/provisioning";
+import { DIAGNOSTIC_KINDS } from "../../src/lib/diagnostics";
+import { parseFieldLines, unknownPlaceholders, type DiagnosticTemplateContent } from "../../src/lib/diagnostic-template";
+import { uuidv7 } from "../../src/server/security/crypto";
 
 export const clinicSpecSchema = z.object({
   name: z.string().min(2),
@@ -36,6 +39,13 @@ export const clinicSpecSchema = z.object({
   planCode: z.string().default("enterprise"),
   /** One service per line, e.g. "EKG 30 ming" (same format as the "price list" box). */
   priceList: z.array(z.string()).default([]),
+  /** Letterhead details (filled only where the clinic has none yet). */
+  legalName: z.string().max(200).default(""),
+  licenseText: z.string().max(300).default(""),
+  /** Diagnostic report templates from the clinic's own forms (fields one per line, see src/lib/diagnostic-template.ts). */
+  diagnosticTemplates: z
+    .array(z.object({ name: z.string().min(2).max(120), study: z.enum(DIAGNOSTIC_KINDS), fields: z.string(), body: z.string().min(1), conclusion: z.string().default("") }))
+    .default([]),
 });
 export type ClinicSpec = z.infer<typeof clinicSpecSchema>;
 
@@ -119,8 +129,49 @@ export async function createClinicFromSpec(specFile: string, ownerEmail: string,
       if (!r) throw new Error("Could not create the owner's activation link");
       activationLink = `${env().APP_URL.replace(/\/$/, "")}/reset-password/${r.token}`;
     }
-    return { slug: created.slug, prices, archived, activationLink };
+    const extras = await applyClinicExtras(spec);
+    return { slug: created.slug, prices, archived, activationLink, extras };
   } finally {
     await logoutClinic(login.token);
   }
+}
+
+/**
+ * Adds the spec's diagnostic templates (by name, never replacing one the clinic
+ * already has) and fills letterhead details that are still EMPTY. Safe to run
+ * again on a live clinic: `node tasks.mjs update-clinic <spec.json>`.
+ * Runs as a system job in the clinic's tenant context; audited.
+ */
+export async function applyClinicExtras(spec: ClinicSpec): Promise<{ templatesAdded: number; letterhead: string[] }> {
+  const tenant = await platformDb().tenant.findUnique({ where: { slug: spec.slug }, select: { id: true } });
+  if (!tenant) throw new Error(`No clinic with slug ${spec.slug}`);
+  const contents = spec.diagnosticTemplates.map((t) => {
+    const { fields, badLines } = parseFieldLines(t.fields);
+    if (badLines.length || !fields.length) throw new Error(`Template "${t.name}": bad field lines ${badLines.join(", ")}`);
+    const unknown = unknownPlaceholders(t.body, fields);
+    if (unknown.length) throw new Error(`Template "${t.name}": unknown placeholders ${unknown.join(", ")}`);
+    const content: DiagnosticTemplateContent = { study: t.study, fields, body: t.body, ...(t.conclusion.trim() ? { conclusion: t.conclusion.trim() } : {}) };
+    return { name: t.name, content: JSON.stringify(content) };
+  });
+  return withAppContext({ tenantId: tenant.id }, async (tx) => {
+    const owner = await tx.membership.findFirst({ where: { tenantId: tenant.id, status: "ACTIVE", roles: { some: { role: { key: "clinic_owner" } } } }, select: { userId: true }, orderBy: { createdAt: "asc" } });
+    if (!owner) throw new Error("The clinic has no active owner");
+    let templatesAdded = 0;
+    for (const c of contents) {
+      if (await tx.clinicTemplate.findFirst({ where: { tenantId: tenant.id, kind: "DIAGNOSTIC", name: c.name, archivedAt: null }, select: { id: true } })) continue;
+      await tx.clinicTemplate.create({ data: { id: uuidv7(), tenantId: tenant.id, kind: "DIAGNOSTIC", name: c.name, content: c.content, createdById: owner.userId } });
+      templatesAdded++;
+    }
+    const current = await tx.tenant.findUniqueOrThrow({ where: { id: tenant.id }, select: { legalName: true, address: true, licenseText: true, contactPhone: true } });
+    const fill: Record<string, string> = {};
+    if (!current.legalName && spec.legalName) fill.legalName = spec.legalName;
+    if (!current.address && spec.address) fill.address = spec.address;
+    if (!current.licenseText && spec.licenseText) fill.licenseText = spec.licenseText;
+    if (!current.contactPhone && spec.contactPhone) fill.contactPhone = spec.contactPhone;
+    if (Object.keys(fill).length) await tx.tenant.update({ where: { id: tenant.id }, data: fill, select: { id: true } });
+    if (templatesAdded || Object.keys(fill).length) {
+      await recordAudit(tx, { tenantId: tenant.id, actorType: "SYSTEM", action: "clinic.spec_applied", entityType: "Tenant", entityId: tenant.id, metadata: { templatesAdded, letterhead: Object.keys(fill) } });
+    }
+    return { templatesAdded, letterhead: Object.keys(fill) };
+  });
 }

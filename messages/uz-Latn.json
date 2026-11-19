@@ -810,7 +810,8 @@
       "nextVisitDate": "Sana",
       "nextVisitSaved": "Keyingi tashrif sanasi saqlandi.",
       "rxTimes": "Qabul soatlari",
-      "rxTimesHint": "Masalan 08:00, 20:00 — xulosada jadval boʻlib chiqadi."
+      "rxTimesHint": "Masalan 08:00, 20:00 — xulosada jadval boʻlib chiqadi.",
+      "bsa": "Tana yuzasi"
     },
     "record": {
       "title": "Tibbiy karta",
@@ -1606,7 +1607,9 @@
     "packageTwoServices": "Paketga kamida 2 ta xizmat tanlang.",
     "pregnancyWeeks": "Muddat faqat homiladorlik «Ha» boʻlganda yoziladi.",
     "times": "Soatlarni 08:00, 20:00 koʻrinishida yozing (8 tagacha).",
-    "telegram": "Telegram nomi: 5–32 ta lotin harfi, raqam yoki _."
+    "telegram": "Telegram nomi: 5–32 ta lotin harfi, raqam yoki _.",
+    "templateFieldLines": "Maydonlar qatorlarida xato bor: kalit (lotin harf/raqam), nomi, min-max formatini tekshiring.",
+    "templateUnknownPlaceholders": "Hisobot matnida maydonlar roʻyxatida yoʻq '{{'kalit'}}' bor."
   },
   "errors": {
     "generic": "Nimadir notoʻgʻri ketdi. Qayta urinib koʻring.",
@@ -2596,7 +2599,16 @@
       "doctor_telegram": "Shifokor Telegrami"
     },
     "qrAlt": "Bemor portali QR kodi",
-    "qrHint": "Natijalaringizni telefonda koʻrish uchun QR kodni skanerlang (bemor portali)."
+    "qrHint": "Natijalaringizni telefonda koʻrish uchun QR kodni skanerlang (bemor portali).",
+    "studies": "Diagnostika shablonlari (UZI, ExoKG, EKG…)",
+    "studiesHint": "Klinikangiz blankasi asosida: maydonlar, sizning meʼyorlaringiz va hisobot matni. Natija kiritishda tanlanadi.",
+    "newStudy": "Yangi diagnostika shabloni",
+    "study": "Tekshiruv turi",
+    "fields": "Maydonlar (har qatorda bittasi)",
+    "fieldsHint": "kalit | Nomi | birlik | min-max | meʼyordagi matn. Masalan: fhr | Yurak urishi, 1 daqiqada | marta | 115-160 |. Meʼyor oraligʻi va meʼyordagi matn ixtiyoriy.",
+    "reportText": "Hisobot matni",
+    "reportTextHint": "Qiymat oʻrniga '{{'kalit'}}' yozing. Barcha qiymatlari boʻsh qator chop etilmaydi.",
+    "defaultConclusion": "Standart xulosa"
   },
   "connect": {
     "title": "Qurilmani ulash",
@@ -2981,6 +2993,14 @@
       "ms": "ms",
       "h": "soat",
       "W": "Vt"
-    }
+    },
+    "template": "Shablon",
+    "noTemplate": "Shablonsiz (umumiy maydonlar)",
+    "templateHint": "Klinika shablonidagi meʼyorlar boʻyicha tekshiriladi.",
+    "fillNormal": "Meʼyorni toʻldirish",
+    "normalRange": "meʼyor {min}–{max}",
+    "high": "yuqori",
+    "low": "past",
+    "abnormalList": "Meʼyordan tashqari: {list}"
   }
 }
