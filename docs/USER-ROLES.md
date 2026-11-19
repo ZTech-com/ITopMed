@@ -17,7 +17,7 @@ Sign-in: login + password or Telegram (no second factor). Matrix: `src/server/au
 | Role | Key permissions | Notes |
 |---|---|---|
 | Clinic owner | settings, branches, staff, roles, audit, support-access decisions, subscription, finance reports | **no EMR access** unless also given `doctor` |
-| Clinic administrator | settings, branches, staff, patients, appointments, queue, services | no EMR; MFA required; cannot grant owner |
+| Clinic administrator | settings, branches, staff, patients, appointments, queue, services | no EMR; cannot grant owner |
 | Branch manager | operations and reports for assigned branches | branch scope via `MembershipBranch` |
 | Receptionist | registration/search, appointments, queue, check-in | no EMR |
 | Doctor | own schedule/queue; EMR read/write/sign/amend for patients in their care; orders; prescriptions; documents | care-relationship ABAC (Phase 6) |
