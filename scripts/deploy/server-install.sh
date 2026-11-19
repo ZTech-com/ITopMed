@@ -105,7 +105,16 @@ swap_current() { ln -sfn "$REL" "$BASE/current.new" && mv -Tf "$BASE/current.new
 # new release has started and migrated the database (a broken release never goes live).
 UPDATE=0; [ -L "$BASE/current" ] && UPDATE=1
 [ "$UPDATE" = 0 ] && swap_current
-PGBIN="$BASE/current/node_modules/@embedded-postgres/linux-x64/native/bin"
+# PostgreSQL runs from a stable copy per version, never from a release folder: old releases are
+# deleted on later deploys, and a running server whose files are gone fails to load plpgsql.
+PGVER="$("$NODE" -p "require(\"$REL/node_modules/@embedded-postgres/linux-x64/package.json\").version")"
+PGHOME="$BASE/postgres/$PGVER"
+if [ ! -x "$PGHOME/bin/postgres" ]; then
+  install -d -m 0755 "$BASE/postgres"
+  rm -rf "$PGHOME.tmp" && cp -a "$REL/node_modules/@embedded-postgres/linux-x64/native" "$PGHOME.tmp"
+  chown -R root:root "$PGHOME.tmp" && chmod -R a+rX,go-w "$PGHOME.tmp" && mv "$PGHOME.tmp" "$PGHOME"
+fi
+PGBIN="$PGHOME/bin"
 
 log "systemd units"
 cat > /etc/systemd/system/itopmed-db.service <<EOF
@@ -189,6 +198,12 @@ if [ ! -f "$HOME_DIR/pg/PG_VERSION" ]; then
   ( set -a; . "$ETC/itopmed.env"; set +a; cd "$REL/app"; runuser -p -u itopmed -- "$NODE" tasks.mjs db-init )
 fi
 systemctl enable --now itopmed-db.service
+# Running from another binary folder (older version, or a deleted release)? Restart on the stable copy.
+DBPID="$(systemctl show -p MainPID --value itopmed-db.service)"
+if [ -n "$DBPID" ] && [ "$DBPID" != 0 ] && [ "$(readlink "/proc/$DBPID/exe" 2>/dev/null)" != "$PGBIN/postgres" ]; then
+  log "Restarting the database on $PGBIN"
+  systemctl restart itopmed-db.service
+fi
 for i in $(seq 1 30); do (exec 3<>"/dev/tcp/127.0.0.1/$DB_PORT") 2>/dev/null && break; sleep 1; done
 if ! ( set -a; . "$ETC/itopmed.env"; set +a; cd "$REL/app"; runuser -p -u itopmed -- "$NODE" tasks.mjs migrate ); then
   echo "Migration with the new release failed: the running version stays live; $REL removed." >&2
