@@ -48,7 +48,7 @@ export async function getMember(ctx: ClinicContext, membershipId: string) {
   if (!ctx.permissions.has("staff.read")) throw new DomainError("errors.forbidden");
   return inClinic(ctx, async (tx) => {
     const m = await loadTarget(tx, ctx, membershipId);
-    const user = await tx.user.findUniqueOrThrow({ where: { id: m.userId }, select: { id: true, fullName: true, email: true, lastLoginAt: true, mfaEnabledAt: true } });
+    const user = await tx.user.findUniqueOrThrow({ where: { id: m.userId }, select: { id: true, fullName: true, username: true, email: true, lastLoginAt: true, telegramLinkedAt: true } });
     return { ...m, user };
   });
 }
@@ -118,8 +118,9 @@ export async function setMemberStatus(ctx: ClinicContext, membershipId: string, 
 
 /**
  * Gives a member a new password chosen by the administrator (who hands it
- * over in person). Same guardrails as the MFA reset, re-checked in the
- * database; all of the member's sessions are signed out. Audited.
+ * over in person). Guardrails re-checked in the database (see migration
+ * member_password_reset); all of the member's sessions are signed out and the
+ * Telegram sign-in is unlinked, so the new password takes the account back. Audited.
  */
 export async function setMemberPassword(ctx: ClinicContext, membershipId: string, raw: unknown, meta: RequestMeta) {
   const password = passwordSchema.parse((raw as { password?: unknown })?.password);
@@ -130,7 +131,7 @@ export async function setMemberPassword(ctx: ClinicContext, membershipId: string
     if (target.status === "REMOVED") throw new DomainError("errors.invalidTransition");
     const rows = await tx.$queryRaw<{ result: string }[]>`SELECT app_set_member_password(${target.userId}::uuid, ${hash}) AS result`;
     const result = rows[0]?.result ?? "forbidden";
-    if (result !== "ok") throw new DomainError(result === "other_clinics" ? "errors.passwordOtherClinics" : (RESET_ERRORS[result] ?? "errors.forbidden"));
+    if (result !== "ok") throw new DomainError(RESET_ERRORS[result] ?? "errors.forbidden");
     await audit(tx, ctx, meta, "membership.password_set", membershipId);
   });
 }
@@ -139,25 +140,5 @@ const RESET_ERRORS: Record<string, string> = {
   forbidden: "errors.forbidden",
   not_found: "errors.notFound",
   owner_only: "errors.ownerOnly",
-  other_clinics: "errors.mfaResetOtherClinics",
+  other_clinics: "errors.passwordOtherClinics",
 };
-
-/**
- * Resets the two-step verification of a member who lost their authenticator.
- * The database function re-checks every rule (see migration
- * mfa_recovery_and_reset); accounts that also belong to other clinics are
- * refused — ITop Med support handles those after verifying the person.
- */
-export async function resetMemberMfa(ctx: ClinicContext, membershipId: string, meta: RequestMeta) {
-  await inClinic(ctx, async (tx) => {
-    const target = await loadTarget(tx, ctx, membershipId);
-    assertCanModify(ctx, target);
-    if (target.status === "REMOVED") throw new DomainError("errors.invalidTransition");
-    const user = await tx.user.findUniqueOrThrow({ where: { id: target.userId }, select: { mfaSecretEnc: true, mfaEnabledAt: true } });
-    if (!user.mfaSecretEnc && !user.mfaEnabledAt) throw new DomainError("errors.mfaNotSetUp");
-    const rows = await tx.$queryRaw<{ result: string }[]>`SELECT app_reset_member_mfa(${target.userId}::uuid) AS result`;
-    const result = rows[0]?.result ?? "forbidden";
-    if (result !== "ok") throw new DomainError(RESET_ERRORS[result] ?? "errors.forbidden");
-    await audit(tx, ctx, meta, "membership.mfa_reset", membershipId);
-  });
-}

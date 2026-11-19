@@ -69,3 +69,20 @@ export async function clearAdminCookie() {
 export async function clearClinicCookie() {
   (await cookies()).delete(clinicCookieName());
 }
+
+/**
+ * Telegram Login flow state (encrypted, 10 minutes). SameSite=Lax so it comes
+ * back on the top-level redirect from oauth.telegram.org to our callback.
+ */
+export const telegramFlowCookieName = () => (isProduction() ? "__Host-itm_tg" : "itm_tg");
+
+export async function setTelegramFlowCookie(sealed: string, maxAgeS: number) {
+  (await cookies()).set(telegramFlowCookieName(), sealed, { httpOnly: true, secure: isProduction(), sameSite: "lax", path: "/", maxAge: maxAgeS });
+}
+
+export async function takeTelegramFlowCookie() {
+  const store = await cookies();
+  const value = store.get(telegramFlowCookieName())?.value;
+  store.delete(telegramFlowCookieName());
+  return value;
+}

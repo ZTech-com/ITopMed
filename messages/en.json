@@ -82,16 +82,6 @@
     "locked": "Too many failed attempts. The account is temporarily locked — try again in 15 minutes.",
     "rateLimited": "Too many attempts. Please wait a few minutes and try again.",
     "forgot": "Forgot your password?",
-    "mfaTitle": "Two-step verification",
-    "mfaSubtitle": "Enter the 6-digit code from your authenticator app.",
-    "mfaEnrollTitle": "Set up two-step verification",
-    "mfaEnrollIntro": "Your account has elevated privileges, so two-step verification is mandatory.",
-    "mfaStep1": "Scan this QR code with an authenticator app (for example Google Authenticator, Microsoft Authenticator or 1Password).",
-    "mfaStep2": "Enter the 6-digit code shown in the app to confirm.",
-    "mfaManual": "Can’t scan? Enter this key manually:",
-    "mfaCode": "Verification code",
-    "verify": "Verify",
-    "mfaInvalid": "The code is incorrect or has expired.",
     "chooseClinic": "Choose a clinic",
     "noClinics": "Your account is not an active member of any clinic.",
     "clinicUnavailable": "This clinic workspace is currently unavailable. Contact your clinic administrator.",
@@ -107,17 +97,13 @@
     "resetInvalid": "This reset link is invalid or has expired. Request a new one.",
     "backToSignIn": "Back to sign in",
     "portalInvalid": "Incorrect phone number or password.",
-    "recoveryUse": "Lost your phone? Use a recovery code",
-    "recoveryHint": "Enter one of the recovery codes you saved when you set up two-step verification. Each code works only once.",
-    "recoveryCode": "Recovery code",
-    "recoveryNoCodes": "No codes left? Ask your administrator to reset your two-step verification.",
-    "recoveryInvalid": "This recovery code is not valid or has already been used.",
-    "staffActivated": "Your account is active. Sign in and set up two-step verification.",
-    "mfaCodeHint": "Not your password: the 6-digit number shown in the authenticator app. It changes every 30 seconds.",
-    "mfaGetApp": "No app yet? Install Google Authenticator (free):",
+    "staffActivated": "Your account is active. Sign in with your login and password.",
     "toConsole": "SuperAdmin and network admins: control panel",
     "toClinic": "Clinic staff: sign in to your clinic",
-    "consoleWho": "For SuperAdmin and network admins only. Clinic staff sign in on the clinic sign-in page."
+    "consoleWho": "For SuperAdmin and network admins only. Clinic staff sign in on the clinic sign-in page.",
+    "username": "Login",
+    "or": "or",
+    "telegram": "Sign in with Telegram"
   },
   "invite": {
     "title": "Activate your account",
@@ -138,7 +124,9 @@
     "signedInAs": "You are signed in as {email}.",
     "acceptExisting": "Accept invitation",
     "wrongAccount": "You are signed in as {email}, but this invitation was sent to a different email.",
-    "signOutAndSwitch": "Sign out and switch account"
+    "signOutAndSwitch": "Sign out and switch account",
+    "username": "Login",
+    "usernameHint": "Choose one for signing in: lowercase Latin letters, digits and . _ - (for example dr.karimov)."
   },
   "admin": {
     "dashboard": {
@@ -203,7 +191,7 @@
       "ownerFrontDesk": "The owner also runs the front desk and cash",
       "ownerFrontDeskHint": "For small offices: booking patients and taking payments without a receptionist.",
       "ownerHintNew": "The owner is the clinic's Admin: staff, settings, money and oversight are theirs.",
-      "ownerEmailHint": "The owner signs in with this email.",
+      "ownerEmailHint": "Invitations and password-reset links are sent to this email.",
       "ownerAccess": "How they get access",
       "ownerModePassword": "I set the password now",
       "ownerModePasswordHint": "The account is created at once. You hand the password to the owner yourself.",
@@ -216,8 +204,10 @@
       "networkNone": "No network (standalone clinic)",
       "networkFixed": "The clinic is created in your network “{name}”.",
       "createdReady": "The clinic is ready",
-      "createdReadyHow": "The owner signs in at this address with the email and the password you set. At the first sign-in the clinic is fully set up for its field:",
-      "createdExisting": "The clinic was created. This email already has an ITop Med account, so its password was not changed: the owner signs in with their own password and accepts the invitation (sent by email)."
+      "createdReadyHow": "The owner signs in at this address with the login and the password you set. At the first sign-in the clinic is fully set up for its field:",
+      "createdExisting": "The clinic was created. This email already has an ITop Med account, so its password was not changed: the owner signs in with their own password and accepts the invitation (sent by email).",
+      "ownerUsername": "Owner's login",
+      "ownerUsernameHint": "The owner signs in with this login (for example admin.shifo). If left empty, the email becomes the login."
     },
     "clinicDetail": {
       "workspace": "Workspace",
@@ -272,12 +262,9 @@
       "subtitle": "ITop Med employees with access to this console. Every account is personal.",
       "colName": "Name",
       "colRole": "Role",
-      "colMfa": "Two-step verification",
       "colLastLogin": "Last sign-in",
-      "mfaOn": "Enabled",
-      "mfaOff": "Not set up",
       "inviteTitle": "Invite an employee",
-      "inviteHint": "The person receives a single-use link valid for 48 hours, sets their own password and must set up two-step verification.",
+      "inviteHint": "The person receives a single-use link valid for 48 hours and chooses their own login and password.",
       "invite": "Send invitation",
       "invited": "Invitation sent.",
       "invitedNoEmail": "The invitation was created, but the email could not be sent. Check the email settings and resend it.",
@@ -287,12 +274,7 @@
       "invitedBy": "Invited by {name}",
       "expires": "expires {when}",
       "expired": "expired",
-      "mfaReset": "Reset two-step verification",
-      "mfaResetHint": "Only after you have confirmed the person's identity in person or by video call. Their current authenticator and recovery codes stop working and all their sessions end.",
-      "mfaResetConfirm": "I have verified this person's identity.",
-      "mfaResetSubmit": "Reset",
-      "mfaResetDone": "Two-step verification was reset. The employee sets it up again at the next sign-in.",
-      "manageNote": "Only a super administrator can invite employees or reset their two-step verification."
+      "manageNote": "Only a super administrator can invite employees."
     },
     "support": {
       "title": "Support access",
@@ -329,15 +311,13 @@
       "add": "Add",
       "adminsHint": "They sign in to the control panel (/admin) with their own email and password and see only this network.",
       "noAdmins": "No admin appointed yet.",
-      "mfaOn": "Two-step verification on",
-      "mfaPending": "First sign-in pending",
       "invited": "Invitation sent",
       "appoint": "Appoint a network admin",
       "appointHint": "For example the franchise owner or their manager.",
       "appointSubmit": "Appoint admin",
       "clinicRemoved": "The clinic was removed from the network.",
       "clinicAdded": "The clinic was added to the network.",
-      "adminCreated": "Network admin created. Hand them the email and password; at the first sign-in they set up two-step verification."
+      "adminCreated": "Network admin created. Hand them the login and password yourself."
     }
   },
   "clinic": {
@@ -350,7 +330,6 @@
       "setupSettings": "Review clinic details and default language",
       "setupBranches": "Add your branches",
       "setupStaff": "Invite your staff — one personal account each",
-      "setupMfa": "Two-step verification is enabled",
       "modules": "Modules",
       "modulesHint": "Sections your clinic uses. The owner switches optional sections on or off in Settings.",
       "frontDesk": "Front desk",
@@ -425,7 +404,9 @@
       "password": "Staff member's password",
       "passwordHint": "At least 12 characters, letters and digits. Write it down for the person.",
       "add": "Add staff member",
-      "created": "Done: the account {email} was created. They sign in with this email and the password you gave."
+      "created": "Done: the account was created. They sign in with the login “{username}” and the password you gave.",
+      "username": "Login",
+      "usernameHint": "When adding with a password: the person signs in with this login (for example dr.karimov). If left empty, the email becomes the login."
     },
     "audit": {
       "title": "Activity log",
@@ -466,14 +447,6 @@
       "statusChanged": "Access status updated.",
       "selfNote": "You cannot change your own access. Ask another owner or administrator.",
       "ownerNote": "Only a clinic owner can change an owner’s access.",
-      "mfa": "Two-step verification",
-      "mfaOn": "Enabled",
-      "mfaOff": "Not set up",
-      "mfaResetTitle": "Reset two-step verification",
-      "mfaResetHint": "Use this when the employee has lost their phone and has no recovery codes left. Confirm their identity in person first. Their sessions end and they set up a new authenticator at the next sign-in.",
-      "mfaResetConfirm": "I have verified this employee's identity in person.",
-      "mfaResetSubmit": "Reset two-step verification",
-      "mfaResetDone": "Two-step verification was reset.",
       "passwordTitle": "Give a new password",
       "passwordHint": "If the person forgot their password: set a new one and hand it over yourself. All their open sessions are signed out.",
       "passwordSubmit": "Change password",
@@ -1567,7 +1540,6 @@
     "passwordTooLong": "The password is too long.",
     "passwordWeak": "Use both letters and digits.",
     "passwordMismatch": "The passwords do not match.",
-    "otp": "Enter the 6-digit code.",
     "reasonTooShort": "Describe the reason (at least 10 characters).",
     "roleRequired": "Choose at least one role.",
     "durationRange": "Enter between 5 and 480 minutes.",
@@ -1609,7 +1581,8 @@
     "times": "Write times as 08:00, 20:00 (up to 8).",
     "telegram": "Telegram name: 5–32 Latin letters, digits or _.",
     "templateFieldLines": "Some field lines are invalid: check the key (Latin letters/digits), label and min-max format.",
-    "templateUnknownPlaceholders": "The report text uses a '{{'key'}}' that is not among the fields."
+    "templateUnknownPlaceholders": "The report text uses a '{{'key'}}' that is not among the fields.",
+    "username": "Login: 3–64 characters — lowercase Latin letters, digits and . _ - (for example dr.karimov)."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -1617,7 +1590,6 @@
     "notFound": "Not found.",
     "notFoundTitle": "Page not found",
     "notFoundBody": "The page does not exist or you do not have access to it.",
-    "mfaRequired": "Two-step verification is required.",
     "planNotFound": "The selected plan is not available.",
     "slugTaken": "This workspace address is already taken.",
     "invitationNotPending": "This invitation is no longer pending.",
@@ -1702,8 +1674,6 @@
     "moduleDisabled": "This module is switched off for the clinic.",
     "moduleNotInPlan": "This module is not included in the clinic's plan.",
     "servicePriceNotSet": "Set a price for this service before billing it (Services).",
-    "mfaResetOtherClinics": "This account also works in other clinics, so only ITop Med support can reset its two-step verification.",
-    "mfaNotSetUp": "Two-step verification is not set up for this account.",
     "staffExists": "An employee with this email already exists.",
     "invitationPending": "An invitation for this email is already pending. Resend or revoke it instead.",
     "discountOverLimit": "This discount is above the limit set by the clinic owner.",
@@ -1740,7 +1710,9 @@
     "fileType": "Only JPG, PNG, WebP images or PDF.",
     "noFile": "No file chosen.",
     "tooManyFiles": "Up to 20 files per result.",
-    "nextVisitPast": "The next visit must be after today."
+    "nextVisitPast": "The next visit must be after today.",
+    "usernameTaken": "This login is already taken. Choose another one.",
+    "telegramTaken": "This Telegram account is already linked to another ITop Med account."
   },
   "email": {
     "invitation": {
@@ -1763,10 +1735,10 @@
       "subject": "Your invitation to the ITop Med console",
       "greeting": "Hello, {name}!",
       "body": "You have been invited to the ITop Med platform console as {role}. Use the button below to create your personal account.",
-      "mfa": "At your first sign-in you will set up two-step verification with an authenticator app.",
       "cta": "Create account",
       "expiry": "The link is valid for {hours} hours and can be used once.",
-      "ignore": "If you did not expect this invitation, ignore this email and tell your security contact."
+      "ignore": "If you did not expect this invitation, ignore this email and tell your security contact.",
+      "chooseLogin": "Through the link you choose your own login and password."
     }
   },
   "supportScope": {
@@ -2445,32 +2417,21 @@
   },
   "security": {
     "title": "Account security",
-    "subtitle": "Two-step verification and recovery codes for your personal account.",
-    "setupPrompt": "Two-step verification is on. Now create recovery codes: they are the only way back in if you lose your phone.",
-    "usedNotice": "You signed in with a recovery code. {remaining, plural, =0 {No codes are left — create a new set now.} one {# code is left.} other {# codes are left.}} If your phone is lost, ask an administrator to reset two-step verification.",
-    "mfa": "Two-step verification",
-    "mfaOn": "Enabled",
-    "mfaOffClinic": "Two-step verification is not enabled for your account. It is required for clinic owners, administrators and accountants and is set up at sign-in.",
-    "recoveryTitle": "Recovery codes",
-    "recoveryIntro": "Each recovery code signs you in once without your authenticator app. Keep them somewhere safe and offline, e.g. printed in a locked drawer.",
-    "remaining": "{remaining, plural, =0 {No unused codes left} one {# unused code left} other {# unused codes left}}",
-    "notIssued": "Not created yet",
-    "runningLow": "You are running out of recovery codes. Create a new set.",
-    "regenerateNote": "Creating a new set makes all previous codes stop working.",
-    "recoveryShownOnce": "Save these codes now. They are shown only once and ITop Med cannot show them again.",
-    "copy": "Copy",
-    "copied": "Copied",
-    "download": "Download .txt",
-    "generate": "Create recovery codes",
-    "regenerate": "Create a new set",
     "continue": "Continue",
-    "exemptNotice": "Two-step verification is switched off for this account by the owner's setting (MFA_EXEMPT_EMAILS). The password alone opens it, so keep the password secret and long. Every sign-in is recorded in the audit log.",
-    "mfaExempt": "Off (owner exception)"
+    "subtitle": "Your login and sign-in with Telegram.",
+    "login": "Login",
+    "telegram": "Sign-in with Telegram",
+    "telegramOn": "Linked",
+    "telegramOff": "Not linked",
+    "telegramIntro": "Link your Telegram account to sign in with the Telegram button, without a password. Your login and password keep working too.",
+    "telegramUnavailable": "Sign-in with Telegram is not enabled in this installation (Telegram works only with a domain on the internet). Use your login and password.",
+    "telegramLink": "Link Telegram",
+    "telegramUnlink": "Unlink Telegram",
+    "telegramUnlinked": "Telegram was unlinked. You now sign in with your login and password only."
   },
   "staffInvite": {
     "title": "Join the ITop Med console",
     "subtitle": "You have been invited as {role}.",
-    "mfaNote": "At your first sign-in you will set up two-step verification with an authenticator app.",
     "accept": "Create account"
   },
   "control": {
@@ -2511,7 +2472,6 @@
     "security": "Security",
     "securityHint": "Accounts and access that need a look.",
     "activityLog": "Activity log",
-    "withoutMfa": "Owners, admins and accountants without two-step verification",
     "breakGlass": "Emergency record access (30 days)",
     "supportAccess": "Active ITop Med support access",
     "period": "Figures in the clinic's currency and time zone; \"30 days\" means the last 30 days."
@@ -2614,9 +2574,6 @@
     "title": "Connect this device",
     "desktopTitle": "Connect phones and tablets",
     "subtitle": "Open ITop Med on a phone, tablet or another computer",
-    "qrAlt": "QR code for the connect page",
-    "scanHint": "Scan with the phone's camera. The phone must be on the same Wi-Fi network as this computer.",
-    "orType": "Or type in the phone's browser:",
     "noNetwork": "This computer is not connected to Wi-Fi or a network. Connect it and reload the page.",
     "secureOk": "This device is connected securely.",
     "open": "Open ITop Med",
@@ -2643,7 +2600,8 @@
     "otherDevices": "Other device types",
     "fingerprint": "Certificate fingerprint (SHA-256) — compare it with the one shown on the device:",
     "why": "The certificate is only for the ITop Med server on this clinic's network and is installed once per device. After that, data travels encrypted.",
-    "link": "Connect a phone or tablet"
+    "link": "Connect a phone or tablet",
+    "typeHint": "Open this address in the browser of the phone or tablet. The device must be on the same Wi-Fi network as this computer."
   },
   "welcome": {
     "title": "Welcome to ITop Med",
@@ -2655,14 +2613,13 @@
     "iAmFrontDesk": "I also run the front desk and cash",
     "accountSection": "Your account (clinic Admin)",
     "fullName": "Your full name",
-    "emailHint": "You sign in with this email. It need not be a real mailbox — just remember it.",
+    "emailHint": "For password recovery. It need not be a real mailbox.",
     "passwordHint": "At least 12 characters, letters and digits. Write it down and keep it safe.",
     "confirmPassword": "Repeat the password",
-    "mfa": "Two-step protection with your phone (recommended)",
-    "mfaHint": "Sign-in asks for the password plus a Google Authenticator code. If off, the password alone signs in — weaker protection.",
     "submit": "Create the clinic",
     "privacy": "All data stays on this computer only, with an encrypted backup every day.",
-    "done": "Your clinic is ready! Sign in with your email and password."
+    "done": "Your clinic is ready! Sign in with your email and password.",
+    "usernameHint": "You sign in with this login (for example admin or dr.karimov)."
   },
   "patientFile": {
     "title": "Patient card",
@@ -3010,5 +2967,15 @@
     "menu": "ITop Med",
     "cmdStart": "Start",
     "cmdHelp": "Help"
+  },
+  "telegramLogin": {
+    "failed": "Signing in with Telegram did not work. Try again or use your login and password.",
+    "cancelled": "Sign-in with Telegram was cancelled.",
+    "not_linked": "This Telegram account is not linked to any ITop Med account. Sign in with your login and password first, then link Telegram under “Account security”.",
+    "locked": "The account is temporarily locked. Try again in 15 minutes.",
+    "rate_limited": "Too many attempts. Please try again a little later.",
+    "taken": "This Telegram account is already linked to another ITop Med account.",
+    "disabled": "Sign-in with Telegram is not enabled. Use your login and password.",
+    "linked": "Telegram is linked. You can now use “Sign in with Telegram” on the sign-in page."
   }
 }

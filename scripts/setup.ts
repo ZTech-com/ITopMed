@@ -2,7 +2,7 @@
  * `npm run setup` — first-time configuration on a new computer.
  * Creates `.env` from `.env.example` with fresh random database passwords and
  * encryption keys. Refuses to overwrite an existing `.env` (its keys decrypt
- * existing data — losing them makes MFA secrets and backups unreadable).
+ * existing data — losing them makes stored secrets and backups unreadable).
  */
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";

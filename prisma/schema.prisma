@@ -38,6 +38,8 @@ enum AccountStatus {
 
 model PlatformUser {
   id               String        @id @db.Uuid
+  /// Sign-in name (lowercase). Existing accounts were given their email as login.
+  username         String        @unique
   email            String        @unique
   fullName         String
   passwordHash     String?
@@ -46,9 +48,9 @@ model PlatformUser {
   networkId        String?       @db.Uuid
   status           AccountStatus @default(INVITED)
   locale           String        @default("uz-Latn")
-  /// AES-256-GCM encrypted TOTP secret (see src/server/security/crypto.ts)
-  mfaSecretEnc     String?
-  mfaEnabledAt     DateTime?
+  /// Telegram Login (OpenID Connect `sub`) linked by the person themselves; null = not linked.
+  telegramSub      String?       @unique
+  telegramLinkedAt DateTime?
   failedLoginCount Int           @default(0)
   lockedUntil      DateTime?
   lastLoginAt      DateTime?
@@ -60,22 +62,8 @@ model PlatformUser {
   invitationsSent PlatformInvitation[]      @relation("PlatformInviter")
   tenantsCreated  Tenant[]
   supportGrants   SupportAccessGrant[]
-  recoveryCodes   PlatformMfaRecoveryCode[]
 
   @@index([networkId])
-}
-
-/// Single-use MFA recovery codes. Only a SHA-256 of each (80-bit) code is stored.
-model PlatformMfaRecoveryCode {
-  id             String    @id @db.Uuid
-  platformUserId String    @db.Uuid
-  codeHash       String    @unique
-  usedAt         DateTime?
-  createdAt      DateTime  @default(now())
-
-  user PlatformUser @relation(fields: [platformUserId], references: [id], onDelete: Cascade)
-
-  @@index([platformUserId])
 }
 
 model PlatformSession {
@@ -85,7 +73,6 @@ model PlatformSession {
   createdAt      DateTime  @default(now())
   expiresAt      DateTime
   lastSeenAt     DateTime  @default(now())
-  mfaVerifiedAt  DateTime?
   revokedAt      DateTime?
   ipHash         String?
   userAgent      String?
@@ -356,6 +343,8 @@ model TenantModule {
 
 model User {
   id               String        @id @db.Uuid
+  /// Sign-in name (lowercase). Existing accounts were given their email as login.
+  username         String        @unique
   email            String        @unique
   phone            String?
   fullName         String
@@ -363,8 +352,9 @@ model User {
   status           AccountStatus @default(INVITED)
   /// Personal UI language; null = follow the clinic default.
   locale           String?
-  mfaSecretEnc     String?
-  mfaEnabledAt     DateTime?
+  /// Telegram Login (OpenID Connect `sub`) linked by the person themselves; null = not linked.
+  telegramSub      String?       @unique
+  telegramLinkedAt DateTime?
   failedLoginCount Int           @default(0)
   lockedUntil      DateTime?
   lastLoginAt      DateTime?
@@ -374,20 +364,6 @@ model User {
   sessions       Session[]
   memberships    Membership[]
   passwordResets PasswordReset[]
-  recoveryCodes  MfaRecoveryCode[]
-}
-
-/// Single-use MFA recovery codes of a clinic account. Only a SHA-256 of each (80-bit) code is stored.
-model MfaRecoveryCode {
-  id        String    @id @db.Uuid
-  userId    String    @db.Uuid
-  codeHash  String    @unique
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
 }
 
 /// Single-use password reset. Only the SHA-256 of the emailed token is stored.
@@ -414,7 +390,6 @@ model Session {
   createdAt      DateTime  @default(now())
   expiresAt      DateTime
   lastSeenAt     DateTime  @default(now())
-  mfaVerifiedAt  DateTime?
   revokedAt      DateTime?
   ipHash         String?
   userAgent      String?

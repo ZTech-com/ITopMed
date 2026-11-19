@@ -16,14 +16,13 @@ export const PASSWORD = "Synthetic-Passw0rd-2026";
 
 export const uniq = (prefix: string) => `${prefix}-${randomBytes(4).toString("hex")}`;
 
-/** A platform principal as it looks after a completed password+MFA login. */
+/** A platform principal as it looks after a completed sign-in. */
 export async function platformActor(role: PlatformRole = "SUPER_ADMIN"): Promise<PlatformPrincipal> {
   const email = `${uniq("staff")}@itopmed.test`;
   const id = await createPlatformUser({ email, fullName: "Synthetic Staff", password: PASSWORD, role });
   return {
     sessionId: "test",
-    mfaVerified: true,
-    user: { id, email, fullName: "Synthetic Staff", role, locale: "en", mfaEnrolled: true },
+    user: { id, username: email, email, fullName: "Synthetic Staff", role, locale: "en", telegramLinked: false },
   };
 }
 

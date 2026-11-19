@@ -15,7 +15,6 @@ import { hashIp, uuidv7 } from "../security/crypto";
  * nothing else on the platform, and never clinical data.
  */
 function authorize(actor: PlatformPrincipal) {
-  if (!actor.mfaVerified) throw new DomainError("errors.mfaRequired");
   if (!platformCan(actor.user.role, "networks.manage")) throw new DomainError("errors.forbidden");
 }
 
@@ -53,7 +52,7 @@ export async function getNetwork(actor: PlatformPrincipal, id: string) {
     where: { id, archivedAt: null },
     include: {
       tenants: { orderBy: { name: "asc" }, select: { id: true, name: true, slug: true, status: true, practiceType: true, _count: { select: { memberships: true } } } },
-      admins: { orderBy: { fullName: "asc" }, select: { id: true, fullName: true, email: true, status: true, mfaEnabledAt: true, lastLoginAt: true } },
+      admins: { orderBy: { fullName: "asc" }, select: { id: true, fullName: true, username: true, email: true, status: true, lastLoginAt: true } },
       invitations: { where: { status: "PENDING" }, orderBy: { createdAt: "desc" }, select: { id: true, email: true, fullName: true, expiresAt: true } },
     },
   });

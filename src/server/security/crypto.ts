@@ -36,8 +36,8 @@ function key(): Buffer {
 }
 
 /**
- * AES-256-GCM field encryption for secrets at rest (MFA seeds, integration
- * credentials). Format: v1.<iv>.<tag>.<ciphertext> (base64url).
+ * AES-256-GCM field encryption for secrets at rest (integration credentials,
+ * short-lived sign-in state). Format: v1.<iv>.<tag>.<ciphertext> (base64url).
  * `context` is bound as AAD so a ciphertext cannot be moved between records.
  */
 export function encryptField(plaintext: string, context: string): string {

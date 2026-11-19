@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { Prisma, type TenantStatus } from "@/generated/prisma/client";
-import { createClinicSchema, statusReasonSchema, type CreateClinicInput } from "@/lib/validation";
+import { createClinicSchema, statusReasonSchema, usernameSchema, type CreateClinicInput } from "@/lib/validation";
 import { recordAudit } from "../audit";
 import type { PlatformPrincipal, RequestMeta } from "../auth/platform-auth";
 import { platformCan, type PlatformPermission } from "../authz/platform";
@@ -23,7 +23,6 @@ export const INVITATION_TTL_HOURS = 72;
 export { DomainError };
 
 function authorize(actor: PlatformPrincipal, permission: PlatformPermission) {
-  if (!actor.mfaVerified) throw new DomainError("errors.mfaRequired");
   if (!platformCan(actor.user.role, permission)) throw new DomainError("errors.forbidden");
 }
 
@@ -173,7 +172,12 @@ export async function deliverInvitation(a: { to: string; name: string; clinicNam
 }
 
 export const ownerAccessSchema = z.discriminatedUnion("ownerMode", [
-  z.object({ ownerMode: z.literal("password"), ownerPassword: passwordSchema }),
+  z.object({
+    ownerMode: z.literal("password"),
+    /** The owner's login; without one their email is the login. */
+    ownerUsername: z.preprocess((v) => (v === "" || v === null ? undefined : v), usernameSchema.optional()),
+    ownerPassword: passwordSchema,
+  }),
   z.object({ ownerMode: z.literal("invite") }),
 ]);
 
@@ -193,12 +197,16 @@ export type OwnerAccessResult = "password" | "invited" | "existing_account";
  */
 export async function createClinicWithOwner(actor: PlatformPrincipal, raw: unknown, meta: RequestMeta) {
   const access = ownerAccessSchema.parse({ ownerMode: "invite", ...(raw as object) });
+  // Checked before the clinic exists, so a taken login does not leave a half-made clinic behind.
+  if (access.ownerMode === "password" && access.ownerUsername && (await platformDb().user.findUnique({ where: { username: access.ownerUsername }, select: { id: true } }))) {
+    throw new DomainError("errors.usernameTaken");
+  }
   const r = await provisionClinic(actor, raw, meta);
   let owner: OwnerAccessResult = "invited";
   let delivered = false;
   if (access.ownerMode === "password") {
     try {
-      await acceptInvitation(r.inviteToken, { fullName: r.ownerFullName, password: access.ownerPassword, confirmPassword: access.ownerPassword }, meta);
+      await acceptInvitation(r.inviteToken, { fullName: r.ownerFullName, username: access.ownerUsername, password: access.ownerPassword, confirmPassword: access.ownerPassword }, meta);
       owner = "password";
       await withPlatform((tx) => audit(tx, actor, meta, { tenantId: r.tenantId, action: "tenant.owner_account_created", entityType: "Tenant", entityId: r.tenantId, metadata: { by: "platform" } }));
     } catch (e) {

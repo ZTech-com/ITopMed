@@ -106,9 +106,9 @@ export default async function NetworkPage({ params, searchParams }: { params: Pr
                   <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
                     <div className="min-w-0">
                       <p className="font-medium">{a.fullName}</p>
-                      <p className="break-all text-[13px] text-text-2">{a.email}</p>
+                      <p className="break-all text-[13px] text-text-2">{a.username}</p>
                     </div>
-                    <Badge tone={a.mfaEnabledAt ? "success" : "warning"}>{a.mfaEnabledAt ? t("admin.networks.mfaOn") : t("admin.networks.mfaPending")}</Badge>
+                    <Badge tone={a.status === "ACTIVE" ? "success" : "neutral"}>{t(`status.${a.status}`)}</Badge>
                   </li>
                 ))}
                 {network.invitations.map((inv) => (
@@ -142,6 +142,7 @@ export default async function NetworkPage({ params, searchParams }: { params: Pr
                     </label>
                   ))}
                 </fieldset>
+                <TextField name="username" label={t("admin.clinicNew.ownerUsername")} hint={t("admin.clinicNew.ownerUsernameHint")} autoComplete="off" />
                 <TextField name="password" label={t("admin.clinicNew.ownerPassword")} hint={t("admin.clinicNew.ownerPasswordHint")} defaultValue={suggestPassword()} autoComplete="new-password" />
                 <SubmitButton full>{t("admin.networks.appointSubmit")}</SubmitButton>
               </Form>

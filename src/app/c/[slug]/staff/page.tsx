@@ -41,7 +41,7 @@ export default async function StaffPage({ params }: { params: Promise<{ slug: st
                       <Link href={`/c/${ctx.tenant.slug}/staff/${m.id}`} className="font-medium hover:text-accent">
                         {m.user.fullName}
                       </Link>
-                      <p className="text-[13px] text-text-2">{m.user.email}</p>
+                      <p className="break-all text-[13px] text-text-2">{m.user.username}</p>
                     </Td>
                     <Td className="text-text-2">{m.roles.map((r) => roleLabel(t as never, r.role.key, r.role.name)).join(", ")}</Td>
                     <Td>
@@ -93,6 +93,7 @@ export default async function StaffPage({ params }: { params: Promise<{ slug: st
                     </label>
                   ))}
                 </fieldset>
+                <TextField name="username" label={t("clinic.staff.username")} hint={t("clinic.staff.usernameHint")} autoComplete="off" />
                 <TextField name="password" label={t("clinic.staff.password")} hint={t("clinic.staff.passwordHint")} defaultValue={suggestPassword()} autoComplete="new-password" />
                 <SubmitButton full>{t("clinic.staff.add")}</SubmitButton>
               </Form>

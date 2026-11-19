@@ -20,10 +20,10 @@ describe("security primitives", () => {
   });
 
   it("encrypts fields with context binding", () => {
-    const c = encryptField("secret-seed", "totp:user-1");
+    const c = encryptField("secret-seed", "integration:user-1");
     expect(c).not.toContain("secret-seed");
-    expect(decryptField(c, "totp:user-1")).toBe("secret-seed");
-    expect(() => decryptField(c, "totp:user-2")).toThrow();
+    expect(decryptField(c, "integration:user-1")).toBe("secret-seed");
+    expect(() => decryptField(c, "integration:user-2")).toThrow();
   });
 
   it("produces unguessable tokens and time-ordered UUIDv7", () => {

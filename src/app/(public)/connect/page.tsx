@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import QRCode from "qrcode";
 import { AuthLayout } from "@/components/shell/auth-layout";
 import { Alert, buttonClass } from "@/components/ui/primitives";
 import { caFingerprint, lanAddresses, LOCAL_PUBLIC_PORT, readCaPem } from "@/server/local/lan";
@@ -34,16 +33,12 @@ export default async function ConnectPage() {
 
   if (onServer) {
     const connectUrl = ips[0] ? `http://${ips[0]}:${LOCAL_PUBLIC_PORT}/connect` : null;
-    const qr = connectUrl ? await QRCode.toDataURL(connectUrl, { margin: 1, width: 240, errorCorrectionLevel: "M" }) : null;
     return (
       <AuthLayout title={t("desktopTitle")} subtitle={t("subtitle")}>
-        {connectUrl && qr ? (
+        {connectUrl ? (
           <div className="space-y-4 text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element -- data: URL generated on the server */}
-            <img src={qr} alt={t("qrAlt")} width={240} height={240} className="mx-auto rounded-[12px] border border-border bg-white p-2" />
-            <p className="text-[14px] text-text-2">{t("scanHint")}</p>
-            <p className="text-[13px] text-text-3">{t("orType")}</p>
-            <p className="break-all rounded-[10px] bg-surface-2 px-3 py-2 font-mono text-[14px]">{connectUrl}</p>
+            <p className="text-[14px] text-text-2">{t("typeHint")}</p>
+            <p className="break-all rounded-[10px] bg-surface-2 px-3 py-2 font-mono text-[16px]">{connectUrl}</p>
             {ips.length > 1 ? <p className="break-all text-[12px] text-text-3">{ips.slice(1).map((ip) => `http://${ip}:${LOCAL_PUBLIC_PORT}/connect`).join(" · ")}</p> : null}
           </div>
         ) : (

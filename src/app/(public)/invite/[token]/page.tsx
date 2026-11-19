@@ -28,7 +28,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
 
   if (preview.accountExists) {
     const p = await getClinicPrincipal();
-    const signedIn = p && (!p.mfaRequired || p.mfaVerified) ? p : null;
+    const signedIn = p;
     return (
       <AuthLayout title={t("title")} subtitle={subtitle}>
         {!signedIn ? (
@@ -66,6 +66,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
           <p className="font-medium">{preview.email}</p>
         </div>
         <TextField name="fullName" label={t("fullName")} defaultValue={preview.fullName} autoComplete="name" required />
+        <TextField name="username" label={t("username")} hint={t("usernameHint")} autoComplete="username" required />
         <TextField name="password" type="password" label={t("password")} hint={t("passwordHint")} autoComplete="new-password" required />
         <TextField name="confirmPassword" type="password" label={t("confirmPassword")} autoComplete="new-password" required />
         <SubmitButton full>{t("accept")}</SubmitButton>

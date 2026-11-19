@@ -17,7 +17,7 @@ export function createEnvFile(target: string, opts: { port?: number } = {}): boo
   const url = (role: string, password: string) => `postgresql://${role}:${password}@localhost:${port}/itopmed`;
   const lines = [
     "# ITop Med - settings of THIS computer. Keep a copy in a safe place and never share it:",
-    "# without APP_ENCRYPTION_KEY and BACKUP_ENCRYPTION_KEY, MFA secrets and backups cannot be read.",
+    "# without APP_ENCRYPTION_KEY and BACKUP_ENCRYPTION_KEY, stored secrets and backups cannot be read.",
     "APP_URL=http://127.0.0.1:3000",
     `DEV_PG_PORT=${port}`,
     `DEV_PG_SUPERUSER_PASSWORD=${p.superuser}`,
@@ -33,8 +33,9 @@ export function createEnvFile(target: string, opts: { port?: number } = {}): boo
     `AUDIT_HMAC_KEY=${key()}`,
     `BACKUP_ENCRYPTION_KEY=${key()}`,
     "EMAIL_FROM=ITop Med <no-reply@itopmed.local>",
-    "# Emails that sign in with the password alone (no authenticator code). Weaker protection.",
-    "MFA_EXEMPT_EMAILS=",
+    "# Log In with Telegram needs a public HTTPS domain; a clinic network cannot use it. Leave empty.",
+    "TELEGRAM_LOGIN_CLIENT_ID=",
+    "TELEGRAM_LOGIN_CLIENT_SECRET=",
     "# Real email: SMTP_URL=smtps://login:password@smtp.example.uz:465",
     "",
   ];

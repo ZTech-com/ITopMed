@@ -6,18 +6,17 @@ import { requirePlatform } from "@/server/auth/guards";
 import { platformCan } from "@/server/authz/platform";
 import { platformDb } from "@/server/db";
 import { listPendingPlatformInvitations } from "@/server/platform/staff";
-import { inviteStaffAction, resetStaffMfaAction, staffInvitationAction } from "../../actions";
+import { inviteStaffAction, staffInvitationAction } from "../../actions";
 
-export default async function PlatformStaffPage({ searchParams }: { searchParams: Promise<{ mfaReset?: string }> }) {
+export default async function PlatformStaffPage() {
   const p = await requirePlatform("staff.read");
-  const { mfaReset } = await searchParams;
   const canManage = platformCan(p.user.role, "staff.manage");
   const [t, format, staff, invitations] = await Promise.all([
     getTranslations(),
     getFormatter(),
     platformDb().platformUser.findMany({
       orderBy: { createdAt: "asc" },
-      select: { id: true, fullName: true, email: true, role: true, status: true, mfaEnabledAt: true, mfaSecretEnc: true, lastLoginAt: true },
+      select: { id: true, fullName: true, username: true, email: true, role: true, status: true, telegramLinkedAt: true, lastLoginAt: true },
     }),
     listPendingPlatformInvitations(p),
   ]);
@@ -27,11 +26,6 @@ export default async function PlatformStaffPage({ searchParams }: { searchParams
   return (
     <>
       <PageHeader title={t("admin.staff.title")} description={t("admin.staff.subtitle")} />
-      {mfaReset ? (
-        <div className="mb-6" role="status">
-          <Alert tone="success">{t("admin.staff.mfaResetDone")}</Alert>
-        </div>
-      ) : null}
 
       {canManage ? (
         <Card className="mb-6">
@@ -92,41 +86,24 @@ export default async function PlatformStaffPage({ searchParams }: { searchParams
               <Th>{t("admin.staff.colName")}</Th>
               <Th>{t("admin.staff.colRole")}</Th>
               <Th>{t("common.status")}</Th>
-              <Th>{t("admin.staff.colMfa")}</Th>
+              <Th>{t("security.telegram")}</Th>
               <Th>{t("admin.staff.colLastLogin")}</Th>
             </tr>
           </thead>
           <tbody>
             {staff.map((s) => {
-              const hasMfa = Boolean(s.mfaEnabledAt || s.mfaSecretEnc);
               return (
                 <tr key={s.id}>
                   <Td>
                     <p className="font-medium">{s.fullName}</p>
-                    <p className="text-[13px] text-text-2">{s.email}</p>
+                    <p className="break-all text-[13px] text-text-2">{s.username}</p>
                   </Td>
                   <Td className="text-text-2">{t(`platformRole.${s.role}`)}</Td>
                   <Td>
                     <Badge tone={s.status === "ACTIVE" ? "success" : "neutral"}>{t(`status.${s.status}`)}</Badge>
                   </Td>
                   <Td>
-                    <div className="space-y-2">
-                      <Badge tone={s.mfaEnabledAt ? "success" : "warning"}>{s.mfaEnabledAt ? t("admin.staff.mfaOn") : t("admin.staff.mfaOff")}</Badge>
-                      {canManage && hasMfa && s.id !== p.user.id ? (
-                        <details className="text-[13px]">
-                          <summary className="cursor-pointer text-accent">{t("admin.staff.mfaReset")}</summary>
-                          <Form action={resetStaffMfaAction} className="mt-3 max-w-xs space-y-3">
-                            <input type="hidden" name="userId" value={s.id} />
-                            <p className="text-text-2">{t("admin.staff.mfaResetHint")}</p>
-                            <label className="flex items-start gap-2">
-                              <input type="checkbox" name="confirm" value="yes" required className="mt-0.5 size-4 accent-[var(--accent)]" />
-                              <span>{t("admin.staff.mfaResetConfirm")}</span>
-                            </label>
-                            <SubmitButton variant="danger">{t("admin.staff.mfaResetSubmit")}</SubmitButton>
-                          </Form>
-                        </details>
-                      ) : null}
-                    </div>
+                    <Badge tone={s.telegramLinkedAt ? "success" : "neutral"}>{s.telegramLinkedAt ? t("security.telegramOn") : t("security.telegramOff")}</Badge>
                   </Td>
                   <Td className="text-text-2">{s.lastLoginAt ? format.relativeTime(s.lastLoginAt) : t("common.never")}</Td>
                 </tr>

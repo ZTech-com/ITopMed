@@ -37,12 +37,12 @@ function clinicForm(extra: Record<string, string> = {}) {
   };
 }
 
-/** A network admin as it looks after password + MFA sign-in (synthetic). */
+/** A network admin as it looks after sign-in (synthetic). */
 async function networkAdmin(networkId: string): Promise<PlatformPrincipal> {
   const id = uuidv7();
   const email = `${uniq("netadmin")}@itopmed.test`;
-  await platformDb().platformUser.create({ data: { id, email, fullName: "Synthetic Network Admin", role: "NETWORK_ADMIN", networkId, status: "ACTIVE" } });
-  return { sessionId: "test", mfaVerified: true, user: { id, email, fullName: "Synthetic Network Admin", role: "NETWORK_ADMIN", locale: "en", mfaEnrolled: true, networkId } };
+  await platformDb().platformUser.create({ data: { id, username: email, email, fullName: "Synthetic Network Admin", role: "NETWORK_ADMIN", networkId, status: "ACTIVE" } });
+  return { sessionId: "test", user: { id, username: email, email, fullName: "Synthetic Network Admin", role: "NETWORK_ADMIN", locale: "en", telegramLinked: false, networkId } };
 }
 
 describe("clinic created ready for its field", () => {

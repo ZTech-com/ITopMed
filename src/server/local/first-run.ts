@@ -1,12 +1,9 @@
 import "server-only";
-import fs from "node:fs";
-import path from "node:path";
 import { z } from "zod";
-import { RESERVED_SLUGS, emailSchema, personNameSchema } from "@/lib/validation";
+import { RESERVED_SLUGS, emailSchema, personNameSchema, usernameSchema } from "@/lib/validation";
 import { createPlatformUser, type PlatformPrincipal, type RequestMeta } from "../auth/platform-auth";
 import { clinicPresetSchema } from "../clinic/practice";
 import { platformDb, withPlatform } from "../db";
-import { resetEnvCache } from "../env";
 import { DomainError } from "../errors";
 import { passwordSchema } from "../security/password";
 import { changeTenantStatus, createClinicWithOwner } from "../tenancy/provisioning";
@@ -27,16 +24,14 @@ function isThisComputer(ip: string | null): boolean {
   return ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
 }
 
-const checkbox = z.preprocess((v) => v === true || v === "on" || v === "true", z.boolean());
-
 export const firstRunSchema = z
   .object({
     clinicName: z.string().trim().min(2, "validation.required").max(120, "validation.tooLong"),
     fullName: personNameSchema,
     email: emailSchema,
+    username: usernameSchema,
     password: passwordSchema,
     confirmPassword: z.string(),
-    mfa: checkbox.default(false),
   })
   .refine((v) => v.password === v.confirmPassword, { message: "validation.passwordMismatch", path: ["confirmPassword"] });
 
@@ -55,36 +50,19 @@ export function slugFromName(name: string): string {
   return RESERVED_SLUGS.has(slug) ? `${slug}-klinika` : slug;
 }
 
-/** Lets the owner sign in with the password alone on this computer (their explicit choice on the form). */
-function exemptFromMfa(email: string) {
-  const home = process.env.ITM_HOME;
-  if (home) {
-    const file = path.join(home, ".env");
-    const text = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
-    const line = /^MFA_EXEMPT_EMAILS=(.*)$/m.exec(text);
-    const list = new Set((line?.[1] ?? "").split(",").map((e) => e.trim()).filter(Boolean));
-    list.add(email);
-    const next = `MFA_EXEMPT_EMAILS=${[...list].join(",")}`;
-    fs.writeFileSync(file, line ? text.replace(line[0], next) : `${text}\n${next}\n`, { mode: 0o600 });
-  }
-  const current = (process.env.MFA_EXEMPT_EMAILS ?? "").split(",").filter(Boolean);
-  process.env.MFA_EXEMPT_EMAILS = [...new Set([...current, email])].join(",");
-  resetEnvCache();
-}
-
 export async function completeFirstRun(raw: unknown, meta: RequestMeta): Promise<{ slug: string }> {
   if (!(await needsFirstRun()) || !isThisComputer(meta.ip ?? null)) throw new DomainError("errors.forbidden");
   const input = firstRunSchema.parse(raw);
   const preset = clinicPresetSchema.parse(raw);
 
   // The installer becomes the SuperAdmin of this computer's installation and the owner (Admin) of the clinic.
-  const id = await createPlatformUser({ email: input.email, fullName: input.fullName, password: input.password, role: "SUPER_ADMIN" });
+  const id = await createPlatformUser({ email: input.email, username: input.username, fullName: input.fullName, password: input.password, role: "SUPER_ADMIN" });
   if ((await platformDb().platformUser.count()) > 1) {
     // Two forms submitted at once: the other one won.
     await platformDb().platformUser.update({ where: { id }, data: { status: "DISABLED" } });
     throw new DomainError("errors.forbidden");
   }
-  const actor: PlatformPrincipal = { sessionId: "first-run", mfaVerified: true, user: { id, email: input.email, fullName: input.fullName, role: "SUPER_ADMIN", locale: "uz-Latn", mfaEnrolled: false } };
+  const actor: PlatformPrincipal = { sessionId: "first-run", user: { id, username: input.username, email: input.email, fullName: input.fullName, role: "SUPER_ADMIN", locale: "uz-Latn", telegramLinked: false } };
   const slug = slugFromName(input.clinicName);
   const created = await createClinicWithOwner(
     actor,
@@ -101,6 +79,7 @@ export async function completeFirstRun(raw: unknown, meta: RequestMeta): Promise
       taxId: "",
       contactPhone: "",
       ownerMode: "password",
+      ownerUsername: input.username,
       ownerPassword: input.password,
     },
     meta,
@@ -108,6 +87,5 @@ export async function completeFirstRun(raw: unknown, meta: RequestMeta): Promise
   // The clinic's own computer: no trial period - the clinic is active from the start.
   await changeTenantStatus(actor, created.tenantId, "activate", undefined, meta);
   await withPlatform((tx) => tx.subscription.updateMany({ where: { tenantId: created.tenantId }, data: { status: "ACTIVE", trialEndsAt: null } }));
-  if (!input.mfa) exemptFromMfa(input.email);
   return { slug };
 }

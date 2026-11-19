@@ -7,16 +7,15 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 |---|---|---|
 | Tenant isolation via PostgreSQL RLS + tenant context per transaction | ✅ | migration `security_foundation`; `tests/tenant-isolation.test.ts` |
 | Deny-by-default grants; runtime roles without BYPASSRLS/superuser | ✅ | `tests/db-security.test.ts` |
-| Platform role cannot read password hashes, MFA secrets, sessions (and future clinical tables) | ✅ | column-level grants |
+| Platform role cannot read password hashes, Telegram links, sessions (and future clinical tables) | ✅ | column-level grants |
 | Server-side authorization on every page/action/service | ✅ | `auth/guards.ts`, service checks |
 | argon2id password hashing, password policy | ✅ | `security/password.ts` |
 | Account lockout + rate limiting | ✅ | DB lockout; rate limits shared across instances in PostgreSQL, hashed keys, fail closed (Phase 9) |
-| MFA (TOTP) for platform staff and privileged clinic roles | ✅ | `platform-auth.ts`, `clinic-auth.ts` |
-| Session expiry (absolute + idle), revocation, rotation after MFA | ✅ | |
-| Owner exception `MFA_EXEMPT_EMAILS` (password-only sign-in for listed accounts; empty by default; audited with `mfaExempt`, warning on the security page). Weakens those accounts — use only for the owner and never for shared accounts | ⚠️ configurable | `env.ts`, `tests/mfa-exempt.test.ts` |
-| MFA recovery codes (10 × 80-bit, shown once, SHA-256 bound to the account, single use, share the TOTP attempt limit) | ✅ | `security/recovery-codes.ts`; `tests/mfa-recovery.test.ts` |
-| Administrator MFA reset after out-of-band identity check: removes secret + codes and ends every session; clinic resets limited to accounts of that clinic only, re-checked by `app_reset_member_mfa()` in PostgreSQL | ✅ | `platform-auth.ts`, `clinic/members.ts` |
-| Platform staff invitations: single-use 48 h token (hash stored), SUPER_ADMIN only, MFA enrolment forced at first sign-in | ✅ | `platform/staff.ts` |
+| Sign-in = **login name + password**, or **Log In with Telegram** (OpenID Connect, Authorization Code + PKCE, server side). There is **no second factor**: two-step verification (TOTP, recovery codes, `MFA_EXEMPT_EMAILS`) was removed on the owner's decision (2026-11-19). Accounts are protected by argon2id passwords, lockout and rate limits only — weaker than before; reconsider for internet-facing deployments | ⚠️ decision | `platform-auth.ts`, `clinic-auth.ts`; `tests/login-telegram.test.ts` |
+| Telegram id_token verified before use: signature against Telegram's JWKS (RS256/ES256/EdDSA, `none` refused), `iss`, `aud` = our bot, `exp`/`iat`; flow state in an AES-GCM encrypted, 10-minute, SameSite=Lax cookie bound to `state`; only the OIDC `sub` is stored (`telegramSub`, never granted to the platform role) | ✅ | `auth/telegram-oidc.ts`, `auth/telegram-login.ts` |
+| Telegram is linked only by the signed-in person (from a still-valid session); one Telegram account per ITop Med account; an unknown Telegram account never creates an account. An administrator's new password also unlinks Telegram (`app_set_member_password`) | ✅ | `tests/login-telegram.test.ts` |
+| Session expiry (absolute + idle), revocation | ✅ | |
+| Platform staff invitations: single-use 48 h token (hash stored), SUPER_ADMIN only; the invitee chooses login and password | ✅ | `platform/staff.ts` |
 | HttpOnly, Secure, SameSite cookies, `__Host-` prefix in production | ✅ | `auth/cookies.ts` |
 | CSRF | ✅ | SameSite cookies + Next.js server-action Origin check |
 | XSS | ✅ | React escaping, nonce CSP with `strict-dynamic`, escaped email HTML |
@@ -70,12 +69,10 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 3. While active, support acts through the clinic path with the grant id in context; every access is audited; automatic expiry.
 4. CLINICAL_READ stays disabled until the legal assessment below is complete.
 
-## Lost authenticator (MFA reset procedure)
-1. The person first uses one of their recovery codes (shown once at enrolment; a new set can be created on the account security page).
-2. Without codes, an administrator resets two-step verification **only after verifying the person in person or by video call** — never on the strength of an email or chat message, which an attacker could send.
-   * Platform staff: a SUPER_ADMIN, from Platform staff. Nobody can reset themself.
-   * Clinic staff: the clinic owner or an administrator with `staff.manage`, from the member's page. Owners can only be reset by an owner. Accounts that also work in another clinic are refused — ITop Med support handles those (procedure and screen still to be defined).
-3. The reset removes the secret and all recovery codes and ends every session; the person enrols a new authenticator at the next sign-in. The action is audited (`platform.staff.mfa_reset` / `membership.mfa_reset`).
+## Lost password or Telegram account
+1. Clinic staff: the owner or an administrator with `staff.manage` sets a new password on the member's page (only after verifying the person in person). This signs the member out everywhere and removes their Telegram link. Owners only by an owner; accounts that also work in another clinic are refused.
+2. Platform staff: no self-service reset; a SUPER_ADMIN or the server CLI handles it.
+3. A person can unlink their own Telegram on the account security page at any time.
 
 ## Data handling rules
 * No real patient data in development, tests, screenshots or AI prompts. Test data uses `*.test` domains.

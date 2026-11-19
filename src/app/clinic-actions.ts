@@ -5,17 +5,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
 import type { FormState } from "@/lib/form-state";
-import { loginSchema, totpCodeSchema } from "@/lib/validation";
+import { loginSchema } from "@/lib/validation";
 import { toFormState } from "@/server/actions-util";
-import {
-  clinicRecoveryCodeStatus,
-  generateClinicRecoveryCodes,
-  loginClinicUser,
-  logoutClinic,
-  validateClinicSession,
-  verifyClinicMfa,
-  verifyClinicRecoveryCode,
-} from "@/server/auth/clinic-auth";
+import { loginClinicUser, logoutClinic, unlinkClinicTelegram, validateClinicSession } from "@/server/auth/clinic-auth";
 import { clearClinicCookie, readClinicToken, setClinicSessionCookie } from "@/server/auth/cookies";
 import { requireClinic } from "@/server/auth/guards";
 import { createBranch, createStaffWithPassword, inviteStaff, updateClinicSettings } from "@/server/clinic/admin";
@@ -24,7 +16,7 @@ import { acceptInvitation, acceptInvitationAsExistingUser } from "@/server/tenan
 import { safeNext } from "@/lib/safe-next";
 import { requestPasswordReset, resetPassword } from "@/server/auth/password-reset";
 import { createRole, deleteRole, updateRole } from "@/server/clinic/roles";
-import { resetMemberMfa, setMemberPassword, setMemberStatus, updateMemberAccess, type MemberStatusAction } from "@/server/clinic/members";
+import { setMemberPassword, setMemberStatus, updateMemberAccess, type MemberStatusAction } from "@/server/clinic/members";
 import { decideGrant, type GrantDecision } from "@/server/support/access";
 import { getClinicPrincipal, requireClinicUser } from "@/server/auth/guards";
 
@@ -39,53 +31,21 @@ async function applyLocale(token: string) {
 }
 
 export async function clinicLoginAction(_: FormState, fd: FormData): Promise<FormState> {
-  const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
-  if (!parsed.success) return { message: "auth.invalid", values: { email: String(fd.get("email") ?? "") } };
-  const r = await loginClinicUser(parsed.data.email, parsed.data.password, await requestMeta());
-  if (!r.ok) return { message: `auth.${r.reason === "rate_limited" ? "rateLimited" : r.reason}`, values: { email: parsed.data.email } };
+  const parsed = loginSchema.safeParse({ username: fd.get("username"), password: fd.get("password") });
+  if (!parsed.success) return { message: "auth.invalid", values: { username: String(fd.get("username") ?? "") } };
+  const r = await loginClinicUser(parsed.data.username, parsed.data.password, await requestMeta());
+  if (!r.ok) return { message: `auth.${r.reason === "rate_limited" ? "rateLimited" : r.reason}`, values: { username: parsed.data.username } };
   await setClinicSessionCookie(r.token);
-  const p = await applyLocale(r.token);
-  const next = safeNext(fd.get("next"));
-  if (p?.mfaRequired && !p.mfaVerified) redirect(next ? `/mfa?next=${encodeURIComponent(next)}` : "/mfa");
-  redirect(next ?? "/clinics");
+  await applyLocale(r.token);
+  redirect(safeNext(fd.get("next")) ?? "/clinics");
 }
 
-export async function clinicMfaAction(_: FormState, fd: FormData): Promise<FormState> {
-  const code = totpCodeSchema.safeParse(fd.get("code"));
-  if (!code.success) return { fieldErrors: { code: "validation.otp" } };
-  const token = await readClinicToken();
-  if (!token) redirect("/login");
-  const r = await verifyClinicMfa(token, code.data, await requestMeta());
-  if (!r.ok) return { message: r.reason === "rate_limited" ? "auth.rateLimited" : "auth.mfaInvalid" };
-  await setClinicSessionCookie(r.token);
-  const next = safeNext(fd.get("next"));
-  // Without recovery codes a lost phone means a locked-out account: ask for them right away.
-  const p = await validateClinicSession(r.token);
-  if (p && !(await clinicRecoveryCodeStatus(p)).issued) redirect(`/account/security?setup=1${next ? `&next=${encodeURIComponent(next)}` : ""}`);
-  redirect(next ?? "/clinics");
-}
-
-/** Second factor with a one-time recovery code (lost authenticator). */
-export async function clinicRecoveryCodeAction(_: FormState, fd: FormData): Promise<FormState> {
-  const token = await readClinicToken();
-  if (!token) redirect("/login");
-  const r = await verifyClinicRecoveryCode(token, String(fd.get("recoveryCode") ?? "").slice(0, 64), await requestMeta());
-  if (!r.ok) return { message: r.reason === "rate_limited" ? "auth.rateLimited" : "auth.recoveryInvalid", nonce: Date.now() };
-  await setClinicSessionCookie(r.token);
-  const next = safeNext(fd.get("next"));
-  redirect(`/account/security?used=1${next ? `&next=${encodeURIComponent(next)}` : ""}`);
-}
-
-export async function generateClinicRecoveryCodesAction(): Promise<FormState> {
+/** Removes the Telegram sign-in from the person's own account. */
+export async function unlinkTelegramAction(): Promise<FormState> {
   const p = await requireClinicUser();
-  try {
-    const codes = await generateClinicRecoveryCodes(p, await requestMeta());
-    revalidatePath("/account/security");
-    // Shown once in the browser; never stored in clear and never logged.
-    return { ok: true, data: { codes }, nonce: Date.now() };
-  } catch (e) {
-    return toFormState(e);
-  }
+  await unlinkClinicTelegram(p, await requestMeta());
+  revalidatePath("/account/security");
+  return { ok: true, message: "security.telegramUnlinked", nonce: Date.now() };
 }
 
 export async function clinicLogoutAction() {
@@ -99,7 +59,7 @@ export async function acceptInvitationAction(_: FormState, fd: FormData): Promis
   try {
     await acceptInvitation(
       token,
-      { fullName: fd.get("fullName"), password: fd.get("password"), confirmPassword: fd.get("confirmPassword") },
+      { fullName: fd.get("fullName"), username: fd.get("username"), password: fd.get("password"), confirmPassword: fd.get("confirmPassword") },
       await requestMeta(),
     );
   } catch (e) {
@@ -140,10 +100,10 @@ export async function inviteStaffAction(_: FormState, fd: FormData): Promise<For
   try {
     const input = { fullName: fd.get("fullName"), email: fd.get("email"), roleKeys: fd.getAll("roleKeys") };
     if (fd.get("access") !== "invite") {
-      await createStaffWithPassword(ctx, { ...input, password: fd.get("password") }, await requestMeta());
+      const username = await createStaffWithPassword(ctx, { ...input, username: fd.get("username"), password: fd.get("password") }, await requestMeta());
       revalidatePath(`/c/${slug}/staff`);
       // The password is not echoed back: the administrator has just typed or copied it.
-      return { ok: true, message: "clinic.staff.created", messageValues: { email: String(fd.get("email") ?? "") }, nonce: Date.now() };
+      return { ok: true, message: "clinic.staff.created", messageValues: { username }, nonce: Date.now() };
     }
     const r = await inviteStaff(ctx, input, await requestMeta());
     revalidatePath(`/c/${slug}/staff`);
@@ -277,20 +237,6 @@ export async function memberPasswordAction(_: FormState, fd: FormData): Promise<
     return toFormState(e);
   }
   return { ok: true, message: "clinic.member.passwordSet", nonce: Date.now() };
-}
-
-export async function memberMfaResetAction(_: FormState, fd: FormData): Promise<FormState> {
-  const slug = String(fd.get("$slug"));
-  const ctx = await requireClinic(slug, "staff.manage");
-  if (fd.get("confirm") !== "yes") return { message: "validation.confirmRequired", nonce: Date.now() };
-  try {
-    await resetMemberMfa(ctx, String(fd.get("membershipId")), await requestMeta());
-  } catch (e) {
-    return toFormState(e);
-  }
-  revalidatePath(`/c/${slug}/staff`, "layout");
-  // The reset card disappears once MFA is off, so the confirmation is shown at page level.
-  redirect(`/c/${ctx.tenant.slug}/staff/${encodeURIComponent(String(fd.get("membershipId")))}?mfaReset=1`);
 }
 
 // ───────────── Support access decisions ─────────────

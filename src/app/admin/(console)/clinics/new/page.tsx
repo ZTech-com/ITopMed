@@ -115,6 +115,7 @@ export default async function NewClinicPage({ searchParams }: { searchParams: Pr
               {radio("ownerMode", "invite", t("ownerModeInvite"), t("ownerModeInviteHint"), false)}
             </fieldset>
             <div className="max-w-sm">
+              <TextField name="ownerUsername" label={t("ownerUsername")} hint={t("ownerUsernameHint")} autoComplete="off" />
               <TextField name="ownerPassword" label={t("ownerPassword")} hint={t("ownerPasswordHint")} defaultValue={suggestPassword()} autoComplete="new-password" />
             </div>
           </CardBody>

@@ -1,39 +1,34 @@
 import "server-only";
-import { encodeBase32UpperCaseNoPadding } from "@oslojs/encoding";
 import { recordAudit } from "../audit";
 import { isPermission, type Permission } from "../authz/permissions";
 import { MODULES, applyModules } from "../modules/catalog";
-import { setContext, withAppContext, type Tx } from "../db";
-import { isMfaExempt } from "../env";
+import { setContext, withAppContext } from "../db";
 import { DomainError } from "../errors";
-import { hashIp, randomToken, sha256Hex, uuidv7 } from "../security/crypto";
+import { hashIp, randomToken, sha256Hex } from "../security/crypto";
 import { verifyPassword } from "../security/password";
 import { rateLimit } from "../security/rate-limit";
-import { newRecoveryCodes, normalizeRecoveryCode, recoveryCodeHash } from "../security/recovery-codes";
-import { decryptTotpSecret, encryptTotpSecret, newTotpSecret, totpUri, verifyTotp } from "../security/totp";
 import type { RequestMeta } from "./platform-auth";
 
 export const CLINIC_SESSION_ABSOLUTE_MS = 12 * 60 * 60 * 1000;
 export const CLINIC_SESSION_IDLE_MS = 60 * 60 * 1000;
 const MAX_FAILED = 5;
 const LOCK_MINUTES = 15;
-/** Roles that must use MFA (privileged clinic accounts). */
-export const MFA_REQUIRED_ROLES = new Set(["clinic_owner", "clinic_admin", "accountant"]);
 
 export type ClinicLoginResult =
   | { ok: true; token: string; locale: string | null }
   | { ok: false; reason: "invalid" | "locked" | "rate_limited" };
 
-export async function loginClinicUser(emailRaw: string, password: string, meta: RequestMeta): Promise<ClinicLoginResult> {
-  const email = emailRaw.trim().toLowerCase();
+/** Signs in with login name + password. */
+export async function loginClinicUser(usernameRaw: string, password: string, meta: RequestMeta): Promise<ClinicLoginResult> {
+  const username = usernameRaw.trim().toLowerCase();
   const ipHash = hashIp(meta.ip);
-  if (!(await rateLimit(`clogin:${ipHash ?? "noip"}`, 30, 15 * 60_000)) || !(await rateLimit(`clogin:e:${email}`, 10, 15 * 60_000))) {
+  if (!(await rateLimit(`clogin:${ipHash ?? "noip"}`, 30, 15 * 60_000)) || !(await rateLimit(`clogin:u:${username}`, 10, 15 * 60_000))) {
     return { ok: false, reason: "rate_limited" };
   }
 
   const found = await withAppContext({}, (tx) =>
     tx.$queryRaw<{ id: string; passwordHash: string | null; status: string; lockedUntil: Date | null }[]>`
-      SELECT id, "passwordHash", status::text AS status, "lockedUntil" FROM app_auth_lookup_user(${email})`,
+      SELECT id, "passwordHash", status::text AS status, "lockedUntil" FROM app_auth_lookup_login(${username})`,
   );
   const user = found[0];
 
@@ -61,33 +56,86 @@ export async function loginClinicUser(emailRaw: string, password: string, meta: 
     return { ok: false, reason: "invalid" };
   }
 
+  return { ok: true, ...(await startSession(user.id, "clinic.login.password", meta)) };
+}
+
+/** Opens a session for an account whose password or Telegram sign-in was just verified. */
+async function startSession(userId: string, action: string, meta: RequestMeta): Promise<{ token: string; locale: string | null }> {
   const token = randomToken();
-  // Owner-made exception (MFA_EXEMPT_EMAILS): the password alone completes sign-in, and the audit says so.
-  const exempt = isMfaExempt(email);
-  const locale = await withAppContext({ userId: user.id }, async (tx) => {
-    const u = await tx.user.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() } });
+  const ipHash = hashIp(meta.ip);
+  const locale = await withAppContext({ userId }, async (tx) => {
+    const u = await tx.user.update({ where: { id: userId }, data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() } });
     await tx.session.create({
-      data: {
-        id: sha256Hex(token),
-        userId: user.id,
-        expiresAt: new Date(Date.now() + CLINIC_SESSION_ABSOLUTE_MS),
-        mfaVerifiedAt: exempt ? new Date() : null,
-        ipHash,
-        userAgent: meta.userAgent?.slice(0, 256),
-      },
+      data: { id: sha256Hex(token), userId, expiresAt: new Date(Date.now() + CLINIC_SESSION_ABSOLUTE_MS), ipHash, userAgent: meta.userAgent?.slice(0, 256) },
     });
-    await recordAudit(tx, { actorType: "USER", actorId: user.id, action: "clinic.login.password", ipHash, userAgent: meta.userAgent, ...(exempt ? { metadata: { mfaExempt: true } } : {}) });
+    await recordAudit(tx, { actorType: "USER", actorId: userId, action, ipHash, userAgent: meta.userAgent });
     return u.locale;
   });
-  return { ok: true, token, locale };
+  return { token, locale };
+}
+
+export type TelegramSignInResult = { ok: true; token: string; locale: string | null } | { ok: false; reason: "not_linked" | "locked" | "rate_limited" };
+
+/**
+ * Signs in with a Telegram account the person linked to their ITop Med account
+ * earlier. `sub` comes from an id_token already verified (see telegram-oidc.ts).
+ */
+export async function loginClinicWithTelegram(sub: string, meta: RequestMeta): Promise<TelegramSignInResult> {
+  const ipHash = hashIp(meta.ip);
+  if (!(await rateLimit(`ctg:${ipHash ?? "noip"}`, 30, 15 * 60_000))) return { ok: false, reason: "rate_limited" };
+  const rows = await withAppContext({}, (tx) =>
+    tx.$queryRaw<{ id: string; status: string; lockedUntil: Date | null }[]>`SELECT id, status::text AS status, "lockedUntil" FROM app_auth_lookup_telegram(${sub})`,
+  );
+  const user = rows[0];
+  if (!user || user.status !== "ACTIVE") {
+    await withAppContext({}, (tx) =>
+      recordAudit(tx, {
+        actorType: user ? "USER" : "ANONYMOUS",
+        actorId: user?.id,
+        action: "clinic.login.telegram",
+        outcome: "FAILURE",
+        ipHash,
+        userAgent: meta.userAgent,
+        metadata: { reason: user ? "inactive" : "not_linked" },
+      }),
+    );
+    return { ok: false, reason: "not_linked" };
+  }
+  if (user.lockedUntil && user.lockedUntil > new Date()) {
+    await withAppContext({}, (tx) =>
+      recordAudit(tx, { actorType: "USER", actorId: user.id, action: "clinic.login.telegram", outcome: "DENIED", ipHash, userAgent: meta.userAgent, metadata: { reason: "locked" } }),
+    );
+    return { ok: false, reason: "locked" };
+  }
+  return { ok: true, ...(await startSession(user.id, "clinic.login.telegram", meta)) };
+}
+
+/**
+ * Links a Telegram account to the signed-in person's own account. The session
+ * that started the flow must still be valid. One Telegram account can belong to
+ * one ITop Med account only.
+ */
+export async function linkClinicTelegram(userId: string, sessionId: string, sub: string, meta: RequestMeta): Promise<void> {
+  await withAppContext({ userId, sessionId }, async (tx) => {
+    const s = await tx.session.findUnique({ where: { id: sessionId }, select: { userId: true, revokedAt: true, expiresAt: true } });
+    if (!s || s.userId !== userId || s.revokedAt || s.expiresAt <= new Date()) throw new DomainError("errors.forbidden");
+    const taken = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM app_auth_lookup_telegram(${sub})`;
+    if (taken[0] && taken[0].id !== userId) throw new DomainError("errors.telegramTaken");
+    await tx.user.update({ where: { id: userId }, data: { telegramSub: sub, telegramLinkedAt: new Date() } });
+    await recordAudit(tx, { actorType: "USER", actorId: userId, action: "clinic.telegram.linked", ipHash: hashIp(meta.ip), userAgent: meta.userAgent });
+  });
+}
+
+export async function unlinkClinicTelegram(p: ClinicPrincipal, meta: RequestMeta): Promise<void> {
+  await withAppContext({ userId: p.user.id, sessionId: p.sessionId }, async (tx) => {
+    await tx.user.update({ where: { id: p.user.id }, data: { telegramSub: null, telegramLinkedAt: null } });
+    await recordAudit(tx, { actorType: "USER", actorId: p.user.id, action: "clinic.telegram.unlinked", ipHash: hashIp(meta.ip), userAgent: meta.userAgent });
+  });
 }
 
 export interface ClinicPrincipal {
   sessionId: string;
-  mfaVerified: boolean;
-  /** True when the user holds a role that requires MFA in any clinic, or has enrolled. */
-  mfaRequired: boolean;
-  user: { id: string; email: string; fullName: string; locale: string | null; mfaEnrolled: boolean };
+  user: { id: string; username: string; email: string; fullName: string; locale: string | null; telegramLinked: boolean };
   clinics: { tenantId: string; slug: string; name: string; status: string; defaultLocale: string }[];
 }
 
@@ -107,13 +155,9 @@ export async function validateClinicSession(token: string | undefined | null): P
       where: { userId: user.id, status: "ACTIVE" },
       include: { tenant: { select: { id: true, slug: true, name: true, status: true, defaultLocale: true } } },
     });
-    // One query across all clinics (SECURITY DEFINER, limited to the current user).
-    const privileged = (await tx.$queryRaw<{ privileged: boolean }[]>`SELECT app_current_user_has_role(${[...MFA_REQUIRED_ROLES]}::text[]) AS privileged`)[0]?.privileged ?? false;
     return {
       sessionId,
-      mfaVerified: Boolean(s.mfaVerifiedAt),
-      mfaRequired: privileged || Boolean(user.mfaEnabledAt),
-      user: { id: user.id, email: user.email, fullName: user.fullName, locale: user.locale, mfaEnrolled: Boolean(user.mfaEnabledAt) },
+      user: { id: user.id, username: user.username, email: user.email, fullName: user.fullName, locale: user.locale, telegramLinked: Boolean(user.telegramSub) },
       clinics: memberships.map((m) => ({ tenantId: m.tenant.id, slug: m.tenant.slug, name: m.tenant.name, status: m.tenant.status, defaultLocale: m.tenant.defaultLocale })),
     };
   });
@@ -157,98 +201,6 @@ export async function resolveClinic(principal: ClinicPrincipal, slug: string): P
       modules,
       branchIds: membership.allBranches ? null : membership.branches.map((b) => b.branchId),
     };
-  });
-}
-
-export async function beginClinicMfaEnrollment(p: ClinicPrincipal) {
-  if (p.user.mfaEnrolled) throw new Error("MFA already enrolled");
-  return withAppContext({ userId: p.user.id, sessionId: p.sessionId }, async (tx) => {
-    const user = await tx.user.findUniqueOrThrow({ where: { id: p.user.id } });
-    let secret: Uint8Array;
-    if (user.mfaSecretEnc) secret = decryptTotpSecret(user.mfaSecretEnc, user.id);
-    else {
-      secret = newTotpSecret();
-      await tx.user.update({ where: { id: user.id }, data: { mfaSecretEnc: encryptTotpSecret(secret, user.id) } });
-    }
-    return { uri: totpUri(secret, user.email), secretBase32: encodeBase32UpperCaseNoPadding(secret) };
-  });
-}
-
-export async function verifyClinicMfa(token: string, code: string, meta: RequestMeta): Promise<{ ok: true; token: string } | { ok: false; reason: "invalid" | "rate_limited" }> {
-  const p = await validateClinicSession(token);
-  if (!p) return { ok: false, reason: "invalid" };
-  if (!(await rateLimit(`cmfa:${p.sessionId}`, 5, 5 * 60_000))) return { ok: false, reason: "rate_limited" };
-  const ipHash = hashIp(meta.ip);
-  const newToken = randomToken();
-  const ok = await withAppContext({ userId: p.user.id, sessionId: p.sessionId }, async (tx) => {
-    const user = await tx.user.findUniqueOrThrow({ where: { id: p.user.id } });
-    const valid = Boolean(user.mfaSecretEnc) && verifyTotp(decryptTotpSecret(user.mfaSecretEnc!, user.id), code.trim());
-    if (!valid) {
-      await recordAudit(tx, { actorType: "USER", actorId: user.id, action: "clinic.login.mfa", outcome: "FAILURE", ipHash });
-      return false;
-    }
-    if (!user.mfaEnabledAt) {
-      await tx.user.update({ where: { id: user.id }, data: { mfaEnabledAt: new Date() } });
-      await recordAudit(tx, { actorType: "USER", actorId: user.id, action: "clinic.mfa.enrolled", ipHash });
-    }
-    await rotateVerifiedSession(tx, user.id, p.sessionId, newToken, meta);
-    await recordAudit(tx, { actorType: "USER", actorId: user.id, action: "clinic.login.mfa", ipHash });
-    return true;
-  });
-  return ok ? { ok: true, token: newToken } : { ok: false, reason: "invalid" };
-}
-
-/** Replaces the half-signed-in session with a new, MFA-verified one (new token: no session fixation). */
-async function rotateVerifiedSession(tx: Tx, userId: string, oldSessionId: string, newToken: string, meta: RequestMeta) {
-  const now = new Date();
-  await tx.session.update({ where: { id: oldSessionId }, data: { revokedAt: now } });
-  await tx.session.create({
-    data: { id: sha256Hex(newToken), userId, expiresAt: new Date(now.getTime() + CLINIC_SESSION_ABSOLUTE_MS), mfaVerifiedAt: now, ipHash: hashIp(meta.ip), userAgent: meta.userAgent?.slice(0, 256) },
-  });
-}
-
-/** Second factor with a one-time recovery code. Burnt atomically; shares the TOTP attempt limit. */
-export async function verifyClinicRecoveryCode(token: string, codeRaw: string, meta: RequestMeta): Promise<{ ok: true; token: string } | { ok: false; reason: "invalid" | "rate_limited" }> {
-  const p = await validateClinicSession(token);
-  if (!p || !p.user.mfaEnrolled) return { ok: false, reason: "invalid" };
-  if (!(await rateLimit(`cmfa:${p.sessionId}`, 5, 5 * 60_000))) return { ok: false, reason: "rate_limited" };
-  const ipHash = hashIp(meta.ip);
-  const code = normalizeRecoveryCode(codeRaw);
-  const newToken = randomToken();
-  const ok = await withAppContext({ userId: p.user.id, sessionId: p.sessionId }, async (tx) => {
-    const claimed = code
-      ? await tx.mfaRecoveryCode.updateMany({ where: { userId: p.user.id, codeHash: recoveryCodeHash(p.user.id, code), usedAt: null }, data: { usedAt: new Date() } })
-      : { count: 0 };
-    if (claimed.count !== 1) {
-      await recordAudit(tx, { actorType: "USER", actorId: p.user.id, action: "clinic.login.recovery_code", outcome: "FAILURE", ipHash });
-      return false;
-    }
-    const remaining = await tx.mfaRecoveryCode.count({ where: { userId: p.user.id, usedAt: null } });
-    await rotateVerifiedSession(tx, p.user.id, p.sessionId, newToken, meta);
-    await recordAudit(tx, { actorType: "USER", actorId: p.user.id, action: "clinic.login.recovery_code", ipHash, metadata: { remaining } });
-    return true;
-  });
-  return ok ? { ok: true, token: newToken } : { ok: false, reason: "invalid" };
-}
-
-/** Issues a fresh set of recovery codes (the previous set stops working). Returned once, never stored in clear. */
-export async function generateClinicRecoveryCodes(p: ClinicPrincipal, meta: RequestMeta): Promise<string[]> {
-  if (!p.mfaVerified || !p.user.mfaEnrolled) throw new DomainError("errors.mfaRequired");
-  if (!(await rateLimit(`crcgen:${p.user.id}`, 5, 60 * 60_000))) throw new DomainError("errors.rateLimited");
-  const codes = newRecoveryCodes();
-  await withAppContext({ userId: p.user.id, sessionId: p.sessionId }, async (tx) => {
-    await tx.mfaRecoveryCode.deleteMany({ where: { userId: p.user.id } });
-    await tx.mfaRecoveryCode.createMany({ data: codes.map((c) => ({ id: uuidv7(), userId: p.user.id, codeHash: recoveryCodeHash(p.user.id, normalizeRecoveryCode(c)!) })) });
-    await recordAudit(tx, { actorType: "USER", actorId: p.user.id, action: "clinic.mfa.recovery_codes_generated", ipHash: hashIp(meta.ip), metadata: { count: codes.length } });
-  });
-  return codes;
-}
-
-export async function clinicRecoveryCodeStatus(p: ClinicPrincipal) {
-  return withAppContext({ userId: p.user.id, sessionId: p.sessionId }, async (tx) => {
-    const remaining = await tx.mfaRecoveryCode.count({ where: { userId: p.user.id, usedAt: null } });
-    const total = await tx.mfaRecoveryCode.count({ where: { userId: p.user.id } });
-    return { remaining, issued: total > 0 };
   });
 }
 

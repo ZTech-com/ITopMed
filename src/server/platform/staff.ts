@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { PlatformRole } from "@/generated/prisma/client";
-import { emailSchema, personNameSchema } from "@/lib/validation";
+import { emailSchema, personNameSchema, usernameSchema } from "@/lib/validation";
 import { recordAudit } from "../audit";
 import type { PlatformPrincipal, RequestMeta } from "../auth/platform-auth";
 import { platformCan } from "../authz/platform";
@@ -19,7 +19,6 @@ export const PLATFORM_INVITATION_TTL_HOURS = 48;
 const TOKEN_RE = /^[a-z2-7]{20,64}$/;
 
 function authorize(actor: PlatformPrincipal) {
-  if (!actor.mfaVerified) throw new DomainError("errors.mfaRequired");
   if (!platformCan(actor.user.role, "staff.manage")) throw new DomainError("errors.forbidden");
 }
 
@@ -50,9 +49,9 @@ async function deliver(a: { to: string; name: string; role: PlatformRole; locale
 }
 
 /**
- * Invites a new ITop Med employee to the console. The person sets their own
- * password from the emailed single-use link and must enrol two-step
- * verification at the first sign-in. Only SUPER_ADMIN (staff.manage) may do this.
+ * Invites a new ITop Med employee to the console. The person chooses their
+ * login and password from the emailed single-use link. Only SUPER_ADMIN
+ * (staff.manage) may do this.
  */
 export async function invitePlatformStaff(actor: PlatformPrincipal, raw: unknown, meta: RequestMeta) {
   const inv = await createPlatformInvitation(actor, raw, meta);
@@ -146,12 +145,17 @@ export async function previewPlatformInvitation(token: string): Promise<Platform
 }
 
 export const acceptPlatformInvitationSchema = z
-  .object({ fullName: personNameSchema, password: passwordSchema, confirmPassword: z.string() })
+  .object({
+    fullName: personNameSchema,
+    /** Optional for programmatic callers: the invited email then becomes the login. */
+    username: z.preprocess((v) => (v === "" || v === null ? undefined : v), usernameSchema.optional()),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
   .refine((v) => v.password === v.confirmPassword, { message: "validation.passwordMismatch", path: ["confirmPassword"] });
 
 /**
  * Creates the staff account from a valid invitation — single use, atomic.
- * The new account has no second factor yet: the first sign-in forces enrolment.
  */
 export async function acceptPlatformInvitation(token: string, raw: unknown, meta: RequestMeta) {
   if (!(await rateLimit(`pinvite:${hashIp(meta.ip) ?? "noip"}`, 20, 15 * 60_000))) throw new DomainError("errors.rateLimited");
@@ -164,10 +168,12 @@ export async function acceptPlatformInvitation(token: string, raw: unknown, meta
     if (!inv || inv.status !== "PENDING") throw new DomainError("errors.invitationInvalid");
     if (inv.expiresAt <= new Date()) throw new DomainError("errors.invitationExpired");
     if (await tx.platformUser.findUnique({ where: { email: inv.email }, select: { id: true } })) throw new DomainError("errors.staffExists");
+    const username = input.username ?? inv.email;
+    if (await tx.platformUser.findUnique({ where: { username }, select: { id: true } })) throw new DomainError("errors.usernameTaken");
     const claimed = await tx.platformInvitation.updateMany({ where: { id: inv.id, status: "PENDING" }, data: { status: "ACCEPTED", acceptedAt: new Date() } });
     if (claimed.count !== 1) throw new DomainError("errors.invitationInvalid");
     const userId = uuidv7();
-    await tx.platformUser.create({ data: { id: userId, email: inv.email, fullName: input.fullName, passwordHash, role: inv.role, networkId: inv.networkId, status: "ACTIVE" } });
+    await tx.platformUser.create({ data: { id: userId, username, email: inv.email, fullName: input.fullName, passwordHash, role: inv.role, networkId: inv.networkId, status: "ACTIVE" } });
     await recordAudit(tx, {
       actorType: "PLATFORM_USER",
       actorId: userId,
@@ -185,15 +191,16 @@ export async function acceptPlatformInvitation(token: string, raw: unknown, meta
  * Creates a console account (e.g. a network admin) the way the super admin
  * chose: with a password they set now and hand over in person, or by emailed
  * invitation. The password path is the same single-use invitation accepted at
- * once on the server; the person still enrols two-step verification at the
- * first sign-in. The password is never stored in plain text, logged or put in a URL.
+ * once on the server. The password is never stored in plain text, logged or put in a URL.
  */
 export async function createPlatformAccount(actor: PlatformPrincipal, raw: unknown, meta: RequestMeta): Promise<{ mode: "password" | "invite"; delivered: boolean }> {
-  const r = raw as { ownerMode?: unknown; password?: unknown };
+  const r = raw as { ownerMode?: unknown; password?: unknown; username?: unknown };
   if (r?.ownerMode === "password") {
     const password = passwordSchema.parse(r.password);
+    const username = r.username === "" || r.username == null ? undefined : usernameSchema.parse(r.username);
+    if (username && (await platformDb().platformUser.findUnique({ where: { username }, select: { id: true } }))) throw new DomainError("errors.usernameTaken");
     const inv = await createPlatformInvitation(actor, raw, meta);
-    await acceptPlatformInvitation(inv.token, { fullName: inv.fullName, password, confirmPassword: password }, meta);
+    await acceptPlatformInvitation(inv.token, { fullName: inv.fullName, username, password, confirmPassword: password }, meta);
     return { mode: "password", delivered: false };
   }
   const { delivered } = await invitePlatformStaff(actor, raw, meta);

@@ -1,36 +1,37 @@
 import { getTranslations } from "next-intl/server";
-import { RecoveryCodesForm } from "@/components/recovery-codes";
+import { TelegramLinkLink, TelegramNotice } from "@/components/telegram-login";
 import { AuthLayout } from "@/components/shell/auth-layout";
-import { Alert, ButtonLink } from "@/components/ui/primitives";
+import { Form, SubmitButton } from "@/components/ui/form";
+import { Badge, ButtonLink, DescriptionList } from "@/components/ui/primitives";
 import { safeNext } from "@/lib/safe-next";
-import { clinicRecoveryCodeStatus } from "@/server/auth/clinic-auth";
 import { requireClinicUser } from "@/server/auth/guards";
-import { isMfaExempt } from "@/server/env";
-import { generateClinicRecoveryCodesAction } from "../../../clinic-actions";
+import { telegramLogin } from "@/server/env";
+import { unlinkTelegramAction } from "../../../clinic-actions";
 
-/** Account-level security for clinic staff (the account may belong to several clinics). */
-export default async function AccountSecurityPage({ searchParams }: { searchParams: Promise<{ setup?: string; used?: string; next?: string }> }) {
+/** Account-level sign-in settings for clinic staff (the account may belong to several clinics). */
+export default async function AccountSecurityPage({ searchParams }: { searchParams: Promise<{ next?: string; tg?: string }> }) {
   const p = await requireClinicUser();
   const sp = await searchParams;
   const next = safeNext(sp.next) ?? "/clinics";
   const t = await getTranslations("security");
-  const enrolled = p.user.mfaEnrolled && p.mfaVerified;
-  const status = enrolled ? await clinicRecoveryCodeStatus(p) : null;
+  const telegramOn = Boolean(telegramLogin());
   return (
-    <AuthLayout title={t("title")} subtitle={p.user.email}>
+    <AuthLayout title={t("title")} subtitle={p.user.fullName}>
+      <TelegramNotice code={sp.tg} />
       <div className="space-y-5">
-        {!enrolled ? (
-          <Alert tone={isMfaExempt(p.user.email) ? "warning" : "neutral"}>{isMfaExempt(p.user.email) ? t("exemptNotice") : t("mfaOffClinic")}</Alert>
+        <DescriptionList
+          items={[
+            { label: t("login"), value: <span className="break-all font-mono">{p.user.username}</span> },
+            { label: t("telegram"), value: p.user.telegramLinked ? <Badge tone="success">{t("telegramOn")}</Badge> : <Badge tone="neutral">{t("telegramOff")}</Badge> },
+          ]}
+        />
+        <p className="text-[14px] text-text-2">{telegramOn ? t("telegramIntro") : t("telegramUnavailable")}</p>
+        {p.user.telegramLinked ? (
+          <Form action={unlinkTelegramAction}>
+            <SubmitButton variant="secondary">{t("telegramUnlink")}</SubmitButton>
+          </Form>
         ) : (
-          <>
-            {sp.setup && !status!.issued ? <Alert tone="warning">{t("setupPrompt")}</Alert> : null}
-            {sp.used ? <Alert tone="warning">{t("usedNotice", { remaining: status!.remaining })}</Alert> : null}
-            <p className="text-[14px] text-text-2">{t("recoveryIntro")}</p>
-            <p className="text-[14px] font-medium">{status!.issued ? t("remaining", { remaining: status!.remaining }) : t("notIssued")}</p>
-            {status!.issued && status!.remaining <= 3 ? <Alert tone="warning">{t("runningLow")}</Alert> : null}
-            {status!.issued ? <p className="text-[13px] text-text-3">{t("regenerateNote")}</p> : null}
-            <RecoveryCodesForm action={generateClinicRecoveryCodesAction} issued={status!.issued} />
-          </>
+          <TelegramLinkLink kind="clinic" />
         )}
         <ButtonLink href={next} variant="secondary" className="w-full">
           {t("continue")}

@@ -3,7 +3,7 @@ import { currentTheme } from "./app-shell";
 import { InstallApp } from "../install-app";
 import { Preferences } from "./preferences";
 
-/** Centered card layout for sign-in, MFA and invitation pages. */
+/** Centered card layout for sign-in and invitation pages. */
 export async function AuthLayout({ eyebrow, title, subtitle, children }: { eyebrow?: string; title: string; subtitle?: ReactNode; children: ReactNode }) {
   const theme = await currentTheme();
   return (

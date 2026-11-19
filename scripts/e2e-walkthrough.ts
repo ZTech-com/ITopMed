@@ -8,8 +8,8 @@
  *   cashier:   invoice for the visit → issue → take payment → receipt
  *   owner:     control centre, reports
  *
- * One account with all roles is used (ITM_AUDIT_EMAIL / ITM_AUDIT_PASSWORD,
- * MFA-exempt). Creates synthetic records in the clinic given by --slug: use a
+ * One account with all roles is used (ITM_AUDIT_LOGIN or ITM_AUDIT_EMAIL /
+ * ITM_AUDIT_PASSWORD). Creates synthetic records in the clinic given by --slug: use a
  * development or demo database only.
  */
 import "dotenv/config";
@@ -58,7 +58,7 @@ async function main() {
 
   await ok(page, "sign in", async () => {
     await page.goto(`${BASE}/login`);
-    await page.fill('input[name="email"]', process.env.ITM_AUDIT_EMAIL!);
+    await page.fill('input[name="username"]', (process.env.ITM_AUDIT_LOGIN ?? process.env.ITM_AUDIT_EMAIL)!);
     await page.fill('input[name="password"]', process.env.ITM_AUDIT_PASSWORD!);
     await Promise.all([page.waitForURL((u) => !u.pathname.endsWith("/login")), page.press('input[name="password"]', "Enter")]);
   });

@@ -15,7 +15,6 @@ export const getClinicPrincipal = cache(async () => validateClinicSession(await 
 export async function requirePlatform(permission?: PlatformPermission) {
   const p = await getPlatformPrincipal();
   if (!p) redirect("/admin/login");
-  if (!p.mfaVerified) redirect("/admin/mfa");
   // Resources the role may not use are reported as not found (no information leak).
   if (permission && !platformCan(p.user.role, permission)) notFound();
   return p;
@@ -24,7 +23,6 @@ export async function requirePlatform(permission?: PlatformPermission) {
 export async function requireClinicUser() {
   const p = await getClinicPrincipal();
   if (!p) redirect("/login");
-  if (p.mfaRequired && !p.mfaVerified) redirect("/mfa");
   return p;
 }
 

@@ -11,12 +11,12 @@ Every person has an individual account; shared accounts are prohibited. Least pr
 | BILLING | view clinics, manage subscriptions | lifecycle, modules |
 | READ_ONLY | view clinics and staff | any change |
 
-MFA is mandatory for all platform staff. Matrix: `src/server/authz/platform.ts`.
+Sign-in: login + password or Telegram (no second factor). Matrix: `src/server/authz/platform.ts`.
 
 ## Clinic roles (templates copied into every clinic)
 | Role | Key permissions | Notes |
 |---|---|---|
-| Clinic owner | settings, branches, staff, roles, audit, support-access decisions, subscription, finance reports | **no EMR access** unless also given `doctor`; MFA required |
+| Clinic owner | settings, branches, staff, roles, audit, support-access decisions, subscription, finance reports | **no EMR access** unless also given `doctor` |
 | Clinic administrator | settings, branches, staff, patients, appointments, queue, services | no EMR; MFA required; cannot grant owner |
 | Branch manager | operations and reports for assigned branches | branch scope via `MembershipBranch` |
 | Receptionist | registration/search, appointments, queue, check-in | no EMR |
@@ -25,7 +25,7 @@ MFA is mandatory for all platform staff. Matrix: `src/server/authz/platform.ts`.
 | Nurse | vitals, nursing records, assigned tasks | |
 | Laboratory staff | lab queue, specimens, results, verification | |
 | Cashier | invoices, payments, refunds, cash shift | |
-| Accountant | revenue/expenses, statements, debts | MFA required |
+| Accountant | revenue/expenses, statements, debts | |
 | Pharmacist / inventory | catalogue, suppliers, receiving, issuing/dispensing (FEFO), write-offs, stock counts | finds patients only by record number when dispensing; no patient search or EMR |
 | HR manager | staff profiles, licences/certificates, leave (blocks doctors' days), schedules | sees leave categories; colleagues only see absences |
 | Patient (portal, Phase 8b) | own appointments (cancel up to 2 h before), lab results released by the doctor, issued invoices and payments, own consents (except portal access), password | separate identity realm (`PatientAccount`), cookie and DB role (`itopmed_portal`); never sees notes, diagnoses or staff data |

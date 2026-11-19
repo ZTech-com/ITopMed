@@ -7,15 +7,14 @@ import { listOperationalBranches } from "@/server/clinic/context";
 import { getMember } from "@/server/clinic/members";
 import { listRoles } from "@/server/clinic/roles";
 import { DomainError } from "@/server/tenancy/provisioning";
-import { memberAccessAction, memberMfaResetAction, memberPasswordAction, memberStatusAction } from "../../../../clinic-actions";
+import { memberAccessAction, memberPasswordAction, memberStatusAction } from "../../../../clinic-actions";
 import { suggestPassword } from "@/server/security/password";
 
 const choice =
   "flex min-h-11 cursor-pointer items-center gap-3 rounded-[var(--radius-control)] border border-border bg-surface-2 px-3 text-[14px] has-[:checked]:border-accent has-[:checked]:bg-accent-soft";
 
-export default async function MemberPage({ params, searchParams }: { params: Promise<{ slug: string; membershipId: string }>; searchParams: Promise<{ mfaReset?: string }> }) {
+export default async function MemberPage({ params }: { params: Promise<{ slug: string; membershipId: string }> }) {
   const { slug, membershipId } = await params;
-  const { mfaReset } = await searchParams;
   const ctx = await requireClinic(slug, "staff.read");
   const member = await getMember(ctx, membershipId).catch((e) => {
     if (e instanceof DomainError) notFound();
@@ -36,7 +35,6 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
     <div className="max-w-4xl">
       <PageHeader eyebrow={t("clinic.staff.title")} title={member.user.fullName} description={member.user.email} action={<Badge tone={STATUS_TONE[member.status]}>{t(`status.${member.status}`)}</Badge>} />
 
-      {mfaReset ? <div className="mb-6" role="status"><Alert tone="success">{t("clinic.member.mfaResetDone")}</Alert></div> : null}
       {isSelf ? <div className="mb-6"><Alert tone="neutral">{t("clinic.member.selfNote")}</Alert></div> : null}
       {!isSelf && targetIsOwner && !callerIsOwner ? <div className="mb-6"><Alert tone="neutral">{t("clinic.member.ownerNote")}</Alert></div> : null}
 
@@ -46,7 +44,8 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
             items={[
               { label: t("clinic.staff.colRoles"), value: member.roles.map((r) => roleName(r.role)).join(", ") },
               { label: t("clinic.staff.colLastLogin"), value: member.user.lastLoginAt ? format.relativeTime(member.user.lastLoginAt) : t("common.never") },
-              { label: t("clinic.member.mfa"), value: <Badge tone={member.user.mfaEnabledAt ? "success" : "neutral"}>{member.user.mfaEnabledAt ? t("clinic.member.mfaOn") : t("clinic.member.mfaOff")}</Badge> },
+              { label: t("security.login"), value: <span className="break-all font-mono">{member.user.username}</span> },
+              { label: t("security.telegram"), value: <Badge tone={member.user.telegramLinkedAt ? "success" : "neutral"}>{member.user.telegramLinkedAt ? t("security.telegramOn") : t("security.telegramOff")}</Badge> },
             ]}
           />
         </CardBody>
@@ -140,22 +139,6 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
         </Card>
       ) : null}
 
-      {canEdit && member.user.mfaEnabledAt && member.status !== "REMOVED" ? (
-        <Card className="mt-6">
-          <CardHeader title={t("clinic.member.mfaResetTitle")} description={t("clinic.member.mfaResetHint")} />
-          <CardBody>
-            <Form action={memberMfaResetAction}>
-              <input type="hidden" name="$slug" value={ctx.tenant.slug} />
-              <input type="hidden" name="membershipId" value={member.id} />
-              <label className="flex items-start gap-2 text-[14px]">
-                <input type="checkbox" name="confirm" value="yes" required className="mt-0.5 size-4 accent-[var(--accent)]" />
-                <span>{t("clinic.member.mfaResetConfirm")}</span>
-              </label>
-              <SubmitButton variant="danger">{t("clinic.member.mfaResetSubmit")}</SubmitButton>
-            </Form>
-          </CardBody>
-        </Card>
-      ) : null}
     </div>
   );
 }

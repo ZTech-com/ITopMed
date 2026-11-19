@@ -30,9 +30,9 @@ export default async function StaffInvitePage({ params }: { params: Promise<{ to
           <p className="font-medium">{preview.email}</p>
         </div>
         <TextField name="fullName" label={t("invite.fullName")} defaultValue={preview.fullName} autoComplete="name" required />
+        <TextField name="username" label={t("invite.username")} hint={t("invite.usernameHint")} autoComplete="username" required />
         <TextField name="password" type="password" label={t("invite.password")} hint={t("invite.passwordHint")} autoComplete="new-password" required />
         <TextField name="confirmPassword" type="password" label={t("invite.confirmPassword")} autoComplete="new-password" required />
-        <Alert tone="neutral">{t("staffInvite.mfaNote")}</Alert>
         <SubmitButton full>{t("staffInvite.accept")}</SubmitButton>
       </Form>
     </AuthLayout>

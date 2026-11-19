@@ -1,7 +1,6 @@
 import "server-only";
 import type { AppointmentStatus } from "@/generated/prisma/client";
 import type { ClinicContext } from "../auth/clinic-auth";
-import { MFA_REQUIRED_ROLES } from "../auth/clinic-auth";
 import { sequential, type Tx } from "../db";
 import { addDays, instantToLocalDate, localToInstant } from "../scheduling/time";
 import { DomainError } from "../errors";
@@ -58,12 +57,6 @@ export async function controlCenter(ctx: ClinicContext) {
     ]);
 
     const appointments = Object.fromEntries(apptToday.map((g) => [g.status, g._count._all])) as Partial<Record<AppointmentStatus, number>>;
-
-    // Privileged staff who still sign in without two-step verification.
-    const privileged = await tx.membership.findMany({
-      where: { tenantId: t, status: "ACTIVE", roles: { some: { role: { key: { in: [...MFA_REQUIRED_ROLES] } } } }, user: { mfaEnabledAt: null } },
-      select: { user: { select: { fullName: true } } },
-    });
 
     let money = null;
     const shifts: { id: string; cashier: string | null; branch: string; openedAt: Date; expectedMinor: bigint; currency: string }[] = [];
@@ -127,7 +120,7 @@ export async function controlCenter(ctx: ClinicContext) {
       appointments,
       noShow: { count: noShow30, total: total30 },
       clinical: { draftNotes: draftNotes.map((d) => ({ name: nameOf(d.authorId), count: d._count._all })), openEncounters, unbilledVisits: unbilled },
-      security: { breakGlass, supportGrants, withoutMfa: privileged.map((p) => p.user.fullName) },
+      security: { breakGlass, supportGrants },
       money,
       shifts: shifts.map((s) => ({ ...s, cashier: nameOf(s.cashier) })),
       shiftDifferences: shiftDifferences.map((s) => ({ ...s, cashier: nameOf(s.cashier) })),

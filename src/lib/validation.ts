@@ -70,12 +70,21 @@ export const branchSchema = z.object({
   phone: z.union([z.literal("").transform(() => undefined), phoneSchema]).optional(),
 });
 
+/**
+ * Sign-in name: lowercase letters, digits and . _ - (e.g. "dr.karimov").
+ * Accounts that existed before login names were introduced use their email,
+ * so "@" and "+" are accepted as well.
+ */
+export const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9][a-z0-9._@+-]{2,63}$/, "validation.username");
+
 export const loginSchema = z.object({
-  email: emailSchema,
+  username: z.string().trim().toLowerCase().min(1, "validation.required").max(64),
   password: z.string().min(1, "validation.required").max(256),
 });
-
-export const totpCodeSchema = z.string().trim().regex(/^\d{6}$/, "validation.otp");
 
 export const statusReasonSchema = z.string().trim().min(10, "validation.reasonTooShort").max(500, "validation.tooLong");
 

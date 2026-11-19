@@ -60,7 +60,6 @@ export default async function ClinicDashboard({ params, searchParams }: { params
         { done: memberCount > 1, label: t("clinic.dashboard.setupStaff"), href: `${base}/staff` },
         { done: ops.services > 0, label: t("clinic.dashboard.setupServices"), href: `${base}/services` },
         { done: ops.doctors > 0 && ops.noSchedule === 0, label: t("clinic.dashboard.setupDoctors"), href: `${base}/doctors` },
-        { done: ctx.principal.user.mfaEnrolled, label: t("clinic.dashboard.setupMfa"), href: undefined },
       ]
     : [];
 

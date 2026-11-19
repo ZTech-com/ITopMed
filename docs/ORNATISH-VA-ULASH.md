@@ -18,7 +18,7 @@ Klinikani ishga tushirishning 2 yo'li bor, bittasini tanlang:
 ## 1-yo'l. Internet orqali (server) — eng oson
 
 ### Siz (SuperAdmin): yangi klinika ochish — 2 daqiqa
-1. https://itopmed.itoppos.uz/admin/login → email va parolingiz bilan, keyin Google Authenticator kodi bilan kiring.
+1. https://itopmed.itoppos.uz/admin/login → login va parolingiz bilan (yoki ulangan bo'lsa, «Telegram orqali kirish») kiring.
 2. **Klinikalar → Yangi klinika** bo'limida:
    - klinika nomini yozing;
    - turini tanlang (kabinet / stomatologiya / diagnostika / ko'p tarmoqli);
@@ -28,12 +28,12 @@ Klinikani ishga tushirishning 2 yo'li bor, bittasini tanlang:
 3. **Klinikani yaratish** tugmasini bosing.
 4. Egaga 3 narsani bering:
    - manzil: **https://itopmed.itoppos.uz/login**
-   - email
+   - login
    - parol
 
 ### Klinika egasi: birinchi kirish
-1. https://itopmed.itoppos.uz/login → email va parol bilan kiradi.
-2. Telefonga **Google Authenticator** o'rnatib, QR kodni skanerlaydi. Bu faqat egasi, admin va buxgalter uchun majburiy.
+1. https://itopmed.itoppos.uz/login → login va parol bilan kiradi.
+2. Xohlasa, **Hisob xavfsizligi**da Telegramni ulaydi — keyin Telegram tugmasi bilan kiradi.
 3. **Xizmatlar va narxlar** bo'limida narxlarni qo'yadi.
 
 ### Shifokor va registratorni qo'shish (klinika egasi qiladi)
@@ -78,16 +78,16 @@ Odatda bu registratura kompyuteri bo'ladi, chunki u kun bo'yi yoniq turadi.
 
 ### Shifokorning kompyuterini ulash — dastur o'rnatilmaydi
 1. Shifokor kompyuteri asosiy kompyuter bilan **bitta Wi-Fi yoki bitta tarmoq**da bo'lishi kerak.
-2. Asosiy kompyuterdagi kirish sahifasida **«Telefon yoki planshetni ulash»** tugmasini bosing. Ekranda QR kod va manzil chiqadi, masalan `http://192.168.1.10/connect`.
+2. Asosiy kompyuterdagi kirish sahifasida **«Telefon yoki planshetni ulash»** tugmasini bosing. Ekranda manzil chiqadi, masalan `http://192.168.1.10/connect`.
 3. Shifokor kompyuterida brauzerni (Chrome yoki Edge) ochib, **shu manzilni** yozing.
 4. Ekrandagi 4 qadamni bajaring:
    1. sertifikatni yuklab oling;
    2. faylni oching → **Sertifikatni o'rnatish → Joriy foydalanuvchi → «Ishonchli ildiz sertifikat markazlari»**;
    3. **ITop Med'ni ochish** tugmasini bosing;
    4. **Ilovani o'rnatish**ni tanlang.
-5. Shifokor o'z emaili va paroli bilan kiradi.
+5. Shifokor o'z logini va paroli bilan kiradi.
 
-Telefon va planshet ham shunday ulanadi: QR kodni kamera bilan skanerlaysiz.
+Telefon va planshet ham shunday ulanadi: shu manzilni telefon brauzerida ochasiz.
 
 ---
 
@@ -98,7 +98,7 @@ Telefon va planshet ham shunday ulanadi: QR kodni kamera bilan skanerlaysiz.
 | Shifokor registrator yozgan bemorni ko'rmayapti | Dastur 2 ta kompyuterga alohida o'rnatilgan | Faqat bitta asosiy kompyuter qoldiring. Qolganlari brauzer orqali ulansin |
 | Shifokor ro'yxatida bemor yo'q | Bemor boshqa shifokorga yozilgan, yoki **Shifokorlar** bo'limida profil to'ldirilmagan | Qabulxonada to'g'ri shifokorni tanlang. Shifokor profilini to'ldiring |
 | Lokal rejimda boshqa kompyuter ochmayapti | Asosiy kompyuter o'chiq, boshqa Wi-Fi'da, yoki Windows ruxsat berilmagan | Asosiy kompyuterni yoqing. Bitta tarmoqqa ulang. Kirish sahifasidagi **«Telefon yoki planshetni ulash»** sahifasini ochib, kerak bo'lsa ruxsatni qayta bering |
-| Kecha ishlagan, bugun ochilmayapti (lokal) | Router asosiy kompyuterga yangi IP manzil bergan | QR sahifadagi yangi manzilni oching. Doimiy hal qilish: routerda shu kompyuterga **doimiy IP** bering (DHCP reservation) |
+| Kecha ishlagan, bugun ochilmayapti (lokal) | Router asosiy kompyuterga yangi IP manzil bergan | Ulanish sahifasidagi yangi manzilni oching. Doimiy hal qilish: routerda shu kompyuterga **doimiy IP** bering (DHCP reservation) |
 | Asosiy kompyuter o'chsa | Dastur faqat unda turadi | Ish vaqtida asosiy kompyuter yoniq tursin. Uyqu rejimini o'chiring |
 | "Email orqali taklif" ishlamaydi | Serverda email hali sozlanmagan | **«Parolni hozir beraman»** usulidan foydalaning |
 | Xodim parolini unutdi | — | Ega **Xodimlar** bo'limida uning hisobini o'chiradi va yangi parol bilan qayta qo'shadi |

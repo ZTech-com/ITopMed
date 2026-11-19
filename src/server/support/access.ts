@@ -40,7 +40,6 @@ export function effectiveStatus(g: Pick<SupportAccessGrant, "status" | "requeste
 }
 
 export async function requestSupportAccess(actor: PlatformPrincipal, tenantId: string, raw: unknown, meta: RequestMeta) {
-  if (!actor.mfaVerified) throw new DomainError("errors.mfaRequired");
   if (!platformCan(actor.user.role, "support.request_access")) throw new DomainError("errors.forbidden");
   const input = supportRequestSchema.parse(raw);
   if (input.scope === "CLINICAL_READ" && !CLINICAL_SUPPORT_ACCESS_ENABLED) throw new DomainError("errors.clinicalAccessDisabled");

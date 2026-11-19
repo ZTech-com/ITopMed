@@ -4,21 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import type { FormState } from "@/lib/form-state";
-import { loginSchema, totpCodeSchema } from "@/lib/validation";
+import { loginSchema } from "@/lib/validation";
 import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
 import { toFormState } from "@/server/actions-util";
 import { clearAdminCookie, readAdminToken, setAdminSessionCookie } from "@/server/auth/cookies";
 import { requirePlatform } from "@/server/auth/guards";
-import {
-  generatePlatformRecoveryCodes,
-  loginPlatformUser,
-  logoutPlatform,
-  platformRecoveryCodeStatus,
-  resetPlatformStaffMfa,
-  validatePlatformSession,
-  verifyPlatformMfa,
-  verifyPlatformRecoveryCode,
-} from "@/server/auth/platform-auth";
+import { loginPlatformUser, logoutPlatform, unlinkPlatformTelegram } from "@/server/auth/platform-auth";
 import { createNetwork, setTenantNetwork } from "@/server/platform/networks";
 import {
   acceptPlatformInvitation,
@@ -43,49 +34,21 @@ import {
 // ───────────── Authentication ─────────────
 
 export async function adminLoginAction(_: FormState, fd: FormData): Promise<FormState> {
-  const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
-  if (!parsed.success) return { message: "auth.invalid", values: { email: String(fd.get("email") ?? "") } };
-  const r = await loginPlatformUser(parsed.data.email, parsed.data.password, await requestMeta());
-  if (!r.ok) return { message: `auth.${r.reason === "rate_limited" ? "rateLimited" : r.reason}`, values: { email: parsed.data.email } };
+  const parsed = loginSchema.safeParse({ username: fd.get("username"), password: fd.get("password") });
+  if (!parsed.success) return { message: "auth.invalid", values: { username: String(fd.get("username") ?? "") } };
+  const r = await loginPlatformUser(parsed.data.username, parsed.data.password, await requestMeta());
+  if (!r.ok) return { message: `auth.${r.reason === "rate_limited" ? "rateLimited" : r.reason}`, values: { username: parsed.data.username } };
   await setAdminSessionCookie(r.token);
-  redirect(r.mfaExempt ? "/admin" : "/admin/mfa");
-}
-
-export async function adminMfaAction(_: FormState, fd: FormData): Promise<FormState> {
-  const code = totpCodeSchema.safeParse(fd.get("code"));
-  if (!code.success) return { fieldErrors: { code: "validation.otp" } };
-  const token = await readAdminToken();
-  if (!token) redirect("/admin/login");
-  const r = await verifyPlatformMfa(token, code.data, await requestMeta());
-  if (!r.ok) return { message: r.reason === "rate_limited" ? "auth.rateLimited" : "auth.mfaInvalid" };
-  await setAdminSessionCookie(r.token);
-  const p = await validatePlatformSession(r.token);
-  if (p && isLocale(p.user.locale)) (await cookies()).set(LOCALE_COOKIE, p.user.locale, { path: "/", maxAge: 31536000, sameSite: "lax" });
-  // Without recovery codes a lost phone means a locked-out account: ask for them right away.
-  if (p && !(await platformRecoveryCodeStatus(p.user.id)).issued) redirect("/admin/security?setup=1");
+  if (isLocale(r.locale)) (await cookies()).set(LOCALE_COOKIE, r.locale, { path: "/", maxAge: 31536000, sameSite: "lax" });
   redirect("/admin");
 }
 
-/** Second factor with a one-time recovery code (lost authenticator). */
-export async function adminRecoveryCodeAction(_: FormState, fd: FormData): Promise<FormState> {
-  const token = await readAdminToken();
-  if (!token) redirect("/admin/login");
-  const r = await verifyPlatformRecoveryCode(token, String(fd.get("recoveryCode") ?? "").slice(0, 64), await requestMeta());
-  if (!r.ok) return { message: r.reason === "rate_limited" ? "auth.rateLimited" : "auth.recoveryInvalid", nonce: Date.now() };
-  await setAdminSessionCookie(r.token);
-  redirect("/admin/security?used=1");
-}
-
-export async function generateAdminRecoveryCodesAction(): Promise<FormState> {
+/** Removes the Telegram sign-in from the employee's own account. */
+export async function adminUnlinkTelegramAction(): Promise<FormState> {
   const actor = await requirePlatform();
-  try {
-    const codes = await generatePlatformRecoveryCodes(actor, await requestMeta());
-    revalidatePath("/admin/security");
-    // Shown once in the browser; never stored in clear and never logged.
-    return { ok: true, data: { codes }, nonce: Date.now() };
-  } catch (e) {
-    return toFormState(e);
-  }
+  await unlinkPlatformTelegram(actor, await requestMeta());
+  revalidatePath("/admin/security");
+  return { ok: true, message: "security.telegramUnlinked", nonce: Date.now() };
 }
 
 export async function adminLogoutAction() {
@@ -191,25 +154,12 @@ export async function staffInvitationAction(_: FormState, fd: FormData): Promise
   return { ok: true, message: op === "resend" ? "admin.staff.resent" : "admin.staff.revoked", nonce: Date.now() };
 }
 
-export async function resetStaffMfaAction(_: FormState, fd: FormData): Promise<FormState> {
-  const actor = await requirePlatform("staff.manage");
-  if (fd.get("confirm") !== "yes") return { message: "validation.confirmRequired", nonce: Date.now() };
-  try {
-    await resetPlatformStaffMfa(actor, String(fd.get("userId")), await requestMeta());
-  } catch (e) {
-    return toFormState(e);
-  }
-  revalidatePath("/admin/staff");
-  // The row's reset form disappears once MFA is off, so the confirmation is shown at page level.
-  redirect("/admin/staff?mfaReset=1");
-}
-
 /** Public: the invited person creates their console account from the emailed link. */
 export async function acceptStaffInvitationAction(_: FormState, fd: FormData): Promise<FormState> {
   try {
     await acceptPlatformInvitation(
       String(fd.get("token") ?? ""),
-      { fullName: fd.get("fullName"), password: fd.get("password"), confirmPassword: fd.get("confirmPassword") },
+      { fullName: fd.get("fullName"), username: fd.get("username"), password: fd.get("password"), confirmPassword: fd.get("confirmPassword") },
       await requestMeta(),
     );
   } catch (e) {
@@ -281,7 +231,7 @@ export async function networkAdminAction(_: FormState, fd: FormData): Promise<Fo
   try {
     r = await createPlatformAccount(
       actor,
-      { email: fd.get("email"), fullName: fd.get("fullName"), role: "NETWORK_ADMIN", networkId, ownerMode: fd.get("ownerMode"), password: fd.get("password") },
+      { email: fd.get("email"), fullName: fd.get("fullName"), role: "NETWORK_ADMIN", networkId, ownerMode: fd.get("ownerMode"), username: fd.get("username"), password: fd.get("password") },
       await requestMeta(),
     );
   } catch (e) {

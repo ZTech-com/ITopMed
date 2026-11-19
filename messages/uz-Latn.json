@@ -82,16 +82,6 @@
     "locked": "Muvaffaqiyatsiz urinishlar juda koʻp. Hisob vaqtincha bloklandi — 15 daqiqadan soʻng qayta urinib koʻring.",
     "rateLimited": "Urinishlar juda koʻp. Bir necha daqiqa kutib, qayta urinib koʻring.",
     "forgot": "Parolni unutdingizmi?",
-    "mfaTitle": "Ikki bosqichli tekshiruv",
-    "mfaSubtitle": "Autentifikator ilovasidagi 6 xonali kodni kiriting.",
-    "mfaEnrollTitle": "Ikki bosqichli tekshiruvni sozlash",
-    "mfaEnrollIntro": "Hisobingiz kengaytirilgan huquqlarga ega, shuning uchun ikki bosqichli tekshiruv majburiy.",
-    "mfaStep1": "QR kodni autentifikator ilovasi bilan skanerlang (masalan, Google Authenticator, Microsoft Authenticator yoki 1Password).",
-    "mfaStep2": "Tasdiqlash uchun ilovada koʻrsatilgan 6 xonali kodni kiriting.",
-    "mfaManual": "Skanerlab boʻlmayaptimi? Ushbu kalitni qoʻlda kiriting:",
-    "mfaCode": "Tasdiqlash kodi",
-    "verify": "Tasdiqlash",
-    "mfaInvalid": "Kod notoʻgʻri yoki muddati oʻtgan.",
     "chooseClinic": "Klinikani tanlang",
     "noClinics": "Hisobingiz hech bir klinikaning faol aʼzosi emas.",
     "clinicUnavailable": "Klinika ish maydoni hozir mavjud emas. Klinika administratoriga murojaat qiling.",
@@ -107,17 +97,13 @@
     "resetInvalid": "Tiklash havolasi yaroqsiz yoki muddati oʻtgan. Yangisini soʻrang.",
     "backToSignIn": "Kirish sahifasiga qaytish",
     "portalInvalid": "Telefon raqami yoki parol notoʻgʻri.",
-    "recoveryUse": "Telefoningizni yo'qotdingizmi? Tiklash kodidan foydalaning",
-    "recoveryHint": "Ikki bosqichli tekshiruvni sozlaganingizda saqlab qo'ygan tiklash kodlaringizdan birini kiriting. Har bir kod faqat bir marta ishlaydi.",
-    "recoveryCode": "Tiklash kodi",
-    "recoveryNoCodes": "Kodlar qolmadimi? Administratordan ikki bosqichli tekshiruvni qayta o'rnatishni so'rang.",
-    "recoveryInvalid": "Bu tiklash kodi noto'g'ri yoki allaqachon ishlatilgan.",
-    "staffActivated": "Hisobingiz faollashtirildi. Tizimga kiring va ikki bosqichli tekshiruvni sozlang.",
-    "mfaCodeHint": "Bu parol emas: autentifikator ilovasida ko'rinadigan 6 xonali raqam. U har 30 soniyada yangilanadi.",
-    "mfaGetApp": "Ilova hali yo'qmi? Google Authenticator'ni o'rnating (bepul):",
+    "staffActivated": "Hisobingiz faollashtirildi. Login va parolingiz bilan kiring.",
     "toConsole": "SuperAdmin va tarmoq adminlari: boshqaruv paneli",
     "toClinic": "Klinika xodimlari: klinikaga kirish",
-    "consoleWho": "Faqat SuperAdmin va tarmoq adminlari uchun. Klinika xodimlari klinikaga kirish sahifasidan kiradi."
+    "consoleWho": "Faqat SuperAdmin va tarmoq adminlari uchun. Klinika xodimlari klinikaga kirish sahifasidan kiradi.",
+    "username": "Login",
+    "or": "yoki",
+    "telegram": "Telegram orqali kirish"
   },
   "invite": {
     "title": "Hisobni faollashtirish",
@@ -138,7 +124,9 @@
     "signedInAs": "Siz {email} sifatida kirgansiz.",
     "acceptExisting": "Taklifni qabul qilish",
     "wrongAccount": "Siz {email} sifatida kirgansiz, lekin bu taklif boshqa elektron pochtaga yuborilgan.",
-    "signOutAndSwitch": "Chiqish va hisobni almashtirish"
+    "signOutAndSwitch": "Chiqish va hisobni almashtirish",
+    "username": "Login",
+    "usernameHint": "Kirish uchun o'zingiz tanlang: kichik lotin harflari, raqamlar va . _ - (masalan, dr.karimov)."
   },
   "admin": {
     "dashboard": {
@@ -203,7 +191,7 @@
       "ownerFrontDesk": "Egasi registratura va kassani ham o'zi qiladi",
       "ownerFrontDeskHint": "Kichik kabinetlar uchun: administratorsiz bemorni yozish va to'lov olish.",
       "ownerHintNew": "Egasi klinikaning Admini: xodimlar, sozlamalar, pul va nazorat uning qo'lida.",
-      "ownerEmailHint": "Egasi shu email bilan kiradi.",
+      "ownerEmailHint": "Taklif va parolni tiklash havolalari shu emailga yuboriladi.",
       "ownerAccess": "Kirish usuli",
       "ownerModePassword": "Parolni hozir o'zim belgilayman",
       "ownerModePasswordHint": "Hisob darhol yaratiladi. Parolni egasiga o'zingiz berasiz.",
@@ -216,8 +204,10 @@
       "networkNone": "Tarmoqsiz (alohida klinika)",
       "networkFixed": "Klinika «{name}» tarmog'ingizda yaratiladi.",
       "createdReady": "Klinika tayyor",
-      "createdReadyHow": "Egasi email va siz bergan parol bilan shu manzildan kiradi. Birinchi kirishda klinika sohasiga moslab to'liq sozlanadi:",
-      "createdExisting": "Klinika yaratildi. Bu email bilan ITop Med'da hisob allaqachon bor, shuning uchun uning paroli o'zgartirilmadi: egasi o'z paroli bilan kirib taklifni qabul qiladi (taklif emailga yuborildi)."
+      "createdReadyHow": "Egasi siz bergan login va parol bilan shu manzildan kiradi. Birinchi kirishda klinika sohasiga moslab to'liq sozlanadi:",
+      "createdExisting": "Klinika yaratildi. Bu email bilan ITop Med'da hisob allaqachon bor, shuning uchun uning paroli o'zgartirilmadi: egasi o'z paroli bilan kirib taklifni qabul qiladi (taklif emailga yuborildi).",
+      "ownerUsername": "Egasining logini",
+      "ownerUsernameHint": "Egasi shu login bilan kiradi (masalan, admin.shifo). Bo'sh qolsa, email login bo'ladi."
     },
     "clinicDetail": {
       "workspace": "Ish maydoni",
@@ -272,12 +262,9 @@
       "subtitle": "Ushbu konsolga kirish huquqiga ega ITop Med xodimlari. Har bir hisob shaxsiy.",
       "colName": "Ism",
       "colRole": "Rol",
-      "colMfa": "Ikki bosqichli tekshiruv",
       "colLastLogin": "Soʻnggi kirish",
-      "mfaOn": "Yoqilgan",
-      "mfaOff": "Sozlanmagan",
       "inviteTitle": "Xodimni taklif qilish",
-      "inviteHint": "Xodim 48 soat amal qiladigan bir martalik havola oladi, o'z parolini o'rnatadi va ikki bosqichli tekshiruvni sozlashi shart.",
+      "inviteHint": "Xodim 48 soat amal qiladigan bir martalik havola oladi va o'z login hamda parolini o'rnatadi.",
       "invite": "Taklif yuborish",
       "invited": "Taklif yuborildi.",
       "invitedNoEmail": "Taklif yaratildi, lekin xat yuborilmadi. Pochta sozlamalarini tekshirib, qayta yuboring.",
@@ -287,12 +274,7 @@
       "invitedBy": "Taklif qildi: {name}",
       "expires": "muddati: {when}",
       "expired": "muddati o'tgan",
-      "mfaReset": "Ikki bosqichli tekshiruvni qayta o'rnatish",
-      "mfaResetHint": "Faqat shaxsni yuzma-yuz yoki video qo'ng'iroq orqali tasdiqlaganingizdan keyin. Uning joriy autentifikatori va tiklash kodlari ishlamay qoladi, barcha seanslari yakunlanadi.",
-      "mfaResetConfirm": "Men bu shaxsning kimligini tasdiqladim.",
-      "mfaResetSubmit": "Qayta o'rnatish",
-      "mfaResetDone": "Ikki bosqichli tekshiruv qayta o'rnatildi. Xodim keyingi kirishda uni qaytadan sozlaydi.",
-      "manageNote": "Xodimlarni taklif qilish yoki ularning ikki bosqichli tekshiruvini qayta o'rnatish faqat super administratorga ruxsat etilgan."
+      "manageNote": "Xodimlarni taklif qilish faqat super administratorga ruxsat etilgan."
     },
     "support": {
       "title": "Qoʻllab-quvvatlash kirishi",
@@ -329,15 +311,13 @@
       "add": "Qo'shish",
       "adminsHint": "Ular boshqaruv paneliga (/admin) o'z email va paroli bilan kiradi va faqat shu tarmoqni ko'radi.",
       "noAdmins": "Hali admin tayinlanmagan.",
-      "mfaOn": "Ikki bosqichli tekshiruv yoqilgan",
-      "mfaPending": "Birinchi kirish kutilmoqda",
       "invited": "Taklif yuborilgan",
       "appoint": "Tarmoq admini tayinlash",
       "appointHint": "Masalan, franshiza egasi yoki uning boshqaruvchisi.",
       "appointSubmit": "Admin tayinlash",
       "clinicRemoved": "Klinika tarmoqdan chiqarildi.",
       "clinicAdded": "Klinika tarmoqqa qo'shildi.",
-      "adminCreated": "Tarmoq admini yaratildi. Email va parolni unga o'zingiz bering; birinchi kirishda ikki bosqichli tekshiruvni sozlaydi."
+      "adminCreated": "Tarmoq admini yaratildi. Login va parolni unga o'zingiz bering."
     }
   },
   "clinic": {
@@ -350,7 +330,6 @@
       "setupSettings": "Klinika maʼlumotlari va standart tilni tekshiring",
       "setupBranches": "Filiallaringizni qoʻshing",
       "setupStaff": "Xodimlarni taklif qiling — har biriga shaxsiy hisob",
-      "setupMfa": "Ikki bosqichli tekshiruv yoqilgan",
       "modules": "Modullar",
       "modulesHint": "Klinikangiz foydalanadigan bo'limlar. Qo'shimcha bo'limlarni ega Sozlamalarda yoqadi yoki o'chiradi.",
       "frontDesk": "Registratura",
@@ -425,7 +404,9 @@
       "password": "Xodimning paroli",
       "passwordHint": "Kamida 12 belgi, harf va raqam. Shu parolni xodimga yozib bering.",
       "add": "Xodimni qoʻshish",
-      "created": "Tayyor: {email} hisobi yaratildi. Endi u shu email va siz bergan parol bilan kiradi."
+      "created": "Tayyor: hisob yaratildi. Xodim «{username}» logini va siz bergan parol bilan kiradi.",
+      "username": "Login",
+      "usernameHint": "Parol bilan qo'shganda: xodim shu login bilan kiradi (masalan, dr.karimov). Bo'sh qolsa, email login bo'ladi."
     },
     "audit": {
       "title": "Faoliyat jurnali",
@@ -466,14 +447,6 @@
       "statusChanged": "Kirish holati yangilandi.",
       "selfNote": "Oʻz kirish huquqingizni oʻzgartira olmaysiz. Boshqa ega yoki administratorga murojaat qiling.",
       "ownerNote": "Klinika egasining kirishini faqat klinika egasi oʻzgartira oladi.",
-      "mfa": "Ikki bosqichli tekshiruv",
-      "mfaOn": "Yoqilgan",
-      "mfaOff": "Sozlanmagan",
-      "mfaResetTitle": "Ikki bosqichli tekshiruvni qayta o'rnatish",
-      "mfaResetHint": "Xodim telefonini yo'qotgan va tiklash kodlari qolmagan bo'lsa foydalaning. Avval uning shaxsini yuzma-yuz tasdiqlang. Uning seanslari yakunlanadi va keyingi kirishda yangi autentifikatorni sozlaydi.",
-      "mfaResetConfirm": "Men bu xodimning shaxsini yuzma-yuz tasdiqladim.",
-      "mfaResetSubmit": "Ikki bosqichli tekshiruvni qayta o'rnatish",
-      "mfaResetDone": "Ikki bosqichli tekshiruv qayta o'rnatildi.",
       "passwordTitle": "Yangi parol berish",
       "passwordHint": "Xodim parolini unutsa: yangi parol bering va uni xodimga oʻzingiz yetkazing. Uning barcha ochiq seanslari yopiladi.",
       "passwordSubmit": "Parolni almashtirish",
@@ -1567,7 +1540,6 @@
     "passwordTooLong": "Parol juda uzun.",
     "passwordWeak": "Harflar va raqamlardan foydalaning.",
     "passwordMismatch": "Parollar mos kelmadi.",
-    "otp": "6 xonali kodni kiriting.",
     "reasonTooShort": "Sababni yozing (kamida 10 ta belgi).",
     "roleRequired": "Kamida bitta rolni tanlang.",
     "durationRange": "5 dan 480 daqiqagacha kiriting.",
@@ -1609,7 +1581,8 @@
     "times": "Soatlarni 08:00, 20:00 koʻrinishida yozing (8 tagacha).",
     "telegram": "Telegram nomi: 5–32 ta lotin harfi, raqam yoki _.",
     "templateFieldLines": "Maydonlar qatorlarida xato bor: kalit (lotin harf/raqam), nomi, min-max formatini tekshiring.",
-    "templateUnknownPlaceholders": "Hisobot matnida maydonlar roʻyxatida yoʻq '{{'kalit'}}' bor."
+    "templateUnknownPlaceholders": "Hisobot matnida maydonlar roʻyxatida yoʻq '{{'kalit'}}' bor.",
+    "username": "Login 3–64 belgi: kichik lotin harflari, raqamlar va . _ - (masalan, dr.karimov)."
   },
   "errors": {
     "generic": "Nimadir notoʻgʻri ketdi. Qayta urinib koʻring.",
@@ -1617,7 +1590,6 @@
     "notFound": "Topilmadi.",
     "notFoundTitle": "Sahifa topilmadi",
     "notFoundBody": "Sahifa mavjud emas yoki unga kirish huquqingiz yoʻq.",
-    "mfaRequired": "Ikki bosqichli tekshiruv talab qilinadi.",
     "planNotFound": "Tanlangan tarif mavjud emas.",
     "slugTaken": "Bu ish maydoni manzili band.",
     "invitationNotPending": "Bu taklif endi kutilmayapti.",
@@ -1702,8 +1674,6 @@
     "moduleDisabled": "Bu boʻlim klinikada oʻchirilgan.",
     "moduleNotInPlan": "Bu boʻlim klinika tarifiga kirmaydi.",
     "servicePriceNotSet": "Hisob yozishdan oldin xizmat narxini belgilang (Xizmatlar).",
-    "mfaResetOtherClinics": "Bu hisob boshqa klinikalarda ham ishlaydi, shuning uchun uning ikki bosqichli tekshiruvini faqat ITop Med qo'llab-quvvatlash xizmati qayta o'rnata oladi.",
-    "mfaNotSetUp": "Bu hisobda ikki bosqichli tekshiruv sozlanmagan.",
     "staffExists": "Bu elektron pochtali xodim allaqachon mavjud.",
     "invitationPending": "Bu elektron pochtaga taklif allaqachon yuborilgan. Uni qayta yuboring yoki bekor qiling.",
     "discountOverLimit": "Bu chegirma klinika egasi belgilagan chegaradan katta.",
@@ -1740,7 +1710,9 @@
     "fileType": "Faqat JPG, PNG, WebP rasm yoki PDF.",
     "noFile": "Fayl tanlanmagan.",
     "tooManyFiles": "Bitta natijaga 20 tagacha fayl.",
-    "nextVisitPast": "Keyingi tashrif sanasi bugundan keyin boʻlishi kerak."
+    "nextVisitPast": "Keyingi tashrif sanasi bugundan keyin boʻlishi kerak.",
+    "usernameTaken": "Bu login band. Boshqasini tanlang.",
+    "telegramTaken": "Bu Telegram hisobi boshqa ITop Med hisobiga ulangan."
   },
   "email": {
     "invitation": {
@@ -1763,10 +1735,10 @@
       "subject": "ITop Med konsoliga taklif",
       "greeting": "Assalomu alaykum, {name}!",
       "body": "Siz ITop Med platforma konsoliga {role} sifatida taklif qilindingiz. Shaxsiy hisobingizni yaratish uchun quyidagi tugmani bosing.",
-      "mfa": "Birinchi kirishda autentifikator ilovasi orqali ikki bosqichli tekshiruvni sozlaysiz.",
       "cta": "Hisob yaratish",
       "expiry": "Havola {hours} soat amal qiladi va bir marta ishlatiladi.",
-      "ignore": "Agar bu taklifni kutmagan bo'lsangiz, xatni e'tiborsiz qoldiring va xavfsizlik bo'yicha mas'ul shaxsga xabar bering."
+      "ignore": "Agar bu taklifni kutmagan bo'lsangiz, xatni e'tiborsiz qoldiring va xavfsizlik bo'yicha mas'ul shaxsga xabar bering.",
+      "chooseLogin": "Havola orqali o'z login va parolingizni tanlaysiz."
     }
   },
   "supportScope": {
@@ -2445,32 +2417,21 @@
   },
   "security": {
     "title": "Hisob xavfsizligi",
-    "subtitle": "Shaxsiy hisobingiz uchun ikki bosqichli tekshiruv va tiklash kodlari.",
-    "setupPrompt": "Ikki bosqichli tekshiruv yoqildi. Endi tiklash kodlarini yarating: telefoningizni yo'qotsangiz, hisobga qaytishning yagona yo'li shu.",
-    "usedNotice": "Siz tiklash kodi bilan kirdingiz. {remaining, plural, =0 {Kodlar qolmadi — hozir yangi to'plam yarating.} other {# ta kod qoldi.}} Agar telefoningiz yo'qolgan bo'lsa, administratordan ikki bosqichli tekshiruvni qayta o'rnatishni so'rang.",
-    "mfa": "Ikki bosqichli tekshiruv",
-    "mfaOn": "Yoqilgan",
-    "mfaOffClinic": "Hisobingizda ikki bosqichli tekshiruv yoqilmagan. U klinika egalari, administratorlar va buxgalterlar uchun majburiy va tizimga kirishda sozlanadi.",
-    "recoveryTitle": "Tiklash kodlari",
-    "recoveryIntro": "Har bir tiklash kodi autentifikator ilovasisiz bir marta kirish imkonini beradi. Ularni xavfsiz va internetdan tashqari joyda saqlang, masalan, qulflangan tortmada chop etilgan holda.",
-    "remaining": "{remaining, plural, =0 {Ishlatilmagan kod qolmadi} other {# ta ishlatilmagan kod qoldi}}",
-    "notIssued": "Hali yaratilmagan",
-    "runningLow": "Tiklash kodlari tugab bormoqda. Yangi to'plam yarating.",
-    "regenerateNote": "Yangi to'plam yaratilganda oldingi barcha kodlar ishlamay qoladi.",
-    "recoveryShownOnce": "Bu kodlarni hozir saqlang. Ular faqat bir marta ko'rsatiladi va ITop Med ularni qayta ko'rsata olmaydi.",
-    "copy": "Nusxalash",
-    "copied": "Nusxalandi",
-    "download": ".txt yuklab olish",
-    "generate": "Tiklash kodlarini yaratish",
-    "regenerate": "Yangi to'plam yaratish",
     "continue": "Davom etish",
-    "exemptNotice": "Egasining sozlamasi (MFA_EXEMPT_EMAILS) bilan bu hisob uchun ikki bosqichli tekshiruv o'chirilgan. Hisob faqat parol bilan ochiladi, shuning uchun parolni sir va uzun saqlang. Har bir kirish audit jurnaliga yoziladi.",
-    "mfaExempt": "O'chirilgan (egasi istisnosi)"
+    "subtitle": "Login va Telegram orqali kirish.",
+    "login": "Login",
+    "telegram": "Telegram orqali kirish",
+    "telegramOn": "Ulangan",
+    "telegramOff": "Ulanmagan",
+    "telegramIntro": "Telegram hisobingizni ulang — keyin parolsiz, Telegram tugmasi bilan kirasiz. Login va parol ham ishlashda davom etadi.",
+    "telegramUnavailable": "Telegram orqali kirish bu o'rnatmada yoqilmagan (Telegram faqat internetdagi domen bilan ishlaydi). Login va parol bilan kiring.",
+    "telegramLink": "Telegramni ulash",
+    "telegramUnlink": "Telegramni uzish",
+    "telegramUnlinked": "Telegram uzildi. Endi faqat login va parol bilan kirasiz."
   },
   "staffInvite": {
     "title": "ITop Med konsoliga qo'shilish",
     "subtitle": "Siz {role} sifatida taklif qilindingiz.",
-    "mfaNote": "Birinchi kirishda autentifikator ilovasi orqali ikki bosqichli tekshiruvni sozlaysiz.",
     "accept": "Hisob yaratish"
   },
   "control": {
@@ -2511,7 +2472,6 @@
     "security": "Xavfsizlik",
     "securityHint": "Ko'rib chiqish kerak bo'lgan hisoblar va kirishlar.",
     "activityLog": "Faoliyat jurnali",
-    "withoutMfa": "Ikki bosqichli tekshiruvsiz ega, administrator va buxgalterlar",
     "breakGlass": "Tibbiy kartaga favqulodda kirish (30 kun)",
     "supportAccess": "ITop Med qo'llab-quvvatlashining faol kirishi",
     "period": "Ko'rsatkichlar klinika valyutasi va vaqt mintaqasida; \"30 kun\" — oxirgi 30 kun."
@@ -2614,9 +2574,6 @@
     "title": "Qurilmani ulash",
     "desktopTitle": "Telefon va planshetlarni ulash",
     "subtitle": "Telefon, planshet yoki boshqa kompyuterda ITop Med'ni ochish",
-    "qrAlt": "Ulanish sahifasi uchun QR kod",
-    "scanHint": "Telefon kamerasi bilan skanerlang. Telefon shu kompyuter bilan bitta Wi-Fi tarmog'ida bo'lishi kerak.",
-    "orType": "Yoki telefon brauzerida yozing:",
     "noNetwork": "Kompyuter hech qaysi Wi-Fi yoki tarmoqqa ulanmagan. Tarmoqqa ulang va sahifani yangilang.",
     "secureOk": "Bu qurilma xavfsiz ulangan.",
     "open": "ITop Med'ni ochish",
@@ -2643,7 +2600,8 @@
     "otherDevices": "Boshqa qurilma turlari",
     "fingerprint": "Sertifikat barmoq izi (SHA-256) — qurilmadagisi bilan solishtiring:",
     "why": "Sertifikat faqat shu klinika tarmog'idagi ITop Med server uchun va har bir qurilmaga bir marta o'rnatiladi. Shundan keyin ma'lumotlar shifrlangan holda uzatiladi.",
-    "link": "Telefon yoki planshetni ulash"
+    "link": "Telefon yoki planshetni ulash",
+    "typeHint": "Telefon yoki planshet brauzerida shu manzilni oching. Qurilma shu kompyuter bilan bir Wi-Fi tarmog'ida bo'lishi kerak."
   },
   "welcome": {
     "title": "ITop Med'ga xush kelibsiz",
@@ -2655,14 +2613,13 @@
     "iAmFrontDesk": "Registratura va kassani ham o'zim qilaman",
     "accountSection": "Sizning hisobingiz (klinika Admini)",
     "fullName": "To'liq ismingiz",
-    "emailHint": "Shu email bilan kirasiz. Internet pochta bo'lishi shart emas, faqat eslab qoling.",
+    "emailHint": "Parolni tiklash uchun. Internet pochta bo'lishi shart emas.",
     "passwordHint": "Kamida 12 belgi, harf va raqam. Yozib oling va xavfsiz joyda saqlang.",
     "confirmPassword": "Parolni takrorlang",
-    "mfa": "Telefon orqali ikki bosqichli himoya (tavsiya etiladi)",
-    "mfaHint": "Kirishda parol + telefondagi Google Authenticator kodi. O'chirsangiz, faqat parol bilan kirasiz — himoya kuchsizroq bo'ladi.",
     "submit": "Klinikani yaratish",
     "privacy": "Barcha ma'lumotlar faqat shu kompyuterda saqlanadi va har kuni shifrlangan zaxira nusxasi olinadi.",
-    "done": "Klinikangiz tayyor! Email va parolingiz bilan kiring."
+    "done": "Klinikangiz tayyor! Email va parolingiz bilan kiring.",
+    "usernameHint": "Shu login bilan kirasiz (masalan, admin yoki dr.karimov)."
   },
   "patientFile": {
     "title": "Bemor kartasi",
@@ -3010,5 +2967,15 @@
     "menu": "ITop Med",
     "cmdStart": "Boshlash",
     "cmdHelp": "Yordam"
+  },
+  "telegramLogin": {
+    "failed": "Telegram orqali kirib bo'lmadi. Qaytadan urinib ko'ring yoki login va parol bilan kiring.",
+    "cancelled": "Telegram orqali kirish bekor qilindi.",
+    "not_linked": "Bu Telegram hisobi hech qaysi ITop Med hisobiga ulanmagan. Avval login va parol bilan kiring, keyin «Hisob xavfsizligi»da Telegramni ulang.",
+    "locked": "Hisob vaqtincha bloklangan. 15 daqiqadan keyin urinib ko'ring.",
+    "rate_limited": "Juda ko'p urinish. Birozdan keyin qaytadan urinib ko'ring.",
+    "taken": "Bu Telegram hisobi boshqa ITop Med hisobiga ulangan.",
+    "disabled": "Telegram orqali kirish yoqilmagan. Login va parol bilan kiring.",
+    "linked": "Telegram ulandi. Endi kirish sahifasida «Telegram orqali kirish» tugmasidan foydalanishingiz mumkin."
   }
 }

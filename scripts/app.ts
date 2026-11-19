@@ -6,7 +6,7 @@
  *   npm run app -- --admin       open the control panel (SuperAdmin / network admins) instead of the clinic app
  *   npm run app:stop             stop everything cleanly (database included)
  *   npm run app:status           is it running, and the addresses for other devices
- *   npm run app:doctor           check everything and say what to fix (+ QR code for phones)
+ *   npm run app:doctor           check everything and say what to fix (+ the address for phones)
  *   npm run app:firewall         Windows: allow other devices on the clinic network (asks for administrator)
  *   npm run app:autostart [-- off]  Windows: start the server when you sign in to this computer
  *   npm run app:shortcut         put "ITop Med" and "ITop Med - to'xtatish" shortcuts on the Desktop
@@ -21,7 +21,6 @@ import https from "node:https";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
-import QRCode from "qrcode";
 import { lanAddresses } from "../src/server/local/lan";
 
 /** Packaged Windows app: program folder (ITM_ROOT) and data folder (ITM_HOME) - see scripts/local.ts. */
@@ -264,8 +263,7 @@ async function doctor() {
   console.log(`\nITop Med tekshiruvi\n\n${lines.join("\n")}\n`);
   if (ips[0]) {
     const url = `http://${ips[0]}:${PUBLIC_PORT}/connect`;
-    console.log(`Telefon kamerasi bilan skanerlang (shu Wi-Fi'da bo'lsin):  ${url}\n`);
-    console.log(await QRCode.toString(url, { type: "terminal", small: true }));
+    console.log(`Telefon brauzerida shu manzilni oching (shu Wi-Fi'da bo'lsin):  ${url}\n`);
   }
   if (lines.some((l) => l.startsWith("  ✗"))) process.exitCode = 1;
 }

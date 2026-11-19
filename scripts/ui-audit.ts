@@ -5,8 +5,8 @@
  * and text clipped without an ellipsis. Exit code 1 when anything is found.
  *
  * Needs a running app (npm run app / npm run local / npm run dev) and an account
- * that is clinic owner + platform SUPER_ADMIN without the MFA step
- * (MFA_EXEMPT_EMAILS), given as ITM_AUDIT_EMAIL / ITM_AUDIT_PASSWORD.
+ * that is clinic owner + platform SUPER_ADMIN, given by its login as
+ * ITM_AUDIT_LOGIN (ITM_AUDIT_EMAIL still accepted) / ITM_AUDIT_PASSWORD.
  * Uses the installed Microsoft Edge (or Chrome) — nothing is downloaded.
  *
  *   ITM_AUDIT_EMAIL=… ITM_AUDIT_PASSWORD=… npm run ui:audit -- --slug shifo-med [--base http://127.0.0.1:3000] [--only billing]
@@ -23,7 +23,7 @@ const arg = (name: string, fallback: string) => {
 const BASE = arg("base", "http://127.0.0.1:3000");
 const SLUG = arg("slug", "shifo-med");
 const ONLY = arg("only", "");
-const EMAIL = process.env.ITM_AUDIT_EMAIL ?? "";
+const EMAIL = process.env.ITM_AUDIT_LOGIN ?? process.env.ITM_AUDIT_EMAIL ?? "";
 const PASSWORD = process.env.ITM_AUDIT_PASSWORD ?? "";
 const WIDTHS = [
   { name: "phone", width: 390, height: 844 },
@@ -115,13 +115,13 @@ function routes(ids: Awaited<ReturnType<typeof sampleIds>>): string[] {
 
 async function signIn(page: Page, path: string) {
   await page.goto(`${BASE}${path}`);
-  await page.fill('input[name="email"]', EMAIL);
+  await page.fill('input[name="username"]', EMAIL);
   await page.fill('input[name="password"]', PASSWORD);
   await Promise.all([page.waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 30_000 }), page.press('input[name="password"]', "Enter")]);
 }
 
 async function main() {
-  if (!EMAIL || !PASSWORD) throw new Error("Set ITM_AUDIT_EMAIL and ITM_AUDIT_PASSWORD");
+  if (!EMAIL || !PASSWORD) throw new Error("Set ITM_AUDIT_LOGIN and ITM_AUDIT_PASSWORD");
   const ids = await sampleIds();
   let browser: Browser;
   try {

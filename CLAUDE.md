@@ -4,20 +4,20 @@ Multi-tenant healthcare SaaS (Uzbekistan first). ONE codebase, strict tenant iso
 Read `docs/ARCHITECTURE.md` and `docs/SECURITY-AND-PRIVACY.md` before changing anything security-relevant.
 
 ## Stack
-Next.js 16 App Router · React 19 · TypeScript strict · Tailwind v4 · PostgreSQL + Prisma 7 (driver adapter `@prisma/adapter-pg`) · next-intl 4 · Zod 4 · argon2id (`@node-rs/argon2`) · TOTP (`@oslojs/otp`) · Vitest.
+Next.js 16 App Router · React 19 · TypeScript strict · Tailwind v4 · PostgreSQL + Prisma 7 (driver adapter `@prisma/adapter-pg`) · next-intl 4 · Zod 4 · argon2id (`@node-rs/argon2`) · Log In with Telegram (OIDC, `src/server/auth/telegram-oidc.ts`) · Vitest.
 
 ## Commands
 | Task | Command |
 |---|---|
 | Start local PostgreSQL (embedded, no Docker) | `npm run db:start` (keep running) |
 | Apply migrations / seed plans | `npm run db:migrate` · `npm run db:seed` |
-| Create a platform admin | `npm run admin:create -- --email x@y --name "Name" --role SUPER_ADMIN` |
+| Create a platform admin | `npm run admin:create -- --email x@y --login admin --name "Name" --role SUPER_ADMIN` |
 | Dev server | `npm run dev` → http://localhost:3000/admin/login and /login |
-| Local installation (one PC serves the clinic network; self-healing supervisor in `scripts/local.ts`) | `npm run app` / `app:stop` / `app:status` / `app:doctor` (checks + QR) / `app:firewall` / `app:autostart`; devices join via `http://<pc-ip>/connect` |
+| Local installation (one PC serves the clinic network; self-healing supervisor in `scripts/local.ts`) | `npm run app` / `app:stop` / `app:status` / `app:doctor` (checks + phone address) / `app:firewall` / `app:autostart`; devices join via `http://<pc-ip>/connect` |
 | Packaged Windows app for clinics (one zip: own Node runtime + PostgreSQL + prebuilt app; data in `%LOCALAPPDATA%\ITopMed`; first start = /welcome form) | `npm run package:win` → `dist/ITopMed-Windows.zip` (see `scripts/package/build-win.ts`) |
 | Notification worker | `npm run worker` (or `-- --once`); clinics can also "Send due messages now" |
 | Encrypted backup / restore drill | `npm run backup` · `npm run backup:verify -- <file>` (see docs/DEPLOYMENT.md) |
-| Layout audit (every screen at phone/tablet/desktop, light+dark) | `npm run app` then `ITM_AUDIT_EMAIL=… ITM_AUDIT_PASSWORD=… npm run ui:audit -- --slug <clinic>` (owner + SUPER_ADMIN account listed in `MFA_EXEMPT_EMAILS`); must report no problems after any UI change |
+| Layout audit (every screen at phone/tablet/desktop, light+dark) | `npm run app` then `ITM_AUDIT_LOGIN=… ITM_AUDIT_PASSWORD=… npm run ui:audit -- --slug <clinic>` (login of an account that is clinic owner + SUPER_ADMIN); must report no problems after any UI change |
 | End-to-end clinical walkthrough in the browser (registration → visit → prescription → invoice → payment) | `npm run app`, then the same ITM_AUDIT_* variables: `npm run e2e:walkthrough -- --slug <clinic>` (creates synthetic records — dev/demo data only) |
 | Checks (run all after every change) | `npm run lint` · `npm run typecheck` · `npm test` · `npm run i18n:check` · `npm run build` — read each exit code; never pipe a check into `tail`/`grep` when judging pass/fail |
 
@@ -46,6 +46,6 @@ Tests boot their own throw-away PostgreSQL on port 54339 and apply the real migr
 ## Layout
 - `prisma/schema.prisma`, `prisma/migrations/*` (RLS/grants/audit SQL lives in migrations)
 - `src/server/` — domain services (no React): `auth/`, `authz/`, `tenancy/`, `clinic/`, `security/`, `audit.ts`, `db.ts`
-- `src/app/admin/` platform console · `src/app/c/[slug]/` clinic workspace · `src/app/p/[slug]/` patient portal · `src/app/(public)/` login, MFA, invitations
+- `src/app/admin/` platform console · `src/app/c/[slug]/` clinic workspace · `src/app/p/[slug]/` patient portal · `src/app/(public)/` login, invitations · `src/app/auth/telegram/` Telegram sign-in
 - `src/components/ui` design system · `src/components/shell` app chrome
 - `docs/` product, architecture, security, roadmap

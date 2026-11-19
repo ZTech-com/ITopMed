@@ -18,7 +18,7 @@ export default async function ControlCenterPage({ params }: { params: Promise<{ 
   const change = c.money && c.money.prevMonthNet > 0n ? Number(((c.money.monthNet - c.money.prevMonthNet) * 1000n) / c.money.prevMonthNet) / 10 : null;
   const draftTotal = c.clinical.draftNotes.reduce((s, d) => s + d.count, 0);
   const attention =
-    draftTotal + c.clinical.openEncounters + c.clinical.unbilledVisits + c.security.withoutMfa.length + c.shiftDifferences.length + (c.security.breakGlass > 0 ? 1 : 0);
+    draftTotal + c.clinical.openEncounters + c.clinical.unbilledVisits + c.shiftDifferences.length + (c.security.breakGlass > 0 ? 1 : 0);
 
   return (
     <div className="space-y-6">
@@ -156,11 +156,6 @@ export default async function ControlCenterPage({ params }: { params: Promise<{ 
         <Card>
           <CardHeader title={t("control.security")} description={t("control.securityHint")} action={<Link className="text-[14px] text-accent" href={`${base}/audit`}>{t("control.activityLog")}</Link>} />
           <CardBody className="space-y-3 text-[14px]">
-            <p className="flex flex-wrap justify-between gap-x-3">
-              <span>{t("control.withoutMfa")}</span>
-              <Badge tone={c.security.withoutMfa.length ? "danger" : "success"}>{format.number(c.security.withoutMfa.length)}</Badge>
-            </p>
-            {c.security.withoutMfa.length > 0 ? <p className="text-text-2">{c.security.withoutMfa.join(", ")}</p> : null}
             <p className="flex flex-wrap justify-between gap-x-3">
               <span>{t("control.breakGlass")}</span>
               <Badge tone={c.security.breakGlass ? "warning" : "success"}>{format.number(c.security.breakGlass)}</Badge>

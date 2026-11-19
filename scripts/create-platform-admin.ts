@@ -1,10 +1,10 @@
 /**
  * Creates a platform staff account (bootstrap for the first SUPER_ADMIN).
  *
- *   npm run admin:create -- --email you@itopmed.uz --name "Full Name" --role SUPER_ADMIN
+ *   npm run admin:create -- --email you@itopmed.uz --login admin --name "Full Name" --role SUPER_ADMIN
  *
- * The password is read interactively (never from argv, which leaks into shell
- * history). The user must enrol TOTP MFA at first sign-in.
+ * --login is the sign-in name (without it the email is the login). The password
+ * is read interactively (never from argv, which leaks into shell history).
  */
 import "dotenv/config";
 import { createInterface } from "node:readline/promises";
@@ -17,7 +17,7 @@ async function main() {
   const roles = ["SUPER_ADMIN", "PLATFORM_ADMIN", "SUPPORT", "BILLING", "READ_ONLY"] as const;
   const role = (args.role ?? "SUPER_ADMIN") as (typeof roles)[number];
   if (!args.email || !args.name || !roles.includes(role)) {
-    console.error('Usage: npm run admin:create -- --email <email> --name "<full name>" [--role SUPER_ADMIN]');
+    console.error('Usage: npm run admin:create -- --email <email> [--login <login>] --name "<full name>" [--role SUPER_ADMIN]');
     process.exit(1);
   }
   const password = process.env.ITM_ADMIN_PASSWORD ?? (await prompt("Password (min 12 chars, letters + digits): "));
@@ -27,9 +27,15 @@ async function main() {
     console.error("Password does not meet the policy.");
     process.exit(1);
   }
+  const { usernameSchema } = await import("../src/lib/validation");
+  const login = usernameSchema.safeParse(args.login || args.email);
+  if (!login.success) {
+    console.error("Login: 3-64 characters, lowercase Latin letters, digits and . _ - (for example admin).");
+    process.exit(1);
+  }
   const { createPlatformUser } = await import("../src/server/auth/platform-auth");
-  const id = await createPlatformUser({ email: args.email, fullName: args.name, password, role });
-  console.log(`Created ${role} ${args.email} (${id}). MFA enrolment is required at first sign-in: /admin/login`);
+  const id = await createPlatformUser({ email: args.email, username: login.data, fullName: args.name, password, role });
+  console.log(`Created ${role} with login "${login.data}" (${id}). Sign in: /admin/login`);
   const { disconnectAll } = await import("../src/server/db");
   await disconnectAll();
 }

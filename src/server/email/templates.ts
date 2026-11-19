@@ -59,7 +59,7 @@ export async function invitationEmail(args: {
   return { to: args.to, subject, text, html };
 }
 
-/** ITop Med console invitation for a new employee. Single-use link; MFA enrolment follows at first sign-in. */
+/** ITop Med console invitation for a new employee. Single-use link; they choose their login and password there. */
 export async function platformInvitationEmail(args: { locale: string; to: string; inviteeName: string; role: string; link: string; expiresInHours: number }): Promise<EmailMessage> {
   const locale = isLocale(args.locale) ? args.locale : DEFAULT_LOCALE;
   const t = await translator(locale);
@@ -67,14 +67,14 @@ export async function platformInvitationEmail(args: { locale: string; to: string
   const roleLabel = createTranslator({ locale, messages, namespace: "platformRole" })(args.role as never);
   const greeting = t("platformInvitation.greeting", { name: args.inviteeName });
   const body = t("platformInvitation.body", { role: roleLabel });
-  const mfa = t("platformInvitation.mfa");
+  const chooseLogin = t("platformInvitation.chooseLogin");
   const cta = t("platformInvitation.cta");
   const expiry = t("platformInvitation.expiry", { hours: args.expiresInHours });
   const ignore = t("platformInvitation.ignore");
   return {
     to: args.to,
     subject: t("platformInvitation.subject"),
-    text: `${greeting}\n\n${body}\n${mfa}\n\n${cta}: ${args.link}\n\n${expiry}\n${ignore}`,
-    html: layout(locale, [greeting, body, mfa], { label: cta, link: args.link }, [expiry, ignore]),
+    text: `${greeting}\n\n${body}\n${chooseLogin}\n\n${cta}: ${args.link}\n\n${expiry}\n${ignore}`,
+    html: layout(locale, [greeting, body, chooseLogin], { label: cta, link: args.link }, [expiry, ignore]),
   };
 }

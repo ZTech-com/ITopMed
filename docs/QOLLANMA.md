@@ -43,7 +43,7 @@ Kichik kabinetga keraksiz bo'limlar ko'rinmaydi. Kerak bo'lsa keyin yoqiladi.
 | **Bildirishnomalar** | Qabulni eslatish, natija tayyorligi (email; SMS hali simulyatsiya) |
 | **Rollar** | Har bir xodimga o'z huquqlari; o'zingiz yangi rol yaratishingiz mumkin |
 | **Audit jurnali** | Kim, qachon, nima qildi — o'zgartirib bo'lmaydigan zanjir |
-| **Xavfsizlik** | Parol, ikki bosqichli tekshiruv (Google Authenticator va h.k.), tiklash kodlari, urinishlar chegarasi |
+| **Xavfsizlik** | Login va parol, ixtiyoriy Telegram orqali kirish, urinishlar chegarasi |
 
 **Tayyor rollar:** Klinika egasi, Klinika administratori, Filial rahbari, Registrator, Shifokor, Bosh shifokor, Hamshira, Laboratoriya xodimi, Kassir, Buxgalter, Farmatsevt/ombor, Kadrlar mutaxassisi.
 
@@ -111,7 +111,7 @@ Bu kompyuterda sertifikat kerak emas: oyna `http://127.0.0.1:3000` manzilini och
 | `npm run app` | Serverni ishga tushiradi (kerak bo'lsa) va oynani ochadi |
 | `npm run app:stop` | Hammasini to'g'ri to'xtatadi |
 | `npm run app:status` | Ishlayaptimi va boshqa qurilmalar uchun manzillar |
-| `npm run app:doctor` | Hammasini tekshiradi, nima qilish kerakligini aytadi va telefon uchun **QR kod** chiqaradi |
+| `npm run app:doctor` | Hammasini tekshiradi, nima qilish kerakligini aytadi va telefon uchun **manzil**ni ko'rsatadi |
 | `npm run app:firewall` | Windows Firewall'da tarmoq ruxsati (bir marta, administrator ruxsati so'raladi) |
 | `npm run app:autostart` | Kompyuterga kirganda server o'zi (oynasiz) ishga tushadi; o'chirish: `npm run app:autostart -- off` |
 
@@ -128,8 +128,8 @@ npm run app:firewall
 Windows "Ha/Yo'q" deb so'raydi — **Ha**. Bu faqat shu tarmoqdagi qurilmalarga ruxsat beradi (internetga ochilmaydi) va Windows avval qo'ygan Node.js bloklarini olib tashlaydi. Tekshirish: `npm run app:doctor` — hamma qatorda ✓ bo'lishi kerak.
 
 **Har bir telefon/planshet uchun (2 daqiqa):**
-1. Server kompyuterda ITop Med kirish sahifasidagi **"Telefon yoki planshetni ulash"** havolasini bosing (yoki `npm run app:doctor`) — QR kod chiqadi.
-2. Telefon kamerasi bilan QR kodni skanerlang. Yoki telefon brauzerida server IP manzilini yozing, masalan `192.168.0.80` — o'zi ulanish sahifasiga o'tadi.
+1. Server kompyuterda ITop Med kirish sahifasidagi **"Telefon yoki planshetni ulash"** havolasini bosing (yoki `npm run app:doctor`) — ulanish manzili chiqadi.
+2. Telefon brauzerida shu manzilni yoki server IP manzilini yozing, masalan `192.168.0.80` — o'zi ulanish sahifasiga o'tadi.
 3. Ulanish sahifasi telefon turini o'zi aniqlaydi va qadamlarni ko'rsatadi: **sertifikatni yuklab olish** → **ishonch bildirish** → **ITop Med'ni ochish** → **ilova sifatida o'rnatish**.
 
 Sertifikat faqat shu klinika serveri uchun (`.data/certs/itopmed-local-ca.crt` — ochiq qism). Maxfiy kalit (`.key`) kompyuterdan hech qachon chiqmaydi, uni hech kimga bermang. Sahifadagi barmoq izini (SHA-256) server kompyuterdagi ulanish sahifasidagisi bilan solishtirsangiz, soxta sertifikat emasligiga ishonch hosil qilasiz.
@@ -146,7 +146,7 @@ SMTP sozlanmagan bo'lsa, xatlar (taklif havolalari, parol tiklash) server kompyu
 Haqiqiy email uchun `.env` ga `SMTP_URL=smtps://login:parol@smtp.server.uz:465` qo'shing va `npm run app:stop`, `npm run app` qiling.
 
 ### 4.4. IP manzil o'zgarsa yoki Wi-Fi uzilsa
-Server buni o'zi sezadi (10–20 soniyada) va yangi IP uchun sertifikatni ishlayotgan holda yangilaydi. Sertifikat markazi o'zgarmaydi, shuning uchun qurilmalarga qayta o'rnatish shart emas — faqat yangi manzilni oching (QR kod yangisini ko'rsatadi). Manzil o'zgarmasligi uchun routerda server kompyuterga **doimiy IP** (DHCP reservation) bering.
+Server buni o'zi sezadi (10–20 soniyada) va yangi IP uchun sertifikatni ishlayotgan holda yangilaydi. Sertifikat markazi o'zgarmaydi, shuning uchun qurilmalarga qayta o'rnatish shart emas — faqat yangi manzilni oching (ulanish sahifasi yangisini ko'rsatadi). Manzil o'zgarmasligi uchun routerda server kompyuterga **doimiy IP** (DHCP reservation) bering.
 
 ### 4.5. Terminalda ko'rib ishga tushirish
 `npm run local` — xuddi shu server, lekin chiqishi ekranda (Ctrl+C bilan to'xtaydi). Kodni yangilagach majburan qayta yig'ish: `npm run local -- --build`.
@@ -176,19 +176,19 @@ Hech qaysi boshqaruv darajasi (SuperAdmin ham) bemorlarning tibbiy ma'lumotlarin
    - **Klinika egasi:** ism, email va **kirish usuli**: "Parolni hozir o'zim belgilayman" (kuchli parol tayyorlab qo'yiladi — yozib oling yoki o'zingiznikini kiriting) yoki "Emailga taklif yuborish".
    - **Tarmoq** (bo'lsa) — klinika franshizaga tegishli bo'lsa.
 3. "Klinikani yaratish" → **"Klinika tayyor"** va kirish manzili chiqadi. Email va parolni egaga o'zingiz bering. Parol keyin hech qayerda ko'rsatilmaydi va saqlanmaydi (faqat shifrlangan xesh).
-4. Ega birinchi marta kirganda (ikki bosqichli tekshiruvni sozlagach) klinika sohasiga moslab **o'zi to'liq sozlanadi**: xizmatlar, hujjat va yozuv shablonlari, egaga shifokor roli va Du–Ju 9:00–18:00 jadval. Egaga faqat xizmatlarga narx qo'yish qoladi.
+4. Ega birinchi marta kirganda klinika sohasiga moslab **o'zi to'liq sozlanadi**: xizmatlar, hujjat va yozuv shablonlari, egaga shifokor roli va Du–Ju 9:00–18:00 jadval. Egaga faqat xizmatlarga narx qo'yish qoladi.
 5. Agar bu email bilan hisob avvaldan bo'lsa, uning paroli o'zgartirilmaydi: egasi o'z paroli bilan kirib taklifni qabul qiladi.
 
 ### 5.1a. Tarmoqlar (franshiza) va tarmoq adminlari
 1. **Tarmoqlar → Yangi tarmoq:** nom, mas'ul shaxs, telefon.
 2. Tarmoq sahifasida: **mavjud klinikani qo'shish** yoki **"Tarmoqda yangi klinika"**.
-3. **Tarmoq admini tayinlash:** ism, email, parol (yoki emailga taklif). U `/admin` ga kiradi, birinchi kirishda ikki bosqichli tekshiruvni sozlaydi va faqat o'z tarmog'ini ko'radi: yangi klinika yaratadi (avtomatik o'z tarmog'ida), to'xtatadi, bo'limlarni yoqadi, egalarga taklifni qayta yuboradi.
+3. **Tarmoq admini tayinlash:** ism, email, parol (yoki emailga taklif). U `/admin` ga kiradi va faqat o'z tarmog'ini ko'radi: yangi klinika yaratadi (avtomatik o'z tarmog'ida), to'xtatadi, bo'limlarni yoqadi, egalarga taklifni qayta yuboradi.
 4. Klinikani tarmoqdan chiqarsangiz, tarmoq admini uni darhol ko'rmay qoladi.
 
 **Platforma xodimlari → Xodimni taklif qilish:** o'z jamoangiz (Qo'llab-quvvatlash, Hisob-kitob, Faqat ko'rish va h.k.). Tarmoq adminlari tarmoq sahifasidan tayinlanadi.
 
 ### 5.2. Klinika egasi (misol: kichik kardiologiya kabineti)
-1. SuperAdmin bergan email va parol bilan `/login` orqali kiring (yoki taklif havolasini oching). Ega uchun ikki bosqichli tekshiruv majburiy; sozlagach tiklash kodlarini saqlang.
+1. SuperAdmin bergan login va parol bilan `/login` orqali kiring (yoki taklif havolasini ochib, login va parolni o'zingiz tanlang).
 2. Klinika SuperAdmin tanlagan turga moslab o'zi sozlanadi. Klinikani o'zingiz yaratgan bo'lsangiz yoki boshqacha sozlamoqchi bo'lsangiz — **Sozlash yordamchisi** (bosh sahifa yoki Sozlamalar):
    - Amaliyot turi: **Xususiy kabinet**;
    - **Asosiy yo'nalish: Kardiologiya** — kardiolog konsultatsiyasi, EKG, exokardiografiya, Xolter, 24 soatlik qon bosimi monitoringi va yuklamali sinov xizmatlari qo'shiladi;
@@ -202,8 +202,15 @@ Boshqa yo'nalishlar uchun ham tayyor xizmatlar to'plami bor: pediatriya, ginekol
 
 ---
 
-### 5.3. Kodsiz kirish (faqat tanlangan hisoblar uchun)
-`.env` faylidagi `MFA_EXEMPT_EMAILS=` qatoriga yozilgan emaillar 6 xonali kodsiz, **faqat parol bilan** kiradi (platforma ham, klinika ham). Bu egasining ongli istisnosi: shu hisoblarning himoyasi kuchsizroq. Shuning uchun parol uzun va sir bo'lsin. Har bir bunday kirish audit jurnalida `mfaExempt` belgisi bilan yoziladi va hisob xavfsizligi sahifasida ogohlantirish ko'rinadi. O'zgartirgandan keyin `npm run local` (yoki `npm run dev`) ni qayta ishga tushiring.
+### 5.3. Kirish: login va parol yoki Telegram
+Har bir xodim **login va parol** bilan kiradi (masalan, `dr.karimov`). Login hisob yaratilganda tanlanadi. 2026-11-19 gacha yaratilgan hisoblarda login — emailning o'zi. Ikki bosqichli tekshiruv (Google Authenticator) yo'q.
+
+**Telegram orqali kirish** (ixtiyoriy, faqat internetdagi serverda):
+1. `.env` ga `TELEGRAM_LOGIN_CLIENT_ID` va `TELEGRAM_LOGIN_CLIENT_SECRET` yoziladi (@BotFather → bot → Login Widget; Allowed URL: `https://<domen>/auth/telegram/callback`).
+2. Xodim avval login va parol bilan kiradi, **Hisob xavfsizligi** sahifasida **«Telegramni ulash»** ni bosadi.
+3. Keyin kirish sahifasidagi **«Telegram orqali kirish»** tugmasi bilan parolsiz kiradi.
+
+Klinika ichidagi mahalliy o'rnatishda (`192.168.x.x`) Telegram ishlamaydi — Telegram faqat internetdagi domenni qabul qiladi. U yerda faqat login va parol.
 
 ## 6. Kundalik ish (rollar bo'yicha)
 
@@ -227,11 +234,11 @@ Boshqa yo'nalishlar uchun ham tayyor xizmatlar to'plami bor: pediatriya, ginekol
 | Tarifni o'zgartirish, bo'limlarni yoqish/o'chirish | Klinika sahifasi → Tarif / Modullar |
 | Egaga taklifni qayta yuborish yoki bekor qilish | Klinika sahifasi → Takliflar |
 | Klinikaga yordam berish uchun kirish | Klinika sahifasi → Qo'llab-quvvatlash so'rovi (klinika tasdiqlaydi, vaqt cheklangan, auditda yoziladi) |
-| O'z jamoangiz | `/admin/staff`: taklif qilish, telefonini yo'qotgan xodimning MFA'sini qayta o'rnatish (avval shaxsini tasdiqlang!) |
+| O'z jamoangiz | `/admin/staff`: taklif qilish |
 | Kim nima qildi | `/admin/audit` → "Zanjirni tekshirish" (jurnal o'zgartirilmaganini isbotlaydi) |
 | O'z xavfsizligingiz | Pastki chapdagi qalqon belgisi → tiklash kodlari |
 
-**Klinika egasi o'z klinikasida:** Xodimlar (rol, filial, to'xtatish, MFA'ni qayta o'rnatish), Rollar va huquqlar, Filiallar, Bo'limlar va xonalar, Shifokorlar va jadval, Xizmatlar va narxlar, Sozlamalar (bo'limlar), Faoliyat jurnali, Qo'llab-quvvatlash kirishi (ITop Med so'rovlarini tasdiqlash yoki rad etish).
+**Klinika egasi o'z klinikasida:** Xodimlar (rol, filial, to'xtatish, yangi parol berish), Rollar va huquqlar, Filiallar, Bo'limlar va xonalar, Shifokorlar va jadval, Xizmatlar va narxlar, Sozlamalar (bo'limlar), Faoliyat jurnali, Qo'llab-quvvatlash kirishi (ITop Med so'rovlarini tasdiqlash yoki rad etish).
 
 ---
 
@@ -242,7 +249,7 @@ Boshqa yo'nalishlar uchun ham tayyor xizmatlar to'plami bor: pediatriya, ginekol
 - **Kassalar:** ochiq smenalar va hozir har bir kassada bo'lishi kerak bo'lgan naqd pul; smena yopilishidagi kamomad va ortiqchalar;
 - **Chegirmalar:** kim, necha marta va qancha chegirma bergan (30 kun); pul qaytarishlar va bekor qilingan hisoblar;
 - **Klinik intizom:** 24 soatdan ortiq imzolanmagan yozuvlar (shifokor bo'yicha), ochiq qolgan qabullar, hisob chiqarilmagan qabullar;
-- **Xavfsizlik:** ikki bosqichli tekshiruvsiz ega/administrator/buxgalterlar, tibbiy kartaga favqulodda kirishlar.
+- **Xavfsizlik:** tibbiy kartaga favqulodda kirishlar, yordam xizmatiga berilgan ruxsatlar.
 
 **Nazorat qoidalari** (Sozlamalar → Nazorat qoidalari; faqat ega o'zgartiradi):
 - xodim bera oladigan eng katta chegirma foizi (masalan 10%); undan oshsa tizim rad etadi;
@@ -313,7 +320,7 @@ Migratsiyalar `npm run local` ichida avtomatik qo'llanadi. Yangilashdan oldin `n
 | ITop Med oynasi ochilmaydi yoki "ishga tushmadi" | `npm run app:doctor`; xato matni va jurnal: `.data/logs/local.log`. `npm run app:stop`, keyin `npm run app` |
 | "Too many attempts" | 5–15 daqiqa kuting (xavfsizlik chegarasi) |
 | Hisob bloklangan | 5 marta noto'g'ri parol: 15 daqiqa kuting yoki "Parolni unutdingizmi" (klinika xodimlari). Platforma xodimlari parolini Super administrator yoki `admin:create` buyrug'i bilan tiklaydi |
-| Telefon (Authenticator) yo'qolgan | Tiklash kodi bilan kiring; kod yo'q bo'lsa administrator MFA'ni qayta o'rnatadi |
+| Parol esdan chiqqan | Klinika egasi yoki administrator xodim sahifasida yangi parol beradi (Telegram bog'lanishi ham uziladi) |
 | Taklif xati kelmadi | SMTP yo'q: `.dev-mailbox` papkasini oching (4.3) |
 | Xizmatga hisob chiqmaydi | Xizmatga narx qo'yilmagan |
 | Shifokorga qabul yozib bo'lmaydi | Jadval yo'q, ta'tilda yoki vaqt band |

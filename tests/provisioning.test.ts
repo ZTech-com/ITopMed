@@ -1,13 +1,6 @@
-import { decodeBase32IgnorePadding } from "@oslojs/encoding";
-import { generateTOTP } from "@oslojs/otp";
 import pg from "pg";
 import { describe, expect, it } from "vitest";
-import {
-  beginPlatformMfaEnrollment,
-  loginPlatformUser,
-  validatePlatformSession,
-  verifyPlatformMfa,
-} from "@/server/auth/platform-auth";
+import { loginPlatformUser, validatePlatformSession } from "@/server/auth/platform-auth";
 import { resolveClinic, validateClinicSession, loginClinicUser } from "@/server/auth/clinic-auth";
 import { createBranch, inviteStaff, listBranches, listClinicAudit, updateClinicSettings } from "@/server/clinic/admin";
 import { acceptInvitation, previewInvitation } from "@/server/tenancy/invitations";
@@ -16,35 +9,30 @@ import { platformDb } from "@/server/db";
 import { createPlatformUser } from "@/server/auth/platform-auth";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
-describe("acceptance 1: super admin signs in securely (password + mandatory TOTP)", () => {
-  it("requires MFA enrolment, rotates the session after MFA, and locks after repeated failures", async () => {
+describe("acceptance 1: super admin signs in with login name + password", () => {
+  it("signs in by login name (case-insensitive) and locks after repeated failures", async () => {
     const email = `${uniq("root")}@itopmed.test`;
-    await createPlatformUser({ email, fullName: "Synthetic Root", password: PASSWORD, role: "SUPER_ADMIN" });
+    const username = uniq("root.admin");
+    await createPlatformUser({ email, username, fullName: "Synthetic Root", password: PASSWORD, role: "SUPER_ADMIN" });
 
-    const login = await loginPlatformUser(email, PASSWORD, META);
+    // The email is no longer a login once a login name was chosen.
+    expect(await loginPlatformUser(email, PASSWORD, META)).toEqual({ ok: false, reason: "invalid" });
+    const login = await loginPlatformUser(username.toUpperCase(), PASSWORD, META);
     expect(login.ok).toBe(true);
     if (!login.ok) return;
-    expect(login.mfaEnrolled).toBe(false);
+    const p = await validatePlatformSession(login.token);
+    expect(p?.user.username).toBe(username);
+    expect(p?.user.telegramLinked).toBe(false);
 
-    const pre = await validatePlatformSession(login.token);
-    expect(pre?.mfaVerified).toBe(false);
-
-    const { secretBase32 } = await beginPlatformMfaEnrollment(pre!);
-    const bad = await verifyPlatformMfa(login.token, "000000", META);
-    expect(bad.ok).toBe(false);
-    const code = generateTOTP(decodeBase32IgnorePadding(secretBase32), 30, 6);
-    const mfa = await verifyPlatformMfa(login.token, code, META);
-    expect(mfa.ok).toBe(true);
-    if (!mfa.ok) return;
-
-    expect(await validatePlatformSession(login.token)).toBeNull(); // pre-MFA token revoked
-    const post = await validatePlatformSession(mfa.token);
-    expect(post?.mfaVerified).toBe(true);
-    expect(post?.user.mfaEnrolled).toBe(true);
-
-    for (let i = 0; i < 5; i++) expect((await loginPlatformUser(email, "wrong-password-123", META)).ok).toBe(false);
-    const locked = await loginPlatformUser(email, PASSWORD, META);
+    for (let i = 0; i < 5; i++) expect((await loginPlatformUser(username, "wrong-password-123", META)).ok).toBe(false);
+    const locked = await loginPlatformUser(username, PASSWORD, META);
     expect(locked).toEqual({ ok: false, reason: "locked" });
+  });
+
+  it("refuses a login name that is already taken", async () => {
+    const username = uniq("taken");
+    await createPlatformUser({ email: `${uniq("a")}@itopmed.test`, username, fullName: "Synthetic A", password: PASSWORD, role: "SUPPORT" });
+    await expect(createPlatformUser({ email: `${uniq("b")}@itopmed.test`, username, fullName: "Synthetic B", password: PASSWORD, role: "SUPPORT" })).rejects.toThrow("errors.usernameTaken");
   });
 
   it("rejects unknown accounts without revealing whether they exist", async () => {
@@ -83,8 +71,6 @@ describe("acceptance 2–5: clinic provisioning, invitation and owner activation
     await expect(provisionClinic(actor, { ...base, slug: "admin" }, META)).rejects.toThrow();
     const support = await platformActor("SUPPORT");
     await expect(provisionClinic(support, { ...base, slug: uniq("x") }, META)).rejects.toThrow("errors.forbidden");
-    const noMfa = { ...actor, mfaVerified: false };
-    await expect(provisionClinic(noMfa, { ...base, slug: uniq("x") }, META)).rejects.toThrow("errors.mfaRequired");
   });
 
   it("owner accepts the invitation once, then configures the clinic", async () => {
@@ -103,7 +89,6 @@ describe("acceptance 2–5: clinic provisioning, invitation and owner activation
 
     const ctx = await clinicContext(ownerEmail, slug);
     expect(ctx.roleKeys).toEqual(["clinic_owner"]);
-    expect(ctx.principal.mfaRequired).toBe(true); // privileged clinic role
     expect(ctx.permissions.has("clinic.settings.manage")).toBe(true);
     expect(ctx.permissions.has("emr.read")).toBe(false); // admin authority ≠ medical access
 
@@ -150,7 +135,6 @@ describe("acceptance 6: clinic creates individual staff accounts", () => {
     expect(dr.roleKeys).toEqual(["doctor"]);
     expect(dr.permissions.has("emr.read")).toBe(true);
     expect(dr.permissions.has("staff.manage")).toBe(false);
-    expect(dr.principal.mfaRequired).toBe(false);
     await expect(inviteStaff(dr, { fullName: "Someone Else", email: "x@clinic.test", roleKeys: ["receptionist"] }, META)).rejects.toThrow("errors.forbidden");
   });
 

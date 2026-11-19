@@ -64,7 +64,7 @@ export async function createClinicFromSpec(specFile: string, ownerEmail: string,
   const spec = clinicSpecSchema.parse(JSON.parse(fs.readFileSync(specFile, "utf8")));
   const admin = await platformDb().platformUser.findFirst({ where: { role: "SUPER_ADMIN", status: "ACTIVE" }, orderBy: { createdAt: "asc" } });
   if (!admin) throw new Error("No active SuperAdmin: create one first (itopmed-admin).");
-  const actor: PlatformPrincipal = { sessionId: "server-task", mfaVerified: true, user: { id: admin.id, email: admin.email, fullName: admin.fullName, role: "SUPER_ADMIN", locale: "uz-Latn", mfaEnrolled: true } };
+  const actor: PlatformPrincipal = { sessionId: "server-task", user: { id: admin.id, username: admin.username, email: admin.email, fullName: admin.fullName, role: "SUPER_ADMIN", locale: "uz-Latn", telegramLinked: false } };
 
   const created = await createClinicWithOwner(
     actor,

@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { passwordSchema, hashPassword } from "../security/password";
-import { personNameSchema } from "@/lib/validation";
+import { personNameSchema, usernameSchema } from "@/lib/validation";
 import { recordAudit } from "../audit";
 import type { RequestMeta } from "../auth/platform-auth";
 import type { ClinicPrincipal } from "../auth/clinic-auth";
@@ -85,6 +85,8 @@ export async function acceptInvitationAsExistingUser(token: string, principal: C
 export const acceptInvitationSchema = z
   .object({
     fullName: personNameSchema,
+    /** Optional for programmatic callers: the invited email then becomes the login. */
+    username: z.preprocess((v) => (v === "" || v === null ? undefined : v), usernameSchema.optional()),
     password: passwordSchema,
     confirmPassword: z.string(),
   })
@@ -108,6 +110,9 @@ export async function acceptInvitation(token: string, raw: unknown, meta: Reques
 
     const existing = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM app_auth_lookup_user(${inv.email})`;
     if (existing.length > 0) throw new DomainError("errors.accountExistsSignIn");
+    const username = input.username ?? inv.email;
+    const taken = await tx.$queryRaw<{ taken: boolean }[]>`SELECT app_username_taken(${username}) AS taken`;
+    if (taken[0]?.taken) throw new DomainError("errors.usernameTaken");
 
     const userId = uuidv7();
     await setContext(tx, { tenantId: inv.tenantId, userId, inviteTokenHash: tokenHash });
@@ -122,7 +127,7 @@ export async function acceptInvitation(token: string, raw: unknown, meta: Reques
     });
     if (claimed.count !== 1) throw new DomainError("errors.invitationInvalid");
 
-    await tx.user.create({ data: { id: userId, email: inv.email, fullName: input.fullName, passwordHash, status: "ACTIVE" } });
+    await tx.user.create({ data: { id: userId, username, email: inv.email, fullName: input.fullName, passwordHash, status: "ACTIVE" } });
 
     const membershipId = uuidv7();
     await tx.membership.create({ data: { id: membershipId, tenantId: inv.tenantId, userId, status: "ACTIVE" } });

@@ -35,14 +35,10 @@ const PUBLIC_PAGES = new Set([
 /** Actions that run before anyone is signed in (they authenticate instead). */
 const PUBLIC_ACTIONS = new Set([
   "admin/actions.ts:adminLoginAction",
-  "admin/actions.ts:adminMfaAction",
-  "admin/actions.ts:adminRecoveryCodeAction", // second factor: authenticates the half-signed-in session
   "admin/actions.ts:acceptStaffInvitationAction", // token-authenticated account creation
   "admin/actions.ts:adminLogoutAction",
   "first-run-actions.ts:firstRunAction", // no account yet: allowed only with zero accounts, LOCAL_MODE, from this computer
   "clinic-actions.ts:clinicLoginAction",
-  "clinic-actions.ts:clinicMfaAction",
-  "clinic-actions.ts:clinicRecoveryCodeAction", // second factor: authenticates the half-signed-in session
   "clinic-actions.ts:clinicLogoutAction",
   "clinic-actions.ts:acceptInvitationAction",
   "clinic-actions.ts:forgotPasswordAction",
@@ -83,7 +79,8 @@ describe("authorization sweep", () => {
     // Local installation only (LOCAL_MODE=1): the PUBLIC half of the local CA, so devices can trust HTTPS.
     // api/tv: the waiting-room screen's data; its secret link is the credential (see src/server/queue/board.ts).
     // api/telegram/webhook: called by Telegram; the secret header derived from the bot token is the credential.
-    const PUBLIC_ROUTES = new Set(["api/health/route.ts", "(public)/connect/ca.crt/route.ts", "(public)/connect/ios/route.ts", "api/tv/[token]/route.ts", "api/telegram/webhook/route.ts"]);
+    // auth/telegram/callback: Telegram Login returns here; the encrypted flow cookie + state and the verified id_token authenticate.
+    const PUBLIC_ROUTES = new Set(["api/health/route.ts", "(public)/connect/ca.crt/route.ts", "(public)/connect/ios/route.ts", "api/tv/[token]/route.ts", "api/telegram/webhook/route.ts", "auth/telegram/callback/route.ts"]);
     const missing = routes.filter((r) => !PUBLIC_ROUTES.has(r) && !GUARDS.test(fs.readFileSync(path.join(ROOT, r), "utf8")));
     expect(missing).toEqual([]);
   });

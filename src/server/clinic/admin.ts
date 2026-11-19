@@ -1,11 +1,11 @@
 import "server-only";
 import { z } from "zod";
-import { branchSchema, clinicSettingsSchema, emailSchema, personNameSchema } from "@/lib/validation";
+import { branchSchema, clinicSettingsSchema, emailSchema, personNameSchema, usernameSchema } from "@/lib/validation";
 import { recordAudit } from "../audit";
 import type { ClinicContext } from "../auth/clinic-auth";
 import type { RequestMeta } from "../auth/platform-auth";
 import type { Permission } from "../authz/permissions";
-import { withAppContext, type Tx } from "../db";
+import { sequential, withAppContext, type Tx } from "../db";
 import { hashIp, randomToken, sha256Hex, uuidv7 } from "../security/crypto";
 import { passwordSchema } from "../security/password";
 import { acceptInvitation } from "../tenancy/invitations";
@@ -76,7 +76,7 @@ export async function listStaff(ctx: ClinicContext) {
   return inClinic(ctx, async (tx) => {
     const members = await tx.membership.findMany({
       where: { tenantId: ctx.tenant.id },
-      include: { user: { select: { id: true, fullName: true, email: true, status: true, lastLoginAt: true } }, roles: { include: { role: { select: { key: true, name: true } } } } },
+      include: { user: { select: { id: true, fullName: true, username: true, email: true, status: true, lastLoginAt: true } }, roles: { include: { role: { select: { key: true, name: true } } } } },
       orderBy: { createdAt: "asc" },
     });
     const invitations = await tx.invitation.findMany({ where: { tenantId: ctx.tenant.id, status: "PENDING" }, orderBy: { createdAt: "desc" } });
@@ -123,7 +123,11 @@ export async function inviteStaff(ctx: ClinicContext, raw: unknown, meta: Reques
   return { invitationId: id, delivered, token };
 }
 
-export const staffPasswordSchema = z.object({ password: passwordSchema });
+export const staffPasswordSchema = z.object({
+  password: passwordSchema,
+  /** The login the administrator chose; without one the email is the login. */
+  username: z.preprocess((v) => (v === "" || v === null ? undefined : v), usernameSchema.optional()),
+});
 
 /**
  * Creates a staff account right away with a password the administrator gives
@@ -134,12 +138,18 @@ export const staffPasswordSchema = z.object({ password: passwordSchema });
 export async function createStaffWithPassword(ctx: ClinicContext, raw: unknown, meta: RequestMeta) {
   require(ctx, "staff.manage");
   const input = inviteStaffSchema.parse(raw);
-  const { password } = staffPasswordSchema.parse(raw);
-  const exists = await inClinic(ctx, (tx) => tx.$queryRaw<{ id: string }[]>`SELECT id FROM app_auth_lookup_user(${input.email})`);
+  const { password, username = input.email } = staffPasswordSchema.parse(raw);
+  const [exists, taken] = await inClinic(ctx, (tx) =>
+    sequential([
+      tx.$queryRaw<{ id: string }[]>`SELECT id FROM app_auth_lookup_user(${input.email})`,
+      tx.$queryRaw<{ taken: boolean }[]>`SELECT app_username_taken(${username}) AS taken`,
+    ]),
+  );
   if (exists.length > 0) throw new DomainError("errors.accountExistsUseInvite");
+  if (taken[0]?.taken) throw new DomainError("errors.usernameTaken");
   const r = await inviteStaff(ctx, input, meta, { deliver: false });
-  await acceptInvitation(r.token, { fullName: input.fullName, password, confirmPassword: password }, meta);
-  return { invitationId: r.invitationId };
+  await acceptInvitation(r.token, { fullName: input.fullName, username, password, confirmPassword: password }, meta);
+  return username;
 }
 
 export async function listClinicAudit(ctx: ClinicContext, take = 100) {

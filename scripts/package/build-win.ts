@@ -171,7 +171,7 @@ async function main() {
       "2. Birinchi marta 1-2 daqiqa kuting: brauzerda ITop Med oynasi ochiladi.",
       "3. Klinika nomi, ismingiz, email va parolingizni kiriting -> \"Klinikani yaratish\".",
       "4. Windows tarmoq ruxsatini so'rasa -> \"Ha\" (telefonlar ulana olishi uchun).",
-      "5. Telefonlar: kirish sahifasidagi \"Telefon yoki planshetni ulash\" -> QR kodni telefon kamerasi bilan skanerlang.",
+      "5. Telefonlar: kirish sahifasidagi \"Telefon yoki planshetni ulash\" -> u yerdagi manzilni telefon brauzerida oching.",
       "",
       "Ish stolida \"ITop Med\", \"ITop Med Boshqaruv\" va \"ITop Med - to'xtatish\" yorliqlari o'zi paydo bo'ladi.",
       "Ma'lumotlar: %LOCALAPPDATA%\\ITopMed (har kuni shifrlangan zaxira: backups papkasi).",

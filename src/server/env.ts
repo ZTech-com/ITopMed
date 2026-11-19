@@ -28,11 +28,14 @@ const schema = z.object({
    */
   LOCAL_MODE: z.enum(["0", "1"]).default("0"),
   /**
-   * Comma-separated emails that sign in with the password alone (no TOTP step).
-   * An explicit, owner-made exception — weaker protection for those accounts.
-   * Every such sign-in is audited with `mfaExempt: true`. Empty = nobody.
+   * Log In with Telegram (OpenID Connect, https://core.telegram.org/bots/telegram-login).
+   * Client ID and Secret come from @BotFather > the bot > Login Widget, where
+   * `${APP_URL}/auth/telegram/callback` must be registered as an Allowed URL.
+   * Both empty = the Telegram button is not shown (password sign-in only).
+   * Works only on a public HTTPS domain: Telegram refuses LAN addresses.
    */
-  MFA_EXEMPT_EMAILS: z.string().default(""),
+  TELEGRAM_LOGIN_CLIENT_ID: z.string().regex(/^\d{1,20}$/, "must be the numeric Client ID").optional(),
+  TELEGRAM_LOGIN_CLIENT_SECRET: z.string().min(8).optional(),
   /**
    * Telegram delivery: "api" = the official Bot API (api.telegram.org, needs internet),
    * "dev-outbox" = SIMULATED (files in .dev-mailbox/telegram), "none" = off.
@@ -72,7 +75,7 @@ export function env(): Env {
   return cached;
 }
 
-/** After the first-run form changes a setting in this process (MFA_EXEMPT_EMAILS). */
+/** Re-read the environment (tests change it between cases). */
 export function resetEnvCache() {
   cached = undefined;
 }
@@ -84,11 +87,9 @@ export function telegramTransport(): "api" | "dev-outbox" | "none" {
   return e.TELEGRAM_TRANSPORT ?? (e.NODE_ENV === "production" ? "api" : "dev-outbox");
 }
 
-/** True when the owner listed this account in MFA_EXEMPT_EMAILS (see .env.example). */
-export function isMfaExempt(email: string): boolean {
-  const list = env()
-    .MFA_EXEMPT_EMAILS.split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return list.includes(email.trim().toLowerCase());
+/** Telegram Login is offered only when both BotFather credentials are configured. */
+export function telegramLogin(): { clientId: string; clientSecret: string; redirectUri: string } | null {
+  const e = env();
+  if (!e.TELEGRAM_LOGIN_CLIENT_ID || !e.TELEGRAM_LOGIN_CLIENT_SECRET) return null;
+  return { clientId: e.TELEGRAM_LOGIN_CLIENT_ID, clientSecret: e.TELEGRAM_LOGIN_CLIENT_SECRET, redirectUri: new URL("/auth/telegram/callback", e.APP_URL).toString() };
 }
