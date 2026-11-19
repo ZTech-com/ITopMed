@@ -45,6 +45,10 @@ export const PLACEHOLDERS = [
   "vitals.weight",
   "vitals.height",
   "prescriptions",
+  "prescriptions.schedule",
+  "visit.nextVisit",
+  "doctor.phone",
+  "doctor.telegram",
   "today",
 ] as const;
 export type Placeholder = (typeof PLACEHOLDERS)[number];

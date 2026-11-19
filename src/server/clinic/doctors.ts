@@ -90,6 +90,21 @@ export const doctorProfileSchema = z.object({
     .optional(),
   defaultSlotMinutes: z.coerce.number().int().min(5, "validation.slotRange").max(240, "validation.slotRange"),
   acceptsOnlineBooking: z.boolean(),
+  /** Printed on conclusions for patients' questions. */
+  contactPhone: z
+    .string()
+    .trim()
+    .max(32, "validation.tooLong")
+    .refine((v) => v === "" || /^\+?[\d\s()-]{7,32}$/.test(v), "validation.phone")
+    .transform((v) => (v === "" ? undefined : v))
+    .optional(),
+  contactTelegram: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/^https?:\/\/t\.me\//i, "").replace(/^@/, ""))
+    .refine((v) => v === "" || /^[A-Za-z0-9_]{5,32}$/.test(v), "validation.telegram")
+    .transform((v) => (v === "" ? undefined : `@${v}`))
+    .optional(),
 });
 
 /** Creates or updates the practitioner profile of a member who holds a doctor role. */
@@ -105,7 +120,7 @@ export async function saveDoctorProfile(ctx: ClinicContext, membershipId: string
     if (!m) throw new DomainError("errors.notFound");
     if (!m.roles.some((r) => (DOCTOR_ROLE_KEYS as readonly string[]).includes(r.role.key))) throw new DomainError("errors.notADoctor");
     const id = m.doctorProfile?.id ?? uuidv7();
-    if (m.doctorProfile) await tx.doctorProfile.update({ where: { id }, data: { ...input, departmentId: input.departmentId ?? null, licenseNumber: input.licenseNumber ?? null } });
+    if (m.doctorProfile) await tx.doctorProfile.update({ where: { id }, data: { ...input, departmentId: input.departmentId ?? null, licenseNumber: input.licenseNumber ?? null, contactPhone: input.contactPhone ?? null, contactTelegram: input.contactTelegram ?? null } });
     else await tx.doctorProfile.create({ data: { id, tenantId: ctx.tenant.id, membershipId: m.id, ...input } });
     await auditClinic(tx, ctx, meta, { action: m.doctorProfile ? "doctor_profile.updated" : "doctor_profile.created", entityType: "DoctorProfile", entityId: id, metadata: { specialty: input.specialty } });
     return id;

@@ -593,7 +593,11 @@
       "slotsFor": "{date} uchun boʻsh vaqtlar",
       "noSlots": "Bu kunda ish vaqti yoʻq.",
       "showSlots": "Koʻrsatish",
-      "privacyHint": "Sabab faqat toifa sifatida koʻrsatiladi. Bu yerga xodimlar salomatligi haqida maʼlumot kiritmang."
+      "privacyHint": "Sabab faqat toifa sifatida koʻrsatiladi. Bu yerga xodimlar salomatligi haqida maʼlumot kiritmang.",
+      "contactPhone": "Telefon (bemorlar uchun)",
+      "contactHint": "Xulosada chiqadi: bemor savollari uchun.",
+      "contactTelegram": "Telegram",
+      "contactTelegramHint": "Masalan @dr_farhod — xulosada chiqadi."
     },
     "mySchedule": {
       "title": "Mening jadvalim",
@@ -800,7 +804,13 @@
       "frequent": "Koʻp ishlatiladigan tashxislar",
       "suggested": "Taxminiy tashxis (tasdiqlang)",
       "calcTitle": "Tibbiy kalkulyatorlar",
-      "bmi": "BMI"
+      "bmi": "BMI",
+      "nextVisit": "Keyingi tashrif",
+      "nextVisitHint": "Bemor bilan kelishilgan sana xulosada chiqadi.",
+      "nextVisitDate": "Sana",
+      "nextVisitSaved": "Keyingi tashrif sanasi saqlandi.",
+      "rxTimes": "Qabul soatlari",
+      "rxTimesHint": "Masalan 08:00, 20:00 — xulosada jadval boʻlib chiqadi."
     },
     "record": {
       "title": "Tibbiy karta",
@@ -1594,7 +1604,9 @@
     "leadHours": "0 dan 168 gacha soat kiriting.",
     "maxActive": "1 dan 20 gacha kiriting.",
     "packageTwoServices": "Paketga kamida 2 ta xizmat tanlang.",
-    "pregnancyWeeks": "Muddat faqat homiladorlik «Ha» boʻlganda yoziladi."
+    "pregnancyWeeks": "Muddat faqat homiladorlik «Ha» boʻlganda yoziladi.",
+    "times": "Soatlarni 08:00, 20:00 koʻrinishida yozing (8 tagacha).",
+    "telegram": "Telegram nomi: 5–32 ta lotin harfi, raqam yoki _."
   },
   "errors": {
     "generic": "Nimadir notoʻgʻri ketdi. Qayta urinib koʻring.",
@@ -1719,7 +1731,13 @@
     },
     "freeVisitReasonRequired": "Bepul qayta koʻrik sababini yozing.",
     "drugRequired": "Dori nomini yozing.",
-    "noPreviousNote": "Bu bemorning oldingi imzolangan koʻrigi yoʻq."
+    "noPreviousNote": "Bu bemorning oldingi imzolangan koʻrigi yoʻq.",
+    "diagnosticValue": "Baʼzi qiymatlar notoʻgʻri (raqam yoki chegaradan tashqari).",
+    "fileTooLarge": "Fayl juda katta (10 MB gacha).",
+    "fileType": "Faqat JPG, PNG, WebP rasm yoki PDF.",
+    "noFile": "Fayl tanlanmagan.",
+    "tooManyFiles": "Bitta natijaga 20 tagacha fayl.",
+    "nextVisitPast": "Keyingi tashrif sanasi bugundan keyin boʻlishi kerak."
   },
   "email": {
     "invitation": {
@@ -2528,7 +2546,7 @@
     "printHint": "Bu qabul uchun bemor ma'lumotlari to'ldirilgan hujjatni chop eting.",
     "std": {
       "summaryName": "Qabul xulosasi",
-      "summaryBody": "Bemor: [[patient.fullName]], tug'ilgan sana [[patient.birthDate]], karta [[patient.mrn]]\nQabul sanasi: [[visit.date]]\n\nShikoyatlar:\n[[note.complaints]]\n\nKo'rik:\n[[note.examination]]\n\nXulosa:\n[[note.assessment]]\n\nTashxis:\n[[diagnoses]]\n\nTavsiyalar:\n[[note.plan]]\n\nRetseptlar:\n[[prescriptions]]\n\nShifokor: [[doctor.fullName]] ([[doctor.specialty]])\nImzo: ______________",
+      "summaryBody": "Bemor: [[patient.fullName]], tug'ilgan sana [[patient.birthDate]], karta [[patient.mrn]]\nQabul sanasi: [[visit.date]]\n\nShikoyatlar:\n[[note.complaints]]\n\nKo'rik:\n[[note.examination]]\n\nXulosa:\n[[note.assessment]]\n\nTashxis:\n[[diagnoses]]\n\nTavsiyalar:\n[[note.plan]]\n\nRetseptlar:\n[[prescriptions]]\n\nDorilarni qabul qilish jadvali:\n[[prescriptions.schedule]]\n\nKeyingi tashrif: [[visit.nextVisit]]\nSavollar uchun: [[doctor.phone]] [[doctor.telegram]]\n\nShifokor: [[doctor.fullName]] ([[doctor.specialty]])\nImzo: ______________",
       "referralName": "Yo'llanma",
       "referralBody": "Kimga: ______________________________\n\nBemor [[patient.fullName]], tug'ilgan sana [[patient.birthDate]] (karta [[patient.mrn]]), quyidagi uchun yo'llanadi: ______________________________\n\nTashxis:\n[[diagnoses]]\n\nSabab / topilmalar:\n[[note.assessment]]\n\nYo'llagan shifokor: [[doctor.fullName]] ([[doctor.specialty]]), [[clinic.name]], [[clinic.phone]]\nSana: [[today]]\nImzo: ______________",
       "certificateName": "Ma'lumotnoma",
@@ -2571,8 +2589,14 @@
       "vitals_bp": "qon bosimi (oxirgi)",
       "vitals_pulse": "puls",
       "vitals_weight": "vazn",
-      "vitals_height": "bo'y"
-    }
+      "vitals_height": "bo'y",
+      "prescriptions_schedule": "Dorilarni qabul qilish jadvali (soatlar boʻyicha)",
+      "visit_nextVisit": "Keyingi tashrif sanasi",
+      "doctor_phone": "Shifokor telefoni",
+      "doctor_telegram": "Shifokor Telegrami"
+    },
+    "qrAlt": "Bemor portali QR kodi",
+    "qrHint": "Natijalaringizni telefonda koʻrish uchun QR kodni skanerlang (bemor portali)."
   },
   "connect": {
     "title": "Qurilmani ulash",
@@ -2873,5 +2897,90 @@
     "none": "Bugun yozuv yoʻq.",
     "by": "{name}, {time}",
     "bothArms": "Bosimni ikkala qoʻlda oʻlchang"
+  },
+  "diagnostics": {
+    "cardTitle": "Diagnostika: EKG, ExoKG, UZI va boshqalar",
+    "cardHint": "Apparat yoki qogʻozdagi natijani kiriting, rasm yoki PDF biriktiring. Har biri alohida hujjat boʻlib chop etiladi (narxsiz).",
+    "none": "Hali tekshiruv natijasi yoʻq.",
+    "add": "Natija qoʻshish",
+    "kindLabel": "Tekshiruv turi",
+    "title": "Sarlavha",
+    "conclusion": "Xulosa",
+    "save": "Natijani saqlash",
+    "saved": "Natija saqlandi.",
+    "filesAfter": "Rasm va PDF'larni saqlagandan keyin natija ostidan biriktirasiz.",
+    "print": "Chop etish",
+    "attach": "Fayl biriktirish",
+    "image": "Rasm",
+    "markError": "Xato deb belgilash",
+    "markedError": "Natija xato deb belgilandi.",
+    "inError": "XATO KIRITILGAN",
+    "patient": "Bemor",
+    "date": "Sana",
+    "performedBy": "Tekshiruvni oʻtkazdi",
+    "upload": {
+      "uploaded": "Fayl biriktirildi.",
+      "fileTooLarge": "Fayl juda katta (10 MB gacha).",
+      "fileType": "Faqat JPG, PNG, WebP rasm yoki PDF.",
+      "noFile": "Fayl tanlanmagan.",
+      "tooManyFiles": "Bitta natijaga 20 tagacha fayl.",
+      "failed": "Faylni biriktirib boʻlmadi."
+    },
+    "kind": {
+      "ECG": "EKG",
+      "ECHO": "ExoKG (exokardiografiya)",
+      "ULTRASOUND": "UZI",
+      "HOLTER": "Xolter EKG monitoringi",
+      "ABPM": "Arterial bosimning sutkalik monitoringi (SMAD)",
+      "STRESS_TEST": "Veloergometriya / yuklama sinovi",
+      "OTHER": "Boshqa tekshiruv"
+    },
+    "field": {
+      "rhythm": "Ritm",
+      "heartRate": "YuUS",
+      "axis": "Elektr oʻq",
+      "pq": "PQ",
+      "qrs": "QRS",
+      "qt": "QT",
+      "st": "ST segment / T toʻlqin",
+      "lvef": "Otish fraksiyasi (EF)",
+      "lvedd": "ChQ oxirgi diastolik oʻlchami (KDOʻ)",
+      "lvesd": "ChQ oxirgi sistolik oʻlchami (KSOʻ)",
+      "ivs": "Qorinchalararo toʻsiq (QAT)",
+      "lvpw": "ChQ orqa devori",
+      "la": "Chap boʻlmacha",
+      "aorta": "Aorta ildizi",
+      "rv": "Oʻng qorincha",
+      "pasp": "Oʻpka arteriyasidagi sistolik bosim",
+      "valves": "Klapanlar",
+      "wallMotion": "Devorlar harakati",
+      "organ": "Aʼzo / soha",
+      "findings": "Topilmalar",
+      "durationHours": "Davomiyligi",
+      "meanHr": "Oʻrtacha YuUS",
+      "minHr": "Minimal YuUS",
+      "maxHr": "Maksimal YuUS",
+      "pvc": "Qorincha ekstrasistolalari",
+      "svc": "Supraventrikulyar ekstrasistolalar",
+      "pauses": "Pauzalar",
+      "daySys": "Kunduzgi oʻrtacha sistolik",
+      "dayDia": "Kunduzgi oʻrtacha diastolik",
+      "nightSys": "Tungi oʻrtacha sistolik",
+      "nightDia": "Tungi oʻrtacha diastolik",
+      "dipping": "Tungi pasayish (dipping)",
+      "protocol": "Protokol",
+      "maxWorkload": "Maksimal yuklama",
+      "maxSys": "Maksimal sistolik bosim",
+      "result": "Natija"
+    },
+    "unit": {
+      "perMin": "/daq",
+      "percent": "%",
+      "mm": "mm",
+      "mmHg": "mm sim. ust.",
+      "ms": "ms",
+      "h": "soat",
+      "W": "Vt"
+    }
   }
 }

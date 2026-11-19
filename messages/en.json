@@ -593,7 +593,11 @@
       "slotsFor": "Slots on {date}",
       "noSlots": "No working hours on this day.",
       "showSlots": "Show",
-      "privacyHint": "Absence reasons are categories only. Do not record health information about staff here."
+      "privacyHint": "Absence reasons are categories only. Do not record health information about staff here.",
+      "contactPhone": "Phone (for patients)",
+      "contactHint": "Printed on conclusions for patients' questions.",
+      "contactTelegram": "Telegram",
+      "contactTelegramHint": "E.g. @dr_farhod — printed on conclusions."
     },
     "mySchedule": {
       "title": "My schedule",
@@ -800,7 +804,13 @@
       "frequent": "Frequent diagnoses",
       "suggested": "Tentative diagnosis (confirm)",
       "calcTitle": "Clinical calculators",
-      "bmi": "BMI"
+      "bmi": "BMI",
+      "nextVisit": "Next visit",
+      "nextVisitHint": "The date agreed with the patient is printed on the conclusion.",
+      "nextVisitDate": "Date",
+      "nextVisitSaved": "Next visit date saved.",
+      "rxTimes": "Intake times",
+      "rxTimesHint": "E.g. 08:00, 20:00 — printed as a schedule on the conclusion."
     },
     "record": {
       "title": "Medical record",
@@ -1594,7 +1604,9 @@
     "leadHours": "Enter 0 to 168 hours.",
     "maxActive": "Enter 1 to 20.",
     "packageTwoServices": "Choose at least 2 services for a package.",
-    "pregnancyWeeks": "Weeks only when pregnancy is “Yes”."
+    "pregnancyWeeks": "Weeks only when pregnancy is “Yes”.",
+    "times": "Write times as 08:00, 20:00 (up to 8).",
+    "telegram": "Telegram name: 5–32 Latin letters, digits or _."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -1719,7 +1731,13 @@
     },
     "freeVisitReasonRequired": "Write the reason for the free follow-up visit.",
     "drugRequired": "Enter the drug.",
-    "noPreviousNote": "This patient has no earlier signed note."
+    "noPreviousNote": "This patient has no earlier signed note.",
+    "diagnosticValue": "Some values are invalid (not a number or out of range).",
+    "fileTooLarge": "File too large (up to 10 MB).",
+    "fileType": "Only JPG, PNG, WebP images or PDF.",
+    "noFile": "No file chosen.",
+    "tooManyFiles": "Up to 20 files per result.",
+    "nextVisitPast": "The next visit must be after today."
   },
   "email": {
     "invitation": {
@@ -2528,7 +2546,7 @@
     "printHint": "Print a document for this visit with the patient's data filled in.",
     "std": {
       "summaryName": "Visit summary",
-      "summaryBody": "Patient: [[patient.fullName]], born [[patient.birthDate]], record [[patient.mrn]]\nDate of visit: [[visit.date]]\n\nComplaints:\n[[note.complaints]]\n\nExamination:\n[[note.examination]]\n\nConclusion:\n[[note.assessment]]\n\nDiagnosis:\n[[diagnoses]]\n\nRecommendations:\n[[note.plan]]\n\nPrescriptions:\n[[prescriptions]]\n\nDoctor: [[doctor.fullName]] ([[doctor.specialty]])\nSignature: ______________",
+      "summaryBody": "Patient: [[patient.fullName]], born [[patient.birthDate]], record [[patient.mrn]]\nDate of visit: [[visit.date]]\n\nComplaints:\n[[note.complaints]]\n\nExamination:\n[[note.examination]]\n\nConclusion:\n[[note.assessment]]\n\nDiagnosis:\n[[diagnoses]]\n\nRecommendations:\n[[note.plan]]\n\nPrescriptions:\n[[prescriptions]]\n\nMedication schedule:\n[[prescriptions.schedule]]\n\nNext visit: [[visit.nextVisit]]\nQuestions: [[doctor.phone]] [[doctor.telegram]]\n\nDoctor: [[doctor.fullName]] ([[doctor.specialty]])\nSignature: ______________",
       "referralName": "Referral",
       "referralBody": "To: ______________________________\n\nPatient [[patient.fullName]], born [[patient.birthDate]] (record [[patient.mrn]]), is referred for: ______________________________\n\nDiagnosis:\n[[diagnoses]]\n\nReason / findings:\n[[note.assessment]]\n\nReferring doctor: [[doctor.fullName]] ([[doctor.specialty]]), [[clinic.name]], [[clinic.phone]]\nDate: [[today]]\nSignature: ______________",
       "certificateName": "Certificate of visit",
@@ -2571,8 +2589,14 @@
       "vitals_bp": "blood pressure (latest)",
       "vitals_pulse": "pulse",
       "vitals_weight": "weight",
-      "vitals_height": "height"
-    }
+      "vitals_height": "height",
+      "prescriptions_schedule": "Medication schedule (by time)",
+      "visit_nextVisit": "Next visit date",
+      "doctor_phone": "Doctor's phone",
+      "doctor_telegram": "Doctor's Telegram"
+    },
+    "qrAlt": "Patient portal QR code",
+    "qrHint": "Scan the QR code to see your results on your phone (patient portal)."
   },
   "connect": {
     "title": "Connect this device",
@@ -2873,5 +2897,90 @@
     "none": "No entries today.",
     "by": "{name}, {time}",
     "bothArms": "Measure blood pressure on both arms"
+  },
+  "diagnostics": {
+    "cardTitle": "Diagnostics: ECG, echo, ultrasound and more",
+    "cardHint": "Enter the result from the device or paper and attach images or PDFs. Each study prints as its own document (no prices).",
+    "none": "No study results yet.",
+    "add": "Add result",
+    "kindLabel": "Study",
+    "title": "Title",
+    "conclusion": "Conclusion",
+    "save": "Save result",
+    "saved": "Result saved.",
+    "filesAfter": "Attach images and PDFs under the result after saving it.",
+    "print": "Print",
+    "attach": "Attach file",
+    "image": "Image",
+    "markError": "Mark as entered in error",
+    "markedError": "Result marked as entered in error.",
+    "inError": "ENTERED IN ERROR",
+    "patient": "Patient",
+    "date": "Date",
+    "performedBy": "Performed by",
+    "upload": {
+      "uploaded": "File attached.",
+      "fileTooLarge": "File too large (up to 10 MB).",
+      "fileType": "Only JPG, PNG, WebP images or PDF.",
+      "noFile": "No file chosen.",
+      "tooManyFiles": "Up to 20 files per result.",
+      "failed": "Could not attach the file."
+    },
+    "kind": {
+      "ECG": "ECG",
+      "ECHO": "Echocardiography",
+      "ULTRASOUND": "Ultrasound",
+      "HOLTER": "Holter ECG monitoring",
+      "ABPM": "Ambulatory BP monitoring",
+      "STRESS_TEST": "Exercise stress test",
+      "OTHER": "Other study"
+    },
+    "field": {
+      "rhythm": "Rhythm",
+      "heartRate": "Heart rate",
+      "axis": "Electrical axis",
+      "pq": "PQ",
+      "qrs": "QRS",
+      "qt": "QT",
+      "st": "ST segment / T wave",
+      "lvef": "Ejection fraction (EF)",
+      "lvedd": "LV end-diastolic diameter",
+      "lvesd": "LV end-systolic diameter",
+      "ivs": "Interventricular septum",
+      "lvpw": "LV posterior wall",
+      "la": "Left atrium",
+      "aorta": "Aortic root",
+      "rv": "Right ventricle",
+      "pasp": "Pulmonary artery systolic pressure",
+      "valves": "Valves",
+      "wallMotion": "Wall motion",
+      "organ": "Organ / area",
+      "findings": "Findings",
+      "durationHours": "Duration",
+      "meanHr": "Mean HR",
+      "minHr": "Minimum HR",
+      "maxHr": "Maximum HR",
+      "pvc": "Ventricular ectopics",
+      "svc": "Supraventricular ectopics",
+      "pauses": "Pauses",
+      "daySys": "Daytime mean systolic",
+      "dayDia": "Daytime mean diastolic",
+      "nightSys": "Night-time mean systolic",
+      "nightDia": "Night-time mean diastolic",
+      "dipping": "Nocturnal dipping",
+      "protocol": "Protocol",
+      "maxWorkload": "Maximum workload",
+      "maxSys": "Maximum systolic BP",
+      "result": "Result"
+    },
+    "unit": {
+      "perMin": "/min",
+      "percent": "%",
+      "mm": "mm",
+      "mmHg": "mmHg",
+      "ms": "ms",
+      "h": "h",
+      "W": "W"
+    }
   }
 }

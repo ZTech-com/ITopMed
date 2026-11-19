@@ -212,7 +212,8 @@ server {
     listen 80;
     listen [::]:80;
     server_name $DOMAIN;
-    client_max_body_size 2m;
+    # Diagnostic images / PDFs up to 10 MB each.
+    client_max_body_size 12m;
 
     location / {
         proxy_pass http://127.0.0.1:$APP_PORT;
@@ -230,6 +231,13 @@ EOF
   ln -sfn "$SITE" "/etc/nginx/sites-enabled/$DOMAIN"
   if ! nginx -t; then rm -f "/etc/nginx/sites-enabled/$DOMAIN"; echo "nginx -t failed: site removed, nothing reloaded" >&2; exit 1; fi
   systemctl reload nginx
+fi
+
+# Older installs: raise the upload limit in OUR site file only (test before reload, restore on failure).
+if grep -q "client_max_body_size 2m;" "$SITE"; then
+  cp "$SITE" "$SITE.bak"
+  sed -i "s/client_max_body_size 2m;/client_max_body_size 12m;/" "$SITE"
+  if nginx -t; then systemctl reload nginx; rm -f "$SITE.bak"; else mv "$SITE.bak" "$SITE"; echo "nginx -t failed: upload limit unchanged" >&2; fi
 fi
 
 log "HTTPS certificate for $DOMAIN only"

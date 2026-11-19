@@ -13,6 +13,8 @@ import { documentForVisit } from "@/server/emr/documents";
 import { DomainError } from "@/server/errors";
 import { requestMeta } from "@/server/http";
 import { instantToLocalDate } from "@/server/scheduling/time";
+import QRCode from "qrcode";
+import { env } from "@/server/env";
 
 /**
  * Prints one of the clinic's document templates for this visit (A4) on the
@@ -86,8 +88,16 @@ export default async function VisitDocumentPage({ params }: { params: Promise<{ 
       .filter((p) => p.status === "ACTIVE")
       .map((p, i) => `${i + 1}. ${[p.drug, p.dose, p.frequency, p.route, p.durationDays ? t("clinic.rx.days", { count: p.durationDays }) : null].filter(Boolean).join(" ")}`)
       .join("\n"),
+    "prescriptions.schedule": intakeSchedule(e.prescriptions.filter((p) => p.status === "ACTIVE")),
+    "visit.nextVisit": e.nextVisitDate ? e.nextVisitDate.toISOString().slice(0, 10).split("-").reverse().join(".") : "",
+    "doctor.phone": d.doctor?.contactPhone ?? "",
+    "doctor.telegram": d.doctor?.contactTelegram ?? "",
     today: dmy(new Date()),
   });
+
+  // Patient portal: a QR code on the paper opens the clinic's portal (results after sign-in).
+  const portalUrl = ctx.modules.has("patient_portal") ? `${env().APP_URL.replace(/\/$/, "")}/p/${ctx.tenant.slug}` : null;
+  const qr = portalUrl ? await QRCode.toDataURL(portalUrl, { margin: 1, width: 132, errorCorrectionLevel: "M" }) : null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 print:max-w-none">
@@ -100,7 +110,24 @@ export default async function VisitDocumentPage({ params }: { params: Promise<{ 
         <Letterhead data={head} />
         <h1 className="text-center text-[19px] font-bold uppercase tracking-[0.04em]">{d.template.name}</h1>
         <DocumentText text={text} />
+        {qr ? (
+          <div className="flex items-center gap-3 border-t border-border pt-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qr} alt={t("templates.qrAlt")} width={88} height={88} />
+            <p className="text-[12.5px] text-text-2">{t("templates.qrHint")}</p>
+          </div>
+        ) : null}
       </article>
     </div>
   );
+}
+
+/** "08:00 — Bisoprolol 5 mg (1 tabletka)" lines, by time of day; medicines without times are not listed here. */
+function intakeSchedule(rx: { drug: string; dose: string; times: string | null }[]): string {
+  const byTime = new Map<string, string[]>();
+  for (const p of rx) for (const time of (p.times ?? "").split(",").map((x) => x.trim()).filter(Boolean)) byTime.set(time, [...(byTime.get(time) ?? []), `${p.drug} (${p.dose})`]);
+  return [...byTime.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([time, list]) => `${time} — ${list.join("; ")}`)
+    .join("\n");
 }

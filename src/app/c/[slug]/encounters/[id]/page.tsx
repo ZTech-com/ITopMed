@@ -27,10 +27,13 @@ import { bmi as bmiCalc } from "@/lib/calculators";
 import { suggestDiagnoses } from "@/lib/dx-suggest";
 import { frequentDiagnoses } from "@/server/emr/assist";
 import { getPatientHistory } from "@/server/emr/history";
-import { copyPreviousNoteAction, historyAction } from "../../../../care-actions";
+import { copyPreviousNoteAction, diagnosticAction, diagnosticErrorAction, historyAction, nextVisitAction } from "../../../../care-actions";
+import { DiagnosticFields } from "@/components/diagnostic-fields";
+import { DIAGNOSTIC_FIELDS, unitKey, type DiagnosticKindKey } from "@/lib/diagnostics";
+import { listDiagnosticResults } from "@/server/emr/diagnostics";
 
 /** The doctor's visit workspace. Every load is an audited record access. */
-export default async function EncounterPage({ params, searchParams }: { params: Promise<{ slug: string; id: string }>; searchParams: Promise<{ tooth?: string; dentition?: string }> }) {
+export default async function EncounterPage({ params, searchParams }: { params: Promise<{ slug: string; id: string }>; searchParams: Promise<{ tooth?: string; dentition?: string; files?: string }> }) {
   const { slug, id } = await params;
   const sp = await searchParams;
   const ctx = await requireClinic(slug, "emr.read");
@@ -59,14 +62,17 @@ export default async function EncounterPage({ params, searchParams }: { params: 
   ]);
   const paidToday = billing.today.get(e.patient.id);
   const meta = await requestMeta();
-  const [history, frequent, tv, tdx, tcalc, tan] = await Promise.all([
+  const [history, frequent, tv, tdx, tcalc, tan, studies, tdg] = await Promise.all([
     getPatientHistory(ctx, e.patient.id, meta),
     canWrite ? frequentDiagnoses(ctx) : Promise.resolve([]),
     getTranslations("clinic.visit"),
     getTranslations("dxSuggest"),
     getTranslations("calc"),
     getTranslations("anamnesis"),
+    listDiagnosticResults(ctx, e.patient.id, meta),
+    getTranslations("diagnostics"),
   ]);
+  const canStudy = open && ctx.permissions.has("emr.write");
   // Latest value of each measurement (today's desk / triage values included).
   const latest = new Map<string, number>();
   for (const v of [...e.vitals].sort((a, b) => +b.measuredAt - +a.measuredAt)) if (!latest.has(v.kind)) latest.set(v.kind, Number(v.value));
@@ -328,6 +334,82 @@ export default async function EncounterPage({ params, searchParams }: { params: 
         </Card>
       ) : null}
 
+      <Card id="diagnostics">
+        <CardHeader title={tdg("cardTitle")} description={tdg("cardHint")} />
+        <CardBody className="space-y-4">
+          {sp.files ? <Alert tone={sp.files === "uploaded" ? "success" : "danger"}>{tdg(`upload.${["uploaded", "fileTooLarge", "fileType", "noFile", "tooManyFiles"].includes(sp.files) ? sp.files : "failed"}` as never)}</Alert> : null}
+          {studies.length === 0 ? <p className="text-[14px] text-text-2">{tdg("none")}</p> : null}
+          <ul className="space-y-3">
+            {studies.map((r) => (
+              <li key={r.id} className={`rounded-[12px] border border-border p-3 ${r.enteredInErrorAt ? "opacity-60" : ""}`}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium">{r.title} {r.enteredInErrorAt ? <Badge tone="danger">{tdg("inError")}</Badge> : null}</p>
+                    <p className="text-[12.5px] text-text-3">{format.dateTime(r.performedAt, { dateStyle: "short", timeStyle: "short", timeZone: tz })} · {r.performedByName}</p>
+                  </div>
+                  <ButtonLink href={`/c/${s}/diagnostics/${r.id}/print`} variant="secondary" size="sm">{tdg("print")}</ButtonLink>
+                </div>
+                {DIAGNOSTIC_FIELDS[r.kind as DiagnosticKindKey].some((f) => r.data[f.key] !== undefined) ? (
+                  <p className="mt-2 text-[13.5px] text-text-2">
+                    {DIAGNOSTIC_FIELDS[r.kind as DiagnosticKindKey]
+                      .filter((f) => r.data[f.key] !== undefined)
+                      .map((f) => `${tdg(`field.${f.key}` as never)}: ${r.data[f.key]}${f.type === "number" && f.unit ? ` ${tdg(`unit.${unitKey(f.unit)}` as never)}` : ""}`)
+                      .join(" · ")}
+                  </p>
+                ) : null}
+                <p className="mt-1 whitespace-pre-wrap text-[14px]">{r.conclusion}</p>
+                {r.files.length ? (
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {r.files.map((f) => (
+                      <li key={f.id}>
+                        <a href={`/c/${s}/diagnostics/files/${f.id}`} target="_blank" rel="noopener" className="text-[13px] font-medium text-accent hover:underline">
+                          {f.mimeType === "application/pdf" ? "PDF" : tdg("image")}: {f.fileName}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {canStudy && !r.enteredInErrorAt ? (
+                  <div className="mt-2 flex flex-wrap items-end gap-3 border-t border-border pt-2">
+                    <form method="post" action={`/c/${s}/diagnostics/${r.id}/files`} encType="multipart/form-data" className="flex flex-wrap items-center gap-2">
+                      <input type="hidden" name="$back" value={`/c/${s}/encounters/${e.id}`} />
+                      <label className="text-[13px]">
+                        <span className="sr-only">{tdg("attach")}</span>
+                        <input type="file" name="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf" className="max-w-[16rem] text-[13px]" />
+                      </label>
+                      <button className={buttonClass("secondary", "sm")}>{tdg("attach")}</button>
+                    </form>
+                    {r.performedById === ctx.principal.user.id ? (
+                      <Form action={diagnosticErrorAction} className="space-y-0">
+                        <input type="hidden" name="$slug" value={s} />
+                        <input type="hidden" name="$back" value={`/c/${s}/encounters/${e.id}`} />
+                        <input type="hidden" name="resultId" value={r.id} />
+                        <button className="min-h-8 text-[13px] text-text-3 hover:text-danger">{tdg("markError")}</button>
+                      </Form>
+                    ) : null}
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+          {canStudy ? (
+            <details className="border-t border-border pt-4">
+              <summary className="cursor-pointer text-[14px] font-medium text-accent">{tdg("add")}</summary>
+              <Form action={diagnosticAction} className="mt-3">
+                <input type="hidden" name="$slug" value={s} />
+                <input type="hidden" name="$back" value={`/c/${s}/encounters/${e.id}`} />
+                <input type="hidden" name="patientId" value={e.patient.id} />
+                <input type="hidden" name="encounterId" value={e.id} />
+                <DiagnosticFields />
+                <TextAreaField name="conclusion" label={tdg("conclusion")} rows={3} />
+                <p className="text-[12.5px] text-text-3">{tdg("filesAfter")}</p>
+                <SubmitButton variant="secondary">{tdg("save")}</SubmitButton>
+              </Form>
+            </details>
+          ) : null}
+        </CardBody>
+      </Card>
+
       <Card id="prescriptions">
         <CardHeader
           title={t("clinic.rx.title")}
@@ -355,7 +437,7 @@ export default async function EncounterPage({ params, searchParams }: { params: 
                   {p.status === "CANCELLED" ? <span className="ml-2 no-underline">({t("clinic.rx.cancelledLabel")})</span> : null}
                 </p>
                 <p className="text-text-2">
-                  {[p.dose, p.frequency, p.route, p.durationDays ? t("clinic.rx.days", { count: p.durationDays }) : null].filter(Boolean).join(" · ")}
+                  {[p.dose, p.frequency, p.route, p.durationDays ? t("clinic.rx.days", { count: p.durationDays }) : null, p.times ? `⏰ ${p.times}` : null].filter(Boolean).join(" · ")}
                 </p>
                 {p.instructions ? <p className="text-text-2">{p.instructions}</p> : null}
                 {p.status === "ACTIVE" && p.prescribedById === ctx.principal.user.id && ctx.permissions.has("prescriptions.write") ? (
@@ -379,6 +461,7 @@ export default async function EncounterPage({ params, searchParams }: { params: 
                 <TextField name="frequency" label={t("clinic.rx.frequency")} placeholder={t("clinic.rx.frequencyPlaceholder")} required />
                 <TextField name="route" label={t("clinic.rx.route")} placeholder={t("clinic.rx.routePlaceholder")} optionalLabel={t("common.optional")} />
                 <TextField name="durationDays" label={t("clinic.rx.duration")} inputMode="numeric" optionalLabel={t("common.optional")} />
+                <TextField name="times" label={tv("rxTimes")} hint={tv("rxTimesHint")} placeholder="08:00, 20:00" optionalLabel={t("common.optional")} />
               </div>
               <TextAreaField name="instructions" label={t("clinic.rx.instructions")} rows={2} optionalLabel={t("common.optional")} />
               {allergies.length > 0 ? (
@@ -434,6 +517,23 @@ export default async function EncounterPage({ params, searchParams }: { params: 
           <CardHeader title={t("clinic.visit.addAllergy")} />
           <CardBody>
             <AllergyForm action={allergyAction} slug={s} patientId={e.patient.id} />
+          </CardBody>
+        </Card>
+      ) : null}
+
+      {canWrite ? (
+        <Card>
+          <CardHeader title={tv("nextVisit")} description={tv("nextVisitHint")} />
+          <CardBody>
+            <Form action={nextVisitAction} className="flex flex-wrap items-end gap-3 space-y-0">
+              <input type="hidden" name="$slug" value={s} />
+              <input type="hidden" name="encounterId" value={e.id} />
+              <label className="block">
+                <span className="mb-1 block text-[13px] font-medium">{tv("nextVisitDate")}</span>
+                <input type="date" name="nextVisitDate" defaultValue={e.nextVisitDate ? e.nextVisitDate.toISOString().slice(0, 10) : ""} className="h-10 rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 text-[14px]" />
+              </label>
+              <SubmitButton variant="secondary">{t("common.save")}</SubmitButton>
+            </Form>
           </CardBody>
         </Card>
       ) : null}

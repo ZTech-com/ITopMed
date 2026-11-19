@@ -62,6 +62,8 @@ export default async function DoctorPage({ params, searchParams }: { params: Pro
               <SelectField name="departmentId" label={t("clinic.doctors.department")} defaultValue={p?.departmentId ?? ""} options={[{ value: "", label: t("clinic.services.noDepartment") }, ...departments.map((d) => ({ value: d.id, label: d.name }))]} />
               <TextField name="licenseNumber" label={t("clinic.doctors.license")} defaultValue={p?.licenseNumber} optionalLabel={t("common.optional")} />
               <TextField name="defaultSlotMinutes" label={t("clinic.doctors.slot")} hint={t("clinic.doctors.slotHint")} inputMode="numeric" defaultValue={String(p?.defaultSlotMinutes ?? 20)} />
+              <TextField name="contactPhone" type="tel" label={t("clinic.doctors.contactPhone")} hint={t("clinic.doctors.contactHint")} defaultValue={p?.contactPhone ?? ""} optionalLabel={t("common.optional")} />
+              <TextField name="contactTelegram" label={t("clinic.doctors.contactTelegram")} hint={t("clinic.doctors.contactTelegramHint")} defaultValue={p?.contactTelegram ?? ""} optionalLabel={t("common.optional")} />
               <label className={`${choice} sm:col-span-2`}>
                 <input type="checkbox" name="acceptsOnlineBooking" defaultChecked={p?.acceptsOnlineBooking ?? false} className="size-4 accent-[var(--accent)]" />
                 {t("clinic.doctors.onlineBooking")}

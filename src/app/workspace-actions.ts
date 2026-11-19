@@ -114,6 +114,8 @@ export async function doctorProfileAction(_: FormState, fd: FormData): Promise<F
         licenseNumber: fd.get("licenseNumber") ?? "",
         defaultSlotMinutes: fd.get("defaultSlotMinutes"),
         acceptsOnlineBooking: fd.get("acceptsOnlineBooking") === "on",
+        contactPhone: String(fd.get("contactPhone") ?? ""),
+        contactTelegram: String(fd.get("contactTelegram") ?? ""),
       },
       await requestMeta(),
     );

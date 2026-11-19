@@ -22,6 +22,14 @@ export const prescriptionSchema = z.object({
   frequency: z.string().trim().min(1, "validation.required").max(120, "validation.tooLong"),
   route: optionalText(60),
   durationDays: z.union([z.literal("").transform(() => undefined), z.coerce.number().int("validation.invalid").min(1, "validation.durationDays").max(3650, "validation.durationDays")]).optional(),
+  /** Intake times printed as a schedule, e.g. "08:00, 20:00". */
+  times: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/[;\s]+/g, ",").split(",").filter(Boolean).map((x) => (/^\d:\d\d$/.test(x) ? `0${x}` : x)))
+    .refine((list) => list.length <= 8 && list.every((x) => /^([01]\d|2[0-3]):[0-5]\d$/.test(x)), "validation.times")
+    .transform((list) => (list.length ? [...new Set(list)].sort().join(", ") : undefined))
+    .optional(),
   instructions: optionalText(1000),
   allergyOverride: z.boolean().default(false),
 });
@@ -63,6 +71,7 @@ export async function addPrescription(ctx: ClinicContext, encounterId: string, r
         frequency: input.frequency,
         route: input.route ?? null,
         durationDays: input.durationDays ?? null,
+        times: input.times ?? null,
         instructions: input.instructions ?? null,
         allergyOverride: conflicts.length > 0,
       },

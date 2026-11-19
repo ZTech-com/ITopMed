@@ -8,7 +8,8 @@ import { toFormState } from "@/server/actions-util";
 import { bookAppointment, cancelAppointment, checkIn, markNoShow, registerWalkIn, rescheduleAppointment } from "@/server/appointments/appointments";
 import { isLocalDate, localToInstant } from "@/server/scheduling/time";
 import { requireClinic } from "@/server/auth/guards";
-import { addAllergy, addDiagnosis, amendNote, finishEncounter, recordVitals, saveDraft, setClinicalStatus, signNote, startVisit } from "@/server/emr/record";
+import { addAllergy, addDiagnosis, amendNote, finishEncounter, recordVitals, saveDraft, setClinicalStatus, setNextVisit, signNote, startVisit } from "@/server/emr/record";
+import { addDiagnosticResult, markDiagnosticError } from "@/server/emr/diagnostics";
 import { requestMeta } from "@/server/http";
 import { addPrescription, cancelPrescription } from "@/server/emr/prescriptions";
 import { applyNoteTemplate } from "@/server/emr/documents";
@@ -245,6 +246,7 @@ export async function prescriptionAction(_: FormState, fd: FormData): Promise<Fo
         frequency: str(fd, "frequency"),
         route: str(fd, "route"),
         durationDays: str(fd, "durationDays"),
+        times: str(fd, "times"),
         instructions: str(fd, "instructions"),
         allergyOverride: fd.get("allergyOverride") === "on",
       },
@@ -332,4 +334,41 @@ export async function nursingAction(_: FormState, fd: FormData): Promise<FormSta
   }
   revalidatePath(`/c/${slug}/nurse`);
   return ok("nursingLog.saved");
+}
+
+export async function nextVisitAction(_: FormState, fd: FormData): Promise<FormState> {
+  const { slug, ctx } = await clinicFrom(fd);
+  const encounterId = str(fd, "encounterId");
+  try {
+    await setNextVisit(ctx, encounterId, { nextVisitDate: str(fd, "nextVisitDate") }, await requestMeta());
+  } catch (e) {
+    return toFormState(e, fd);
+  }
+  revalidatePath(`/c/${slug}/encounters/${encounterId}`);
+  return ok("clinic.visit.nextVisitSaved");
+}
+
+export async function diagnosticAction(_: FormState, fd: FormData): Promise<FormState> {
+  const { slug, ctx } = await clinicFrom(fd);
+  const raw = Object.fromEntries([...fd.entries()].filter(([k, v]) => !k.startsWith("$") && typeof v === "string").map(([k, v]) => [k, String(v)]));
+  try {
+    await addDiagnosticResult(ctx, str(fd, "patientId"), raw, await requestMeta());
+  } catch (e) {
+    return toFormState(e, fd);
+  }
+  const back = str(fd, "$back");
+  if (back.startsWith(`/c/${slug}/`)) revalidatePath(back);
+  return ok("diagnostics.saved");
+}
+
+export async function diagnosticErrorAction(_: FormState, fd: FormData): Promise<FormState> {
+  const { slug, ctx } = await clinicFrom(fd);
+  try {
+    await markDiagnosticError(ctx, str(fd, "resultId"), await requestMeta());
+  } catch (e) {
+    return toFormState(e);
+  }
+  const back = str(fd, "$back");
+  if (back.startsWith(`/c/${slug}/`)) revalidatePath(back);
+  return ok("diagnostics.markedError");
 }

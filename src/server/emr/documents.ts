@@ -35,7 +35,7 @@ export async function documentForVisit(ctx: ClinicContext, encounterId: string, 
   const extra = await inClinic(ctx, async (tx) => {
     const tenant = await tx.tenant.findUniqueOrThrow({ where: { id: ctx.tenant.id }, select: { name: true, legalName: true, address: true, contactPhone: true } });
     const doctor = e.doctorProfileId
-      ? await tx.doctorProfile.findUnique({ where: { id: e.doctorProfileId }, select: { specialty: true, membership: { select: { user: { select: { fullName: true } } } } } })
+      ? await tx.doctorProfile.findUnique({ where: { id: e.doctorProfileId }, select: { specialty: true, contactPhone: true, contactTelegram: true, membership: { select: { user: { select: { fullName: true } } } } } })
       : null;
     await auditClinic(tx, ctx, meta, { action: desk ? "document.printed_at_desk" : "document.printed", entityType: "Encounter", entityId: e.id, metadata: { templateId } });
     return { tenant, doctor };

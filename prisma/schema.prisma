@@ -212,6 +212,8 @@ model Tenant {
   vitalSigns           VitalSign[]
   patientHistories     PatientHistory[]
   nursingRecords       NursingRecord[]
+  diagnosticResults    DiagnosticResult[]
+  diagnosticFiles      DiagnosticFile[]
   invoices             Invoice[]
   invoiceLines         InvoiceLine[]
   payments             Payment[]
@@ -703,6 +705,9 @@ model DoctorProfile {
   acceptsOnlineBooking Boolean   @default(false)
   /// Room / cabinet named when the patient is called (e.g. "3-xona").
   cabinet              String?
+  /// Printed on conclusions for patients' questions (optional).
+  contactPhone         String?
+  contactTelegram      String?
   archivedAt           DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
@@ -915,6 +920,7 @@ model Patient {
   vitals            VitalSign[]
   history           PatientHistory?
   nursingRecords    NursingRecord[]
+  diagnostics       DiagnosticResult[]
   prescriptions     Prescription[]
   telegramLinks     TelegramLink[]
   telegramLinkCodes TelegramLinkCode[]
@@ -1078,6 +1084,8 @@ model Encounter {
   status          EncounterStatus @default(OPEN)
   startedAt       DateTime        @default(now())
   closedAt        DateTime?
+  /// Next visit agreed with the patient (printed on the conclusion).
+  nextVisitDate   DateTime?       @db.Date
   createdAt       DateTime        @default(now())
 
   tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
@@ -1239,6 +1247,60 @@ enum SmokingStatus {
   NEVER
   FORMER
   CURRENT
+}
+
+/// Diagnostic study types. New devices / studies are added here and in src/lib/diagnostics.ts.
+enum DiagnosticKind {
+  ECG
+  ECHO
+  ULTRASOUND
+  HOLTER
+  ABPM
+  STRESS_TEST
+  OTHER
+}
+
+/// Result of a diagnostic study (entered by hand from the device or paper today; files attached).
+model DiagnosticResult {
+  id               String         @id @db.Uuid
+  tenantId         String         @db.Uuid
+  patientId        String         @db.Uuid
+  encounterId      String?        @db.Uuid
+  kind             DiagnosticKind
+  /// Short title, e.g. "UZI: buyraklar".
+  title            String
+  /// Measured values by field key (see src/lib/diagnostics.ts).
+  data             Json
+  conclusion       String
+  performedById    String         @db.Uuid
+  performedAt      DateTime       @default(now())
+  enteredInErrorAt DateTime?
+
+  tenant  Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient Patient          @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  files   DiagnosticFile[]
+
+  @@index([tenantId, patientId, performedAt])
+  @@index([encounterId])
+}
+
+/// An image or PDF attached to a diagnostic result (ultrasound pictures, ECG scans, device reports).
+model DiagnosticFile {
+  id           String   @id @db.Uuid
+  tenantId     String   @db.Uuid
+  resultId     String   @db.Uuid
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  sha256       String
+  content      Bytes
+  uploadedById String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  result DiagnosticResult @relation(fields: [resultId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, resultId])
 }
 
 enum NursingKind {
@@ -2106,6 +2168,8 @@ model Prescription {
   /// e.g. "by mouth"
   route           String?
   durationDays    Int?
+  /// Intake times, e.g. "08:00, 20:00" (printed as a schedule).
+  times           String?
   instructions    String?
   /// The prescriber confirmed despite a recorded allergy that matches the medicine.
   allergyOverride Boolean            @default(false)

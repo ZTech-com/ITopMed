@@ -283,6 +283,21 @@ export async function addDiagnosis(ctx: ClinicContext, encounterId: string, raw:
   });
 }
 
+export const nextVisitSchema = z.object({ nextVisitDate: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "validation.date")]) });
+
+/** The next visit agreed with the patient (printed on the conclusion); empty clears it. */
+export async function setNextVisit(ctx: ClinicContext, encounterId: string, raw: unknown, meta: RequestMeta) {
+  if (!ctx.permissions.has("emr.write")) throw new DomainError("errors.forbidden");
+  const { nextVisitDate } = nextVisitSchema.parse(raw);
+  if (nextVisitDate && nextVisitDate <= instantToLocalDate(new Date(), ctx.tenant.timezone)) throw new DomainError("errors.nextVisitPast");
+  const enc = await inClinic(ctx, (tx) => loadEncounter(tx, encounterId));
+  await withRecordAccess(ctx, enc.patientId, meta, { auditView: false }, async (tx, access) => {
+    await ownOpenEncounter(tx, enc.id, access.doctorProfileId);
+    await tx.encounter.update({ where: { id: enc.id }, data: { nextVisitDate: nextVisitDate ? new Date(`${nextVisitDate}T00:00:00Z`) : null }, select: { id: true } });
+    await auditClinic(tx, ctx, meta, { action: "encounter.next_visit_set", entityType: "Encounter", entityId: enc.id, metadata: { set: Boolean(nextVisitDate) } });
+  });
+}
+
 export const allergySchema = z.object({
   substance: z.string().trim().min(2, "validation.required").max(120, "validation.tooLong"),
   reaction: z
