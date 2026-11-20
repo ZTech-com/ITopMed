@@ -3,29 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a66d8">
+<meta name="theme-color" content="#eef1f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e0f12" media="(prefers-color-scheme: dark)">
 <title>ITop Med — offline</title>
 <style>
-  :root { color-scheme: light dark; --bg:#f5f5f7; --card:#fff; --text:#1d1d1f; --muted:#6e6e73; --accent:#0a66d8; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#000; --card:#1c1c1e; --text:#f5f5f7; --muted:#a1a1a6; --accent:#3b8cff; } }
+  /* "Yumshoq" tokens (same values as src/app/globals.css). */
+  :root { color-scheme: light dark; --bg:#eef1f5; --card:#ffffff; --text:#16181d; --muted:#4d5361; --solid:#16181d; --on-solid:#ffffff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0e0f12; --card:#1a1c21; --text:#f2f3f5; --muted:#b4b9c4; --solid:#f2f3f5; --on-solid:#16181d; } }
   * { box-sizing: border-box; }
   body { margin:0; min-height:100dvh; display:grid; place-items:center; padding:24px; background:var(--bg); color:var(--text);
-         font:16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; }
-  main { max-width:420px; width:100%; background:var(--card); border-radius:20px; padding:28px; box-shadow:0 4px 24px rgb(0 0 0 / .08); text-align:center; }
-  img { width:64px; height:64px; border-radius:16px; }
-  h1 { font-size:20px; margin:16px 0 8px; }
-  p { margin:6px 0; color:var(--muted); font-size:14.5px; }
-  .btn { display:inline-flex; align-items:center; text-decoration:none; margin-top:18px; height:44px; padding:0 20px; border:0; border-radius:10px; background:var(--accent); color:#fff; font-size:15px; font-weight:600; cursor:pointer; }
+         font:16px/1.5 Manrope, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width:440px; width:100%; background:var(--card); border-radius:28px; padding:32px 28px; text-align:center; }
+  .mark { display:inline-grid; place-items:center; width:56px; height:56px; border-radius:18px; background:var(--solid); color:var(--on-solid); }
+  h1 { font-size:22px; font-weight:800; letter-spacing:-0.02em; margin:18px 0 8px; text-wrap:balance; }
+  p { margin:6px 0; color:var(--muted); font-size:14.5px; text-wrap:pretty; }
+  .btn { display:inline-flex; align-items:center; text-decoration:none; margin-top:20px; min-height:48px; padding:0 24px; border:0; border-radius:999px; background:var(--solid); color:var(--on-solid); font-size:15px; font-weight:700; cursor:pointer; }
+  .btn:focus-visible { outline:3px solid rgb(31 86 199 / .45); outline-offset:2px; }
 </style>
 </head>
 <body>
 <main>
-  <img src="/icons/icon-192.png" alt="">
-  <h1>Internet aloqasi yoʻq</h1>
-  <p lang="uz-Latn">Aloqa tiklangach sahifani yangilang. Xavfsizlik uchun bemor maʼlumotlari qurilmada saqlanmaydi.</p>
-  <p lang="uz-Cyrl">Интернет алоқаси йўқ. Алоқа тикланганда саҳифани янгиланг.</p>
-  <p lang="ru">Нет подключения к интернету. Обновите страницу, когда связь восстановится. Данные пациентов не хранятся на устройстве.</p>
-  <p lang="en">You are offline. Reload when the connection is back. Patient data is never stored on this device.</p>
+  <span class="mark" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+  <h1>Server bilan aloqa yoʻq</h1>
+  <p lang="uz-Latn">Internet yoki ITop Med serveri ishlamayapti. Klinikadagi kompyuterda ITop Med yoqilganini tekshiring va sahifani yangilang. Xavfsizlik uchun bemor maʼlumotlari qurilmada saqlanmaydi.</p>
+  <p lang="uz-Cyrl">Сервер билан алоқа йўқ. ITop Med ёқилганини текширинг ва саҳифани янгиланг.</p>
+  <p lang="ru">Нет связи с сервером. Проверьте интернет или что ITop Med запущен, и обновите страницу. Данные пациентов не хранятся на устройстве.</p>
+  <p lang="en">Can’t reach the server. Check the internet or that ITop Med is running, then reload. Patient data is never stored on this device.</p>
   <a class="btn" href="/clinics">Qayta urinish · Повторить · Retry</a>
 </main>
 </body>

@@ -9,7 +9,7 @@
  * Navigations go to the network; if the network is unreachable the static
  * offline page is shown instead of the browser's error page.
  */
-const CACHE = "itm-static-v2";
+const CACHE = "itm-static-v3";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png"];
 const STATIC = /^\/(_next\/static\/|icons\/|manifest\.webmanifest$|offline\.html$)/;

@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Board } from "@/server/queue/board";
 
@@ -105,66 +106,83 @@ export function WaitingRoomBoard({ token, initial, labels }: { token: string; in
 
   const [latest, ...earlier] = board.calls;
   return (
-    <main className="min-h-dvh bg-black p-6 text-white md:p-10">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[18px] text-white/70">{board.clinic} · {board.branch}</p>
-          <h1 className="text-[34px] font-bold md:text-[44px]">{labels.title}</h1>
+    // "Yumshoq" board: soft ground, the current call on the ink panel, the queue on white cards.
+    // Colours come from the theme tokens, so a TV set to dark mode gets the dark palette.
+    <main className="min-h-dvh bg-sunken p-5 text-text md:p-8">
+      <header className="mb-5 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
+          <span aria-hidden className="grid size-14 shrink-0 place-items-center rounded-[18px] bg-accent-solid text-on-accent">
+            <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </span>
+          <div className="min-w-0">
+            <h1 className="text-balance text-[30px] font-extrabold leading-tight tracking-[-0.02em] md:text-[40px]">{labels.title}</h1>
+            <p className="text-[18px] text-text-2 md:text-[20px]">
+              {board.clinic} · {board.branch}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
-          {!online ? <span className="rounded-full bg-danger-solid text-on-accent px-4 py-2 text-[16px] font-semibold">{labels.offline}</span> : null}
+          {!online ? <span className="rounded-full bg-danger-solid px-5 py-2.5 text-[18px] font-bold text-white">{labels.offline}</span> : null}
           {board.voice && !sound ? (
-            <button type="button" onClick={enableSound} className="rounded-full bg-accent-solid text-on-accent px-5 py-3 text-[18px] font-semibold" title={labels.soundHint}>
-              🔊 {labels.soundOn}
+            <button type="button" onClick={enableSound} className="inline-flex min-h-14 items-center gap-3 rounded-full bg-accent-solid px-6 text-[20px] font-bold text-on-accent" title={labels.soundHint}>
+              <Volume2 aria-hidden className="size-6" />
+              {labels.soundOn}
             </button>
           ) : null}
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <section aria-live="polite" className="rounded-[28px] bg-white/5 p-6 md:p-8">
-          <p className="mb-4 text-[22px] uppercase tracking-wide text-white/60">{labels.now}</p>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <section aria-live="polite" aria-label={labels.now} className="flex flex-col rounded-[32px] bg-accent-solid p-7 text-on-accent md:p-10">
+          <p className="text-[22px] font-semibold opacity-80 md:text-[26px]">{labels.now}</p>
           {latest ? (
-            <div className="rounded-[24px] bg-accent-solid text-on-accent p-6 md:p-10">
-              <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
-                <span className="text-[96px] font-black leading-none tabular-nums md:text-[140px]">{latest.number ?? "—"}</span>
-                <span className="min-w-0 break-words text-[40px] font-bold md:text-[56px]">{latest.name}</span>
+            <>
+              <div className="mt-4 flex flex-wrap items-baseline gap-x-8 gap-y-2">
+                <span className="text-[120px] font-extrabold leading-[0.95] tracking-[-0.05em] tabular-nums md:text-[180px]">{latest.number ?? "—"}</span>
+                <span className="min-w-0 break-words text-[40px] font-bold md:text-[52px]">{latest.name}</span>
               </div>
-              <p className="mt-4 text-[32px] font-semibold md:text-[44px]">
-                {latest.cabinet ? `${labels.cabinet}: ${latest.cabinet}` : latest.doctor}
-                {latest.state === "inVisit" ? <span className="ml-4 rounded-full bg-white/20 px-4 py-1 align-middle text-[22px]">{labels.inVisit}</span> : null}
-              </p>
-            </div>
+              <div className="mt-auto flex flex-wrap items-center gap-4 pt-6">
+                <ArrowRight aria-hidden className="size-12 shrink-0" />
+                <span className="text-[40px] font-extrabold leading-tight md:text-[56px]">{latest.cabinet ? `${labels.cabinet}: ${latest.cabinet}` : latest.doctor}</span>
+                {latest.state === "inVisit" ? <span className="rounded-full border-2 border-current px-4 py-1 text-[22px] font-semibold">{labels.inVisit}</span> : null}
+              </div>
+            </>
           ) : (
-            <p className="text-[28px] text-white/60">{labels.empty}</p>
+            <p className="mt-4 text-[30px] opacity-80">{labels.empty}</p>
           )}
-          {earlier.length ? (
-            <ul className="mt-6 grid gap-3 md:grid-cols-2">
-              {earlier.map((c) => (
-                <li key={c.id} className="flex items-baseline justify-between gap-4 rounded-[18px] bg-white/10 px-5 py-4">
-                  <span className="text-[40px] font-bold tabular-nums">{c.number ?? "—"}</span>
-                  <span className="min-w-0 flex-1 break-words text-[24px]">{c.name}</span>
-                  <span className="text-[22px] text-white/80">{c.state === "inVisit" ? labels.inVisit : (c.cabinet ?? "")}</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
         </section>
 
-        <section className="rounded-[28px] bg-white/5 p-6 md:p-8">
-          <p className="mb-4 text-[22px] uppercase tracking-wide text-white/60">{labels.waiting}</p>
-          {board.waiting.length ? (
-            <ul className="grid grid-cols-3 gap-3">
-              {board.waiting.map((w, i) => (
-                <li key={`${w.number}-${i}`} className="rounded-[16px] bg-white/10 py-4 text-center text-[36px] font-bold tabular-nums">
-                  {w.number ?? "—"}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-[22px] text-white/60">—</p>
-          )}
-        </section>
+        <div className="flex min-w-0 flex-col gap-5">
+          {earlier.length ? (
+            <section aria-label={labels.number} className="rounded-[32px] bg-surface-2 p-5 md:p-6">
+              <ul className="space-y-3">
+                {earlier.map((c) => (
+                  <li key={c.id} className="flex items-center gap-4 rounded-[22px] bg-surface px-5 py-4">
+                    <span className="text-[44px] font-extrabold leading-none tracking-[-0.03em] tabular-nums">{c.number ?? "—"}</span>
+                    <span className="min-w-0 flex-1 break-words text-[22px] text-text-2">{c.name}</span>
+                    <span className="text-[24px] font-bold">{c.state === "inVisit" ? labels.inVisit : (c.cabinet ?? "")}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          <section aria-label={labels.waiting} className="flex-1 rounded-[32px] bg-surface-2 p-5 md:p-6">
+            <p className="mb-4 px-1 text-[22px] font-bold text-text-2">{labels.waiting}</p>
+            {board.waiting.length ? (
+              <ul className="grid grid-cols-3 gap-3">
+                {board.waiting.map((w, i) => (
+                  <li key={`${w.number}-${i}`} className="rounded-[20px] bg-surface py-4 text-center text-[40px] font-extrabold tracking-[-0.03em] tabular-nums">
+                    {w.number ?? "—"}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="px-1 text-[24px] text-text-2">—</p>
+            )}
+          </section>
+        </div>
       </div>
     </main>
   );

@@ -48,10 +48,10 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
         ))}
         <PrintButton label={t("clinic.desk.printTicket")} />
       </div>
-      <article className="space-y-3 rounded-[16px] border border-border bg-surface p-4 text-center print:border-0 print:p-0">
+      <article className="space-y-3 rounded-[24px] bg-surface p-5 text-center shadow-card print:rounded-none print:p-0 print:shadow-none">
         <Letterhead data={head} compact />
-        <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-text-2">{t("clinic.desk.ticketTitle")}</p>
-        <p className="text-[64px] font-bold leading-none tabular-nums">{a.queueNumber ?? "—"}</p>
+        <p className="text-[14px] font-bold text-text-2">{t("clinic.desk.ticketTitle")}</p>
+        <p className="text-[72px] font-extrabold leading-none tracking-[-0.04em] tabular-nums">{a.queueNumber ?? "—"}</p>
         <div className="space-y-0.5 text-[14px]">
           <p className="font-semibold">{patientName(a.patient)}</p>
           <p>

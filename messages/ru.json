@@ -1453,7 +1453,14 @@
       "freeVisitConfirm": "Приём бесплатный, хотя срок бесплатного повторного приёма прошёл",
       "freeVisitReason": "Причина",
       "freeVisitReasonHint": "Обязательно. Кто разрешил — записывается автоматически.",
-      "printDocument": "Печать: {name}"
+      "printDocument": "Печать: {name}",
+      "statPatients": "Пациентов сегодня",
+      "statDone": "завершено: {count}",
+      "statPaid": "Оплачено сегодня",
+      "statDebt": "Долг",
+      "nextUp": "Следующий в очереди",
+      "nextNone": "Сейчас в очереди никто не ждёт.",
+      "statWaiting": "Ждут в очереди"
     },
     "data": {
       "title": "Где хранятся данные",

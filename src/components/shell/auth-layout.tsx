@@ -8,15 +8,14 @@ export async function AuthLayout({ eyebrow, title, subtitle, children }: { eyebr
   const theme = await currentTheme();
   return (
     <div className="relative flex min-h-dvh flex-col bg-bg">
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(60%_60%_at_50%_0%,var(--accent-soft),transparent)]" />
       <header className="relative mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <div className="flex shrink-0 items-center gap-2.5">
-          <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-[#2b8cff] to-[#0a55c4] text-white">
+          <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-[12px] bg-accent-solid text-on-accent">
             <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
               <path d="M12 5v14M5 12h14" />
             </svg>
           </span>
-          <span className="whitespace-nowrap text-[15px] font-semibold tracking-[-0.01em]">ITop Med</span>
+          <span className="whitespace-nowrap text-[17px] font-extrabold tracking-[-0.02em]">ITop Med</span>
         </div>
         <div className="w-[300px] min-w-0 max-w-[60vw]">
           <Preferences theme={theme} compact />
@@ -26,10 +25,10 @@ export async function AuthLayout({ eyebrow, title, subtitle, children }: { eyebr
         <div className="animate-rise w-full max-w-[420px]">
           <div className="mb-7 text-center">
             {eyebrow ? <p className="mb-2 text-[13px] font-medium text-text-3">{eyebrow}</p> : null}
-            <h1 className="text-balance text-[26px] font-semibold tracking-[-0.022em]">{title}</h1>
+            <h1 className="text-balance text-[30px] font-extrabold tracking-[-0.03em]">{title}</h1>
             {subtitle ? <p className="mt-2 text-pretty text-[15px] leading-relaxed text-text-2">{subtitle}</p> : null}
           </div>
-          <div className="rounded-[20px] border border-border bg-surface p-6 shadow-card sm:p-8">{children}</div>
+          <div className="rounded-[28px] bg-surface p-6 shadow-card sm:p-8">{children}</div>
           <div className="mx-auto mt-5 max-w-[300px]">
             <InstallApp />
           </div>

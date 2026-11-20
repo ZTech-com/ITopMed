@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Manrope } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { currentTheme } from "@/components/shell/app-shell";
 import { ServiceWorker } from "@/components/service-worker";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin", "latin-ext", "cyrillic", "cyrillic-ext"], variable: "--font-inter", display: "swap" });
+const sans = Manrope({ subsets: ["latin", "latin-ext", "cyrillic", "cyrillic-ext"], variable: "--font-manrope", display: "swap" });
 
 export const metadata: Metadata = {
   title: { default: "ITop Med", template: "%s · ITop Med" },
@@ -22,15 +22,15 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f5f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    { media: "(prefers-color-scheme: light)", color: "#eef1f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e0f12" },
   ],
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [locale, theme] = await Promise.all([getLocale(), currentTheme()]);
   return (
-    <html lang={locale} data-theme={theme === "system" ? undefined : theme} className={inter.variable} suppressHydrationWarning>
+    <html lang={locale} data-theme={theme === "system" ? undefined : theme} className={sans.variable} suppressHydrationWarning>
       <body>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
         <ServiceWorker />

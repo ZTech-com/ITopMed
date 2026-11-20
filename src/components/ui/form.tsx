@@ -46,7 +46,7 @@ export function Form({
 }
 
 const inputClass =
-  "block w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-3.5 text-[15px] text-text placeholder:text-text-3 transition-[border-color,box-shadow] duration-150 focus:border-accent focus:outline-none focus:ring-4 focus:ring-[var(--focus)] aria-[invalid=true]:border-danger";
+  "block w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-4 text-[15px] text-text placeholder:text-text-3 transition-[border-color,box-shadow] duration-150 focus:border-accent focus:outline-none focus:ring-4 focus:ring-[var(--focus)] aria-[invalid=true]:border-danger";
 
 interface FieldProps {
   name: string;

@@ -58,7 +58,7 @@ Kichik kabinetga keraksiz bo'limlar ko'rinmaydi. Kerak bo'lsa keyin yoqiladi.
 Terminalda (PowerShell yoki Git Bash) ketma-ket:
 
 ```bash
-git clone https://github.com/ZTech-com/ITopMed.git
+git clone https://github.com/bunyodlomg/ITopMed.git
 ```
 ```bash
 cd ITopMed

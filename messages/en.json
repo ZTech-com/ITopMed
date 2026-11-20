@@ -1453,7 +1453,14 @@
       "freeVisitConfirm": "This visit is free although the free follow-up period is over",
       "freeVisitReason": "Reason",
       "freeVisitReasonHint": "Required. Who allowed it is recorded automatically.",
-      "printDocument": "Print: {name}"
+      "printDocument": "Print: {name}",
+      "statPatients": "Patients today",
+      "statDone": "{count} completed",
+      "statPaid": "Paid today",
+      "statDebt": "Owed",
+      "nextUp": "Next in the queue",
+      "nextNone": "Nobody is waiting in the queue right now.",
+      "statWaiting": "Waiting in the queue"
     },
     "data": {
       "title": "Where the data is kept",

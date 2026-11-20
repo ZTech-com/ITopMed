@@ -7,7 +7,7 @@ import { minorToDecimalString } from "@/lib/money";
 import { PatientPicker, formatBirthDate, patientName } from "@/components/patients";
 import { ServicePicker } from "@/components/service-picker";
 import { Form, SelectField, SubmitButton, TextField } from "@/components/ui/form";
-import { Alert, Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, PageHeader, STATUS_TONE, buttonClass } from "@/components/ui/primitives";
+import { Alert, Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, PageHeader, STATUS_TONE, Stat, buttonClass } from "@/components/ui/primitives";
 import { listDay } from "@/server/appointments/appointments";
 import { requireClinic } from "@/server/auth/guards";
 import { listOperationalBranches } from "@/server/clinic/context";
@@ -72,6 +72,13 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
   const done = sp.done ? queue.find((a) => a.id === sp.done) : undefined;
   const finished = queue.filter((a) => a.status === "COMPLETED").map((a) => a.id);
   const encounters = canPrint && finished.length ? new Map((await withAppContext(db, (tx) => tx.encounter.findMany({ where: { appointmentId: { in: finished } }, select: { id: true, appointmentId: true } }))).map((e) => [e.appointmentId!, e.id])) : new Map<string, string>();
+  // Header figures: today's queue, who is still waiting (checked in, not yet called), money.
+  const waiting = queue.filter((a) => a.status === "CHECKED_IN" && !a.calledAt);
+  const next = waiting[0];
+  let paidSum = 0n;
+  for (const m of paidToday.values()) if (m.currency === ctx.tenant.currency) paidSum += m.paidMinor;
+  let debtSum = 0n;
+  for (const a of new Set(queue.map((q) => q.patientId))) debtSum += debt.get(a) ?? 0n;
   const followUp = chosen && canBill ? await followUpStatus(ctx, chosen.id) : null;
   const doneInvoice = done ? await withAppContext(db, (tx) => tx.invoice.findUnique({ where: { appointmentId: done.id }, select: { id: true } })).catch(() => null) : null;
 
@@ -80,13 +87,20 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
       <AutoRefresh seconds={20} />
       <PageHeader title={t("clinic.desk.title")} description={t("clinic.desk.subtitle")} />
 
+      <section aria-label={t("clinic.desk.today")} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Stat label={t("clinic.desk.statPatients")} value={queue.length} hint={t("clinic.desk.statDone", { count: finished.length })} />
+        <Stat label={t("clinic.desk.statWaiting")} value={waiting.length} />
+        <Stat label={t("clinic.desk.statPaid")} value={money(paidSum, ctx.tenant.currency)} />
+        <Stat label={t("clinic.desk.statDebt")} value={money(debtSum, ctx.tenant.currency)} />
+      </section>
+
       {sp.paid && /^[d ]{1,20}$/.test(sp.paid) ? <Alert tone="success">{t("clinic.desk.debtPaid", { paid: sp.paid })}</Alert> : null}
 
       {done ? (
-        <Card className="border-accent">
+        <Card className="border-2 border-accent-solid">
           <CardBody className="flex flex-wrap items-center justify-between gap-5">
             <div className="flex min-w-0 items-center gap-5">
-              <div className="grid size-20 shrink-0 place-items-center rounded-[18px] bg-accent-solid text-on-accent">
+              <div className="grid size-20 shrink-0 place-items-center rounded-[22px] bg-accent-solid text-on-accent">
                 <span className="text-[13px] font-medium leading-none opacity-90">{t("clinic.desk.number")}</span>
                 <span className="text-[34px] font-bold leading-none tabular-nums">{done.queueNumber ?? "—"}</span>
               </div>
@@ -237,7 +251,26 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
         </Form>
         </div>
 
-        <Card className="h-fit xl:sticky xl:top-4">
+        <div className="h-fit min-w-0 space-y-4 xl:sticky xl:top-4">
+        <section aria-label={t("clinic.desk.nextUp")} className="rounded-[var(--radius-card)] bg-accent-solid p-5 text-on-accent">
+          <p className="text-[13px] font-semibold opacity-80">{t("clinic.desk.nextUp")}</p>
+          {next ? (
+            <>
+              <p className="mt-2 text-[56px] font-extrabold leading-none tracking-[-0.04em] tabular-nums">{next.queueNumber ?? "—"}</p>
+              <p className="mt-3 truncate text-[16px] font-bold">{patientName(next.patient)}</p>
+              <p className="truncate text-[13px] opacity-80">
+                {next.doctor.membership.user.fullName}
+                {next.room ? ` · ${next.room.name}` : ""}
+              </p>
+              <Link href={`${base}/desk/ticket/${next.id}?print=1`} target="_blank" className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-current px-4 text-[14px] font-semibold">
+                <Printer aria-hidden className="size-4" /> {t("clinic.desk.printTicket")}
+              </Link>
+            </>
+          ) : (
+            <p className="mt-2 text-pretty text-[14px] opacity-80">{t("clinic.desk.nextNone")}</p>
+          )}
+        </section>
+        <Card>
           <CardHeader title={t("clinic.desk.today")} description={todayIso(format, today)} />
           {queue.length === 0 ? (
             <EmptyState icon={<ConciergeBell className="size-6" />} title={t("clinic.desk.emptyToday")} />
@@ -248,7 +281,7 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
                 const owes = debt.get(a.patientId) ?? 0n;
                 return (
                   <li key={a.id} className="flex items-start gap-3 px-4 py-3">
-                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-2 text-[14px] font-bold tabular-nums">{a.queueNumber ?? "·"}</span>
+                    <span className={`grid size-10 shrink-0 place-items-center rounded-full text-[14px] font-extrabold tabular-nums ${a.status === "IN_PROGRESS" || (a.calledAt && a.status === "CHECKED_IN") ? "bg-accent-solid text-on-accent" : "bg-sunken"}`}>{a.queueNumber ?? "·"}</span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[14px] font-medium">{patientName(a.patient)}</p>
                       <p className="truncate text-[12.5px] text-text-2">{a.doctor.membership.user.fullName}</p>
@@ -285,6 +318,7 @@ export default async function DeskPage({ params, searchParams }: { params: Promi
             </ul>
           )}
         </Card>
+        </div>
       </div>
     </div>
   );

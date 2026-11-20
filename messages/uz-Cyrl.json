@@ -1453,7 +1453,14 @@
       "freeVisitConfirm": "Бепул қайта кўрик муддати ўтган бўлса ҳам, бу сафар кўрик бепул",
       "freeVisitReason": "Сабаби",
       "freeVisitReasonHint": "Мажбурий. Ким рухсат бергани автоматик ёзилади.",
-      "printDocument": "Чоп этиш: {name}"
+      "printDocument": "Чоп этиш: {name}",
+      "statPatients": "Бугун беморлар",
+      "statDone": "{count} таси якунланди",
+      "statPaid": "Бугун тўланди",
+      "statDebt": "Қарздорлик",
+      "nextUp": "Навбатда кейинги",
+      "nextNone": "Ҳозир навбатда кутаётган бемор йўқ.",
+      "statWaiting": "Навбатда кутмоқда"
     },
     "data": {
       "title": "Маълумотлар қаерда сақланади",

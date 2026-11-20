@@ -11,17 +11,17 @@ type Size = "sm" | "md" | "lg";
 
 // Labels stay on one line when there is room and wrap (never overflow) on narrow screens.
 const base =
-  "inline-flex max-w-full items-center justify-center gap-2 text-center leading-tight rounded-[var(--radius-control)] font-medium transition-[background,box-shadow,color,transform] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 select-none";
+  "inline-flex max-w-full items-center justify-center gap-2 text-center leading-tight rounded-full font-semibold transition-[background,box-shadow,color,transform] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 select-none";
 const variants: Record<Variant, string> = {
-  primary: "bg-accent-solid text-on-accent hover:bg-accent-solid-hover shadow-sm",
-  secondary: "bg-surface text-text border border-border-strong hover:bg-surface-2",
+  primary: "bg-accent-solid text-on-accent hover:bg-accent-solid-hover",
+  secondary: "bg-surface text-text border border-border hover:bg-surface-2 hover:border-border-strong",
   ghost: "text-text-2 hover:bg-sunken hover:text-text",
   danger: "bg-danger-solid text-white hover:opacity-90",
 };
 const sizes: Record<Size, string> = {
-  sm: "min-h-8 px-3 py-1 text-[13px]",
-  md: "min-h-10 px-4 py-2 text-sm",
-  lg: "min-h-12 px-5 py-2.5 text-[15px]",
+  sm: "min-h-9 px-3.5 py-1 text-[13px]",
+  md: "min-h-11 px-5 py-2 text-sm",
+  lg: "min-h-12 px-6 py-2.5 text-[15px]",
 };
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md", extra?: string) {
@@ -50,7 +50,7 @@ export function CardHeader({ title, description, action }: { title: ReactNode; d
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4 sm:px-6">
       <div className="min-w-0">
-        <h2 className="text-balance text-[15px] font-semibold tracking-[-0.01em]">{title}</h2>
+        <h2 className="text-balance text-[16px] font-bold tracking-[-0.01em]">{title}</h2>
         {description ? <p className="mt-0.5 text-pretty text-[13px] text-text-2">{description}</p> : null}
       </div>
       {action}
@@ -67,7 +67,7 @@ export function PageHeader({ title, description, action, eyebrow }: { title: Rea
     <header className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:mb-8">
       <div className="min-w-0 max-w-3xl">
         {eyebrow ? <p className="mb-1 text-[13px] font-medium text-text-3">{eyebrow}</p> : null}
-        <h1 className="text-balance text-[24px] font-semibold leading-tight tracking-[-0.022em] [overflow-wrap:anywhere] sm:text-[30px]">{title}</h1>
+        <h1 className="text-balance text-[26px] font-extrabold leading-tight tracking-[-0.03em] [overflow-wrap:anywhere] sm:text-[34px]">{title}</h1>
         {description ? <p className="mt-2 text-pretty text-[15px] leading-relaxed text-text-2">{description}</p> : null}
       </div>
       {/* Wraps on narrow screens instead of pushing the page wider than the phone. */}
@@ -139,7 +139,7 @@ export const STATUS_TONE: Record<string, Tone> = {
 
 export function Alert({ tone = "accent", title, children }: { tone?: Tone; title?: ReactNode; children?: ReactNode }) {
   return (
-    <div role={tone === "danger" ? "alert" : "status"} className={cx("rounded-[12px] px-4 py-3 text-[14px] leading-relaxed", tones[tone])}>
+    <div role={tone === "danger" ? "alert" : "status"} className={cx("rounded-[16px] px-4 py-3 text-[14px] leading-relaxed", tones[tone])}>
       {title ? <p className="font-semibold">{title}</p> : null}
       {children ? <div className={title ? "mt-0.5" : undefined}>{children}</div> : null}
     </div>
@@ -149,7 +149,7 @@ export function Alert({ tone = "accent", title, children }: { tone?: Tone; title
 export function EmptyState({ title, description, action, icon }: { title: ReactNode; description?: ReactNode; action?: ReactNode; icon?: ReactNode }) {
   return (
     <div className="flex flex-col items-center px-6 py-14 text-center">
-      {icon ? <div className="mb-4 grid size-12 place-items-center rounded-2xl bg-sunken text-text-3">{icon}</div> : null}
+      {icon ? <div className="mb-4 grid size-12 place-items-center rounded-full bg-sunken text-text-3">{icon}</div> : null}
       <p className="text-balance text-[15px] font-semibold">{title}</p>
       {description ? <p className="mt-1 max-w-sm text-pretty text-[14px] text-text-2">{description}</p> : null}
       {action ? <div className="mt-5">{action}</div> : null}
@@ -165,7 +165,7 @@ export function Stat({ label, value, hint, icon }: { label: ReactNode; value: Re
         {icon ? <span className="shrink-0 text-text-3">{icon}</span> : null}
       </div>
       {/* Size follows the card width, so large sums never leave the card; the currency may wrap below the digits. */}
-      <p className="mt-3 text-[clamp(1.125rem,12cqi,2rem)] font-semibold leading-[1.1] tracking-[-0.02em] tabular-nums [overflow-wrap:anywhere]">{value}</p>
+      <p className="mt-3 text-[clamp(1.125rem,12cqi,2rem)] font-extrabold leading-[1.1] tracking-[-0.03em] tabular-nums [overflow-wrap:anywhere]">{value}</p>
       {hint ? <p className="mt-2 text-[12px] text-text-3">{hint}</p> : null}
     </Card>
   );

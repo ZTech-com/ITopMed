@@ -23,7 +23,7 @@ export function MobileTabBar({ items, label }: { items: NavItem[]; label: string
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={cx("flex h-14 flex-col items-center justify-center gap-0.5 text-[10.5px] font-medium", active ? "text-accent" : "text-text-3")}
+                className={cx("flex h-14 flex-col items-center justify-center gap-0.5 text-[10.5px] font-medium", active ? "font-bold text-text" : "text-text-3")}
               >
                 <Icon name={item.icon} className="size-[22px]" />
                 <span className="max-w-full truncate px-1">{item.label}</span>

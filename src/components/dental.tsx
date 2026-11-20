@@ -11,7 +11,7 @@ const STYLE: Record<string, string> = {
   CARIES: "border-danger bg-danger-soft text-danger",
   FILLED: "border-accent bg-accent-soft text-accent",
   CROWN: "border-warning bg-warning-soft text-warning",
-  ROOT_CANAL: "border-accent bg-accent-solid text-white",
+  ROOT_CANAL: "border-accent bg-accent-solid text-on-accent",
   IMPLANT: "border-text-2 bg-sunken text-text",
   MISSING: "border-dashed border-border-strong bg-transparent text-text-3 line-through",
   TO_EXTRACT: "border-danger bg-danger-solid text-white",

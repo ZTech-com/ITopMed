@@ -1453,7 +1453,14 @@
       "freeVisitConfirm": "Bepul qayta koʻrik muddati oʻtgan boʻlsa ham, bu safar koʻrik bepul",
       "freeVisitReason": "Sababi",
       "freeVisitReasonHint": "Majburiy. Kim ruxsat bergani avtomatik yoziladi.",
-      "printDocument": "Chop etish: {name}"
+      "printDocument": "Chop etish: {name}",
+      "statPatients": "Bugun bemorlar",
+      "statDone": "{count} tasi yakunlandi",
+      "statPaid": "Bugun toʻlandi",
+      "statDebt": "Qarzdorlik",
+      "nextUp": "Navbatda keyingi",
+      "nextNone": "Hozir navbatda kutayotgan bemor yoʻq.",
+      "statWaiting": "Navbatda kutmoqda"
     },
     "data": {
       "title": "Maʼlumotlar qayerda saqlanadi",

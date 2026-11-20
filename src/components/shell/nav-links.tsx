@@ -26,8 +26,8 @@ export function NavLinks({ items, label }: { items: NavItem[]; label: string }) 
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cx(
-                  "flex h-10 items-center gap-3 rounded-[10px] px-3 text-[14px] font-medium transition-colors duration-150",
-                  active ? "bg-accent-soft text-accent" : "text-text-2 hover:bg-sunken hover:text-text",
+                  "flex h-11 items-center gap-3 rounded-full px-4 text-[14px] font-medium transition-colors duration-150",
+                  active ? "bg-accent-solid font-semibold text-on-accent" : "text-text-2 hover:bg-surface hover:text-text",
                 )}
               >
                 <Icon name={item.icon} className="size-[18px] shrink-0" />
