@@ -38,7 +38,8 @@
     "package:win": "tsx scripts/package/build-win.ts",
     "package:linux": "tsx scripts/package/build-linux.ts",
     "ui:audit": "tsx scripts/ui-audit.ts",
-    "e2e:walkthrough": "tsx scripts/e2e-walkthrough.ts"
+    "e2e:walkthrough": "tsx scripts/e2e-walkthrough.ts",
+    "telegram:setup": "tsx --conditions=react-server scripts/telegram-setup.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",

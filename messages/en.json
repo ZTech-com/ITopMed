@@ -3002,5 +3002,13 @@
     "high": "high",
     "low": "low",
     "abnormalList": "Outside the normal range: {list}"
+  },
+  "bot": {
+    "welcome": "Hello! This is ITop Med, the management system for clinics.\n\nTap the button below to open it.",
+    "help": "ITop Med bot\n\n/start — start\n/help — help\n\nTap the button below to open ITop Med.",
+    "open": "Open ITop Med",
+    "menu": "ITop Med",
+    "cmdStart": "Start",
+    "cmdHelp": "Help"
   }
 }

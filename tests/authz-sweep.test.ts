@@ -82,7 +82,8 @@ describe("authorization sweep", () => {
     const routes = files.filter((f) => f.endsWith(`${path.sep}route.ts`)).map(rel);
     // Local installation only (LOCAL_MODE=1): the PUBLIC half of the local CA, so devices can trust HTTPS.
     // api/tv: the waiting-room screen's data; its secret link is the credential (see src/server/queue/board.ts).
-    const PUBLIC_ROUTES = new Set(["api/health/route.ts", "(public)/connect/ca.crt/route.ts", "(public)/connect/ios/route.ts", "api/tv/[token]/route.ts"]);
+    // api/telegram/webhook: called by Telegram; the secret header derived from the bot token is the credential.
+    const PUBLIC_ROUTES = new Set(["api/health/route.ts", "(public)/connect/ca.crt/route.ts", "(public)/connect/ios/route.ts", "api/tv/[token]/route.ts", "api/telegram/webhook/route.ts"]);
     const missing = routes.filter((r) => !PUBLIC_ROUTES.has(r) && !GUARDS.test(fs.readFileSync(path.join(ROOT, r), "utf8")));
     expect(missing).toEqual([]);
   });

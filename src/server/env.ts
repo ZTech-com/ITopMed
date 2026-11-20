@@ -39,6 +39,14 @@ const schema = z.object({
    * Default: api in production, dev-outbox otherwise.
    */
   TELEGRAM_TRANSPORT: z.enum(["api", "dev-outbox", "none"]).optional(),
+  /**
+   * Token of the CENTRAL ITop Med bot (Login Widget, Mini App, /start). Not the
+   * clinics' own bots (those are stored encrypted per clinic). Unset = central bot off.
+   */
+  TELEGRAM_BOT_TOKEN: z
+    .string()
+    .regex(/^\d{5,15}:[A-Za-z0-9_-]{30,64}$/, "must be a Telegram bot token")
+    .optional(),
 });
 
 export type Env = z.infer<typeof schema>;

@@ -3002,5 +3002,13 @@
     "high": "yuqori",
     "low": "past",
     "abnormalList": "Meʼyordan tashqari: {list}"
+  },
+  "bot": {
+    "welcome": "Assalomu alaykum! Bu — ITop Med, klinikalar uchun boshqaruv tizimi.\n\nTizimni ochish uchun quyidagi tugmani bosing.",
+    "help": "ITop Med boti\n\n/start — boshlash\n/help — yordam\n\nTizimni ochish uchun quyidagi tugmani bosing.",
+    "open": "ITop Medni ochish",
+    "menu": "ITop Med",
+    "cmdStart": "Boshlash",
+    "cmdHelp": "Yordam"
   }
 }
