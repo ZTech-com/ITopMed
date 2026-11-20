@@ -91,7 +91,7 @@ async function main() {
   const version = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version as string;
   fs.writeFileSync(path.join(OUT, "package.json"), JSON.stringify({ name: "itopmed-server", private: true, version, dependencies: deps }, null, 2));
   // The installer travels with the release, so a deploy always runs the matching version.
-  for (const f of ["server-install.sh", "itopmed-admin.sh", "itopmed-clinic.sh"]) fs.copyFileSync(path.join(ROOT, "scripts", "deploy", f), path.join(OUT, f));
+  for (const f of ["server-install.sh", "itopmed-admin.sh", "itopmed-clinic.sh", "itopmed-deploy.sh"]) fs.copyFileSync(path.join(ROOT, "scripts", "deploy", f), path.join(OUT, f));
   // Ready-made clinic specs for `itopmed-clinic` (no patient data, only names and prices).
   fs.cpSync(path.join(ROOT, "scripts", "deploy", "clinics"), path.join(OUT, "clinics"), { recursive: true });
   fs.writeFileSync(path.join(OUT, "RELEASE"), `${new Date().toISOString()} ${execFileSync("git", ["rev-parse", "--short", "HEAD"], { cwd: ROOT }).toString().trim()}\n`);
