@@ -137,7 +137,7 @@ export async function clinicBotAction(_: FormState, fd: FormData): Promise<FormS
   const tenantId = String(fd.get("tenantId") ?? "");
   try {
     if (fd.get("op") === "disconnect") await disconnectClinicBot(actor, tenantId, await requestMeta());
-    else await connectClinicBot(actor, tenantId, { token: fd.get("token"), loginSecret: fd.get("loginSecret") ?? "" }, await requestMeta());
+    else await connectClinicBot(actor, tenantId, { token: fd.get("token") }, await requestMeta());
   } catch (e) {
     return toFormState(e);
   }

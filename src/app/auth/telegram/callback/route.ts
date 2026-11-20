@@ -1,46 +1,39 @@
 import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
 import { cookies } from "next/headers";
+import { safeNext } from "@/lib/safe-next";
 import { setAdminSessionCookie, setClinicSessionCookie, takeTelegramFlowCookie } from "@/server/auth/cookies";
-import { finishTelegramFlow, telegramReturnPath } from "@/server/auth/telegram-login";
-import { openFlow } from "@/server/auth/telegram-oidc";
+import { openFlow, splitCallbackQuery, type TelegramLoginKind, type TelegramLoginMode } from "@/server/auth/telegram-auth";
+import { completeTelegramWidget, telegramReturnPath } from "@/server/auth/telegram-login";
 import { requestMeta } from "@/server/http";
 
 /**
- * Telegram sends the browser back here with ?code&state. Public by nature (the
- * person is signing in): the encrypted flow cookie set by /auth/telegram/start
- * must match `state`, the code is exchanged with our client secret and the
- * id_token is verified against Telegram's keys before anything is trusted.
+ * Telegram's Login Widget sends our own page here with its signed fields
+ * (id, auth_date, hash, ...). Public by nature (the person is signing in): the
+ * fields are verified with the bot's token before anything is trusted; linking
+ * additionally needs the encrypted flow cookie set by /auth/telegram/start.
+ * Always answers with a redirect, so the signed fields leave the address bar.
  */
 export const dynamic = "force-dynamic";
 
-/**
- * The last hop is a page on our own origin rather than a 30x: a redirect chain
- * that began on oauth.telegram.org is cross-site, and browsers then withhold
- * SameSite=Strict cookies (the console session) on the next page.
- */
-function land(path: string) {
+function go(path: string) {
   const safe = path.startsWith("/") && !path.startsWith("//") ? path : "/";
-  const href = safe.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-  return new Response(
-    `<!doctype html><html><head><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=${href}"><title>ITop Med</title></head><body><p><a href="${href}">ITop Med</a></p></body></html>`,
-    { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } },
-  );
+  return new Response(null, { status: 303, headers: { Location: safe, "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });
 }
 
 export async function GET(request: Request) {
-  const q = new URL(request.url).searchParams;
-  const flow = openFlow(await takeTelegramFlowCookie(), q.get("state"));
-  if (!flow) return land("/login?tg=failed");
-  const code = q.get("code");
-  // The person pressed "Cancel" on Telegram's page (or Telegram reported an error).
-  if (!code) return land(telegramReturnPath(flow.kind, flow.mode, "cancelled", flow.next, flow.slug));
+  const { own, telegram } = splitCallbackQuery(new URL(request.url).searchParams);
+  const kind: TelegramLoginKind = own.kind === "admin" ? "admin" : "clinic";
+  const mode: TelegramLoginMode = own.mode === "link" ? "link" : "login";
+  const slug = kind === "clinic" && own.slug && /^[a-z0-9-]{3,48}$/.test(own.slug) ? own.slug : undefined;
+  const next = kind === "clinic" && mode === "login" ? (safeNext(own.next ?? null) ?? undefined) : undefined;
+  const flow = mode === "link" ? openFlow(await takeTelegramFlowCookie(), own.state ?? null) : null;
 
-  const r = await finishTelegramFlow(flow, code, await requestMeta());
-  if (r.outcome === "error") return land(telegramReturnPath(r.kind, r.mode, r.code, r.next, r.slug));
-  if (r.outcome === "linked") return land(telegramReturnPath(r.kind, "link", "linked"));
+  const r = await completeTelegramWidget({ kind, mode, slug, next, fields: telegram, flow }, await requestMeta());
+  if (r.outcome === "error") return go(telegramReturnPath(r.kind, r.mode, r.code, r.next, r.slug));
+  if (r.outcome === "linked") return go(telegramReturnPath(r.kind, "link", "linked"));
 
   if (r.kind === "admin") await setAdminSessionCookie(r.token);
   else await setClinicSessionCookie(r.token);
   if (isLocale(r.locale)) (await cookies()).set(LOCALE_COOKIE, r.locale, { path: "/", maxAge: 31536000, sameSite: "lax" });
-  return land(telegramReturnPath(r.kind, "login", "ok", r.next));
+  return go(telegramReturnPath(r.kind, "login", "ok", r.next));
 }

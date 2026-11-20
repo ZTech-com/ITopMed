@@ -9,7 +9,7 @@ import { clinicBot } from "../telegram/clinic-bot";
 import { loginClinicWithTelegram, resolveClinic, validateClinicSession } from "./clinic-auth";
 import { homeForRoles } from "./landing";
 import { loginPlatformWithTelegram, type RequestMeta } from "./platform-auth";
-import { parseTelegramId } from "./telegram-oidc";
+import { parseTelegramId } from "./telegram-auth";
 
 /**
  * Mini Apps of the clinics' bots (/tg/<slug>) and of the central ITop Med bot (/tg).

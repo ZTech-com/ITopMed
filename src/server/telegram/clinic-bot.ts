@@ -4,22 +4,20 @@ import { recordAudit } from "../audit";
 import type { PlatformPrincipal, RequestMeta } from "../auth/platform-auth";
 import { platformCan } from "../authz/platform";
 import { withAppContext, withPlatform } from "../db";
-import { env, telegramTransport } from "../env";
+import { telegramTransport } from "../env";
 import { DomainError } from "../errors";
 import { api, botTokenSchema, ctxKey, miniAppUrl } from "../notifications/telegram";
 import { decryptField, encryptField, hashIp } from "../security/crypto";
 import { assertTenantInScope } from "../tenancy/provisioning";
-import type { TelegramConfig } from "../auth/telegram-oidc";
 
 /**
  * Each clinic has its OWN Telegram bot (created by ITop Med with @BotFather and
  * connected by the SuperAdmin in the console). That one bot does everything for
  * the clinic: patient notifications, the Mini App (/tg/<slug>) and website
- * sign-in (/login/<slug>, Login Widget client secret). The platform role never
+ * sign-in (/login/<slug>, Login Widget: only @BotFather > /setdomain is needed).
+ * The platform role never
  * reads the token back: it hands it over encrypted (platform_set_clinic_bot).
  */
-
-const loginKey = (tenantId: string) => `telegram-login:${tenantId}`;
 
 export interface ClinicBot {
   tenantId: string;
@@ -27,8 +25,6 @@ export interface ClinicBot {
   name: string;
   username: string;
   token: string;
-  /** Login Widget client secret; null = no "Sign in with Telegram" for this clinic. */
-  loginSecret: string | null;
 }
 
 const SLUG = /^[a-z0-9-]{3,48}$/;
@@ -37,8 +33,8 @@ const SLUG = /^[a-z0-9-]{3,48}$/;
 export async function clinicBot(slug: string): Promise<ClinicBot | null> {
   if (!SLUG.test(slug)) return null;
   const rows = await withAppContext({}, (tx) =>
-    tx.$queryRaw<{ tenantId: string; slug: string; name: string; username: string; tokenEnc: string; loginSecretEnc: string | null }[]>`
-      SELECT "tenantId", slug, name, username, "tokenEnc", "loginSecretEnc" FROM app_clinic_bot(${slug})`,
+    tx.$queryRaw<{ tenantId: string; slug: string; name: string; username: string; tokenEnc: string }[]>`
+      SELECT "tenantId", slug, name, username, "tokenEnc" FROM app_clinic_bot(${slug})`,
   );
   const r = rows[0];
   if (!r) return null;
@@ -48,7 +44,6 @@ export async function clinicBot(slug: string): Promise<ClinicBot | null> {
     name: r.name,
     username: r.username,
     token: decryptField(r.tokenEnc, ctxKey(r.tenantId)),
-    loginSecret: r.loginSecretEnc ? decryptField(r.loginSecretEnc, loginKey(r.tenantId)) : null,
   };
 }
 
@@ -59,18 +54,9 @@ export async function clinicPublic(slug: string): Promise<{ tenantId: string; sl
   return rows[0] ?? null;
 }
 
-/** OpenID Connect client of the clinic's bot (Client ID = the bot's id). */
-export function clinicLoginConfig(bot: ClinicBot): TelegramConfig | null {
-  if (!bot.loginSecret) return null;
-  return { clientId: bot.token.split(":")[0]!, clientSecret: bot.loginSecret, redirectUri: new URL("/auth/telegram/callback", env().APP_URL).toString() };
-}
-
 // ───────────── Console: connect / disconnect ─────────────
 
-export const connectBotSchema = z.object({
-  token: botTokenSchema,
-  loginSecret: z.union([z.literal("").transform(() => undefined), z.string().trim().min(8, "validation.telegramSecret").max(256)]).optional(),
-});
+export const connectBotSchema = z.object({ token: botTokenSchema });
 
 function authorize(actor: PlatformPrincipal) {
   if (!platformCan(actor.user.role, "tenants.manage")) throw new DomainError("errors.forbidden");
@@ -103,8 +89,8 @@ export async function connectClinicBot(actor: PlatformPrincipal, tenantId: strin
   }
   await withPlatform(async (tx) => {
     const tokenEnc = encryptField(input.token, ctxKey(tenant.id));
-    const secretEnc = input.loginSecret ? encryptField(input.loginSecret, loginKey(tenant.id)) : null;
-    await tx.$executeRaw`SELECT platform_set_clinic_bot(${tenant.id}::uuid, ${username}, ${tokenEnc}, ${secretEnc})`;
+    // The last argument (an OIDC client secret) is no longer used: the Login Widget needs only the token.
+    await tx.$executeRaw`SELECT platform_set_clinic_bot(${tenant.id}::uuid, ${username}, ${tokenEnc}, NULL)`;
     await recordAudit(tx, {
       tenantId: tenant.id,
       actorType: "PLATFORM_USER",
@@ -114,7 +100,7 @@ export async function connectClinicBot(actor: PlatformPrincipal, tenantId: strin
       entityId: tenant.id,
       ipHash: hashIp(meta.ip),
       userAgent: meta.userAgent,
-      metadata: { username, login: Boolean(secretEnc) },
+      metadata: { username },
     });
   });
   return { username };
@@ -132,8 +118,8 @@ export async function disconnectClinicBot(actor: PlatformPrincipal, tenantId: st
 export async function clinicBotStatus(actor: PlatformPrincipal, tenantId: string) {
   return withPlatform(async (tx) => {
     await assertTenantInScope(tx, actor, tenantId);
-    const rows = await tx.$queryRaw<{ username: string; enabled: boolean; connectedAt: Date; loginEnabled: boolean }[]>`
-      SELECT username, enabled, "connectedAt", "loginEnabled" FROM platform_clinic_bot_status(${tenantId}::uuid)`;
+    const rows = await tx.$queryRaw<{ username: string; enabled: boolean; connectedAt: Date }[]>`
+      SELECT username, enabled, "connectedAt" FROM platform_clinic_bot_status(${tenantId}::uuid)`;
     return rows[0] ?? null;
   });
 }

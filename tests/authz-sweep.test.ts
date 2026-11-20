@@ -84,7 +84,7 @@ describe("authorization sweep", () => {
     // Local installation only (LOCAL_MODE=1): the PUBLIC half of the local CA, so devices can trust HTTPS.
     // api/tv: the waiting-room screen's data; its secret link is the credential (see src/server/queue/board.ts).
     // api/telegram/webhook: called by Telegram; the secret header derived from the bot token is the credential.
-    // auth/telegram/callback: Telegram Login returns here; the encrypted flow cookie + state and the verified id_token authenticate.
+    // auth/telegram/callback: the Login Widget returns here; its fields signed with the bot token authenticate (linking also needs the encrypted flow cookie).
     // auth/telegram/webapp: Mini App sign-in; Telegram's initData (HMAC with the bot token) authenticates, same-origin only.
     const PUBLIC_ROUTES = new Set(["api/health/route.ts", "(public)/connect/ca.crt/route.ts", "(public)/connect/ios/route.ts", "api/tv/[token]/route.ts", "api/telegram/webhook/route.ts", "auth/telegram/callback/route.ts", "auth/telegram/webapp/route.ts"]);
     const missing = routes.filter((r) => !PUBLIC_ROUTES.has(r) && !GUARDS.test(fs.readFileSync(path.join(ROOT, r), "utf8")));

@@ -71,8 +71,8 @@ export async function clearClinicCookie() {
 }
 
 /**
- * Telegram Login flow state (encrypted, 10 minutes). SameSite=Lax so it comes
- * back on the top-level redirect from oauth.telegram.org to our callback.
+ * Telegram LINK flow state (encrypted, 10 minutes): who is linking, set by
+ * /auth/telegram/start and taken by /auth/telegram/callback.
  */
 export const telegramFlowCookieName = () => (isProduction() ? "__Host-itm_tg" : "itm_tg");
 

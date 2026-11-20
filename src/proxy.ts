@@ -49,6 +49,8 @@ export function proxy(request: NextRequest) {
     "img-src 'self' blob: data:",
     "font-src 'self'",
     "connect-src 'self'",
+    // Telegram's "Log in with Telegram" button is an iframe from oauth.telegram.org (src/components/telegram-widget.tsx).
+    "frame-src https://oauth.telegram.org",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

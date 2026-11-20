@@ -206,7 +206,7 @@ Boshqa yo'nalishlar uchun ham tayyor xizmatlar to'plami bor: pediatriya, ginekol
 Har bir xodim **login va parol** bilan kiradi (masalan, `dr.karimov`). Login hisob yaratilganda tanlanadi. 2026-11-19 gacha yaratilgan hisoblarda login — emailning o'zi. Ikki bosqichli tekshiruv (Google Authenticator) yo'q.
 
 **Telegram orqali kirish** (ixtiyoriy, faqat internetdagi serverda):
-1. `.env` ga `TELEGRAM_LOGIN_CLIENT_ID` va `TELEGRAM_LOGIN_CLIENT_SECRET` yoziladi (@BotFather → bot → Login Widget; Allowed URL: `https://<domen>/auth/telegram/callback`).
+1. Bot tokenidan boshqa hech narsa kerak emas. @BotFather → `/setdomain` → botni tanlang → domenni yozing: klinika boti uchun klinika manzili (masalan `itopmed.itoppos.uz`), markaziy bot uchun konsol manzili (`admin.itoppos.uz`).
 2. Xodim avval login va parol bilan kiradi, **Hisob xavfsizligi** sahifasida **«Telegramni ulash»** ni bosadi.
 3. Keyin kirish sahifasidagi **«Telegram orqali kirish»** tugmasi bilan parolsiz kiradi.
 

@@ -136,7 +136,7 @@ describe("Telegram notifications", () => {
     await expect(connectClinicBot(await platformActor("SUPPORT"), s.a.tenantId, { token: FAKE_TOKEN }, META)).rejects.toThrow("errors.forbidden");
     const { username } = await connectClinicBot(admin, s.a.tenantId, { token: FAKE_TOKEN }, META); // dev-outbox transport in tests: SIMULATED
     expect(username).toBe("itopmed_simulated_bot");
-    expect(await clinicBotStatus(admin, s.a.tenantId)).toMatchObject({ username, enabled: true, loginEnabled: false });
+    expect(await clinicBotStatus(admin, s.a.tenantId)).toMatchObject({ username, enabled: true });
     // The token is stored encrypted; the platform role hands it over but cannot read the bot table at all.
     const owner = new pg.Client({ connectionString: process.env.MIGRATION_DATABASE_URL });
     await owner.connect();

@@ -4,7 +4,7 @@ Multi-tenant healthcare SaaS (Uzbekistan first). ONE codebase, strict tenant iso
 Read `docs/ARCHITECTURE.md` and `docs/SECURITY-AND-PRIVACY.md` before changing anything security-relevant.
 
 ## Stack
-Next.js 16 App Router · React 19 · TypeScript strict · Tailwind v4 · PostgreSQL + Prisma 7 (driver adapter `@prisma/adapter-pg`) · next-intl 4 · Zod 4 · argon2id (`@node-rs/argon2`) · Log In with Telegram (OIDC, `src/server/auth/telegram-oidc.ts`) · Vitest.
+Next.js 16 App Router · React 19 · TypeScript strict · Tailwind v4 · PostgreSQL + Prisma 7 (driver adapter `@prisma/adapter-pg`) · next-intl 4 · Zod 4 · argon2id (`@node-rs/argon2`) · Log In with Telegram (Login Widget, `src/server/auth/telegram-auth.ts`) · Vitest.
 
 ## Commands
 | Task | Command |

@@ -1,9 +1,8 @@
 import { getTranslations } from "next-intl/server";
-import { TelegramLinkLink, TelegramNotice } from "@/components/telegram-login";
+import { TelegramLinkLink, TelegramNotice, telegramLoginAvailable } from "@/components/telegram-login";
 import { Form, SubmitButton } from "@/components/ui/form";
 import { Badge, Card, CardBody, CardHeader, DescriptionList, PageHeader } from "@/components/ui/primitives";
 import { requirePlatform } from "@/server/auth/guards";
-import { telegramLogin } from "@/server/env";
 import { adminUnlinkTelegramAction } from "../../actions";
 
 /** The employee's own sign-in settings: login name and the optional Telegram sign-in. */
@@ -11,7 +10,7 @@ export default async function AdminSecurityPage({ searchParams }: { searchParams
   const p = await requirePlatform();
   const sp = await searchParams;
   const t = await getTranslations("security");
-  const telegramOn = Boolean(telegramLogin());
+  const telegramOn = await telegramLoginAvailable("admin");
   return (
     <div className="max-w-3xl">
       <PageHeader title={t("title")} description={t("subtitle")} />

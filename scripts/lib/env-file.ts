@@ -33,9 +33,6 @@ export function createEnvFile(target: string, opts: { port?: number } = {}): boo
     `AUDIT_HMAC_KEY=${key()}`,
     `BACKUP_ENCRYPTION_KEY=${key()}`,
     "EMAIL_FROM=ITop Med <no-reply@itopmed.local>",
-    "# Log In with Telegram needs a public HTTPS domain; a clinic network cannot use it. Leave empty.",
-    "TELEGRAM_LOGIN_CLIENT_ID=",
-    "TELEGRAM_LOGIN_CLIENT_SECRET=",
     "# Real email: SMTP_URL=smtps://login:password@smtp.example.uz:465",
     "",
   ];
