@@ -4,7 +4,7 @@ import { widgetBot } from "@/server/auth/telegram-login";
 import { Alert, buttonClass } from "./ui/primitives";
 import { TelegramWidget } from "./telegram-widget";
 
-/** Is "Log in with Telegram" available: the clinic's own bot, or the central bot for the console. */
+/** Is "Log in with Telegram" available: the clinic's own bot (slug), the central bot (/login), or the console's bot. */
 export async function telegramLoginAvailable(kind: "clinic" | "admin", slug?: string | null): Promise<boolean> {
   return Boolean(await widgetBot(kind, slug));
 }
@@ -15,7 +15,8 @@ const widgetLang = (locale: string) => (locale.startsWith("uz") ? "uz" : locale 
 /**
  * "Log in with Telegram" — Telegram's own button (Login Widget), the MAIN way
  * to sign in on the website; login and password follow below it. Clinic staff
- * use their clinic's own bot (/login/<slug>), console staff the central bot.
+ * use their clinic's own bot (/login/<slug>) or the central bot (/login),
+ * console staff the console's bot.
  * Hidden when no bot is set up; then the login form is the only way.
  */
 export async function TelegramLoginButton({ kind, next, slug }: { kind: "clinic" | "admin"; next?: string | null; slug?: string | null }) {
@@ -46,16 +47,19 @@ export async function TelegramLinkWidget({ kind, slug, state }: { kind: "clinic"
 
 /**
  * Link control for the person's own security page. The Telegram user id is the
- * same in every bot, so clinic staff link through any of their clinics' bots.
+ * same in every bot, so clinic staff link through the central bot, or else
+ * through any of their clinics' own bots.
  */
 export async function TelegramLinkLink({ kind, slugs = [] }: { kind: "clinic" | "admin"; slugs?: string[] }) {
   let slug: string | null = null;
   if (kind === "clinic") {
-    for (const s of slugs) if (await widgetBot("clinic", s)) {
-      slug = s;
-      break;
+    if (!(await widgetBot("clinic"))) {
+      for (const s of slugs) if (await widgetBot("clinic", s)) {
+        slug = s;
+        break;
+      }
+      if (!slug) return null;
     }
-    if (!slug) return null;
   } else if (!(await widgetBot("admin"))) return null;
   const t = await getTranslations("security");
   return (

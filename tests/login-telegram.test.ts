@@ -97,7 +97,7 @@ describe("sign-in with Telegram", () => {
     // Simulated Telegram transport (tests, local installations): no widget anywhere.
     expect(await widgetBot("admin")).toBeNull();
     expect(await widgetBot("clinic", "no-such-clinic")).toBeNull();
-    expect(await completeTelegramWidget({ kind: "clinic", mode: "login", fields: widgetFields(1, CENTRAL) }, META)).toMatchObject({ outcome: "error", code: "disabled" });
+    expect(await completeTelegramWidget({ kind: "clinic", mode: "login", slug: "no-such-clinic", fields: widgetFields(1, CENTRAL) }, META)).toMatchObject({ outcome: "error", code: "disabled" });
     const o = await clinicWithBot();
     expect(await link(linkFlow("clinic", { userId: "x", sessionId: "y" }, o.slug), widgetFields(newTgId(), o.token))).toMatchObject({ outcome: "error", code: "failed" });
     expect(await completeTelegramWidget({ kind: "clinic", mode: "link", slug: o.slug, fields: widgetFields(newTgId(), o.token), flow: null }, META)).toMatchObject({
@@ -163,6 +163,42 @@ describe("sign-in with Telegram", () => {
     const m = (await listStaff(o.ctx)).members.find((x) => x.user.username === username)!;
     await setMemberPassword(o.ctx, m.id, { password: "Synthetic-New-2026x" }, META);
     expect(await login(o.slug, widgetFields(tg, o.token))).toMatchObject({ outcome: "error", code: "not_linked" });
+  });
+
+  it("the central bot (/login) signs in the staff of any clinic and links them", async () => {
+    const o = await clinicWithBot();
+    const tg = newTgId();
+    const central = (fields: Record<string, string>) => completeTelegramWidget({ kind: "clinic", mode: "login", fields }, META);
+    expect(await central(widgetFields(tg, CENTRAL))).toMatchObject({ outcome: "error", code: "not_linked" });
+    // Linking through the central bot (no clinic in the flow).
+    const owner = { userId: o.ctx.principal.user.id, sessionId: o.ctx.principal.sessionId };
+    expect(await link(linkFlow("clinic", owner), widgetFields(tg, CENTRAL))).toEqual({ outcome: "linked", kind: "clinic" });
+    const r = await central(widgetFields(tg, CENTRAL));
+    expect(r).toMatchObject({ outcome: "signed_in", kind: "clinic", next: `/c/${o.slug}` });
+    // The same Telegram account also works with the clinic's own bot (Telegram ids are the same in every bot).
+    expect((await login(o.slug, widgetFields(tg, o.token))).outcome).toBe("signed_in");
+    // A clinic bot's signature is not the central bot's.
+    expect(await central(widgetFields(tg, o.token))).toMatchObject({ outcome: "error", code: "failed" });
+  });
+
+  it("the console uses its own bot when TELEGRAM_ADMIN_BOT_TOKEN is set", async () => {
+    const ADMIN = tokenFor("3234567890");
+    process.env.TELEGRAM_ADMIN_BOT_TOKEN = ADMIN;
+    resetEnvCache();
+    try {
+      const username = uniq("support");
+      await createPlatformUser({ email: `${uniq("s")}@itopmed.test`, username, fullName: "Synthetic Support", password: PASSWORD, role: "SUPPORT" });
+      const pw = await loginPlatformUser(username, PASSWORD, META);
+      if (!pw.ok) throw new Error("login failed");
+      const p = (await validatePlatformSession(pw.token))!;
+      const tg = newTgId();
+      expect(await link(linkFlow("admin", { userId: p.user.id, sessionId: p.sessionId }), widgetFields(tg, CENTRAL))).toMatchObject({ outcome: "error", code: "failed" });
+      expect(await link(linkFlow("admin", { userId: p.user.id, sessionId: p.sessionId }), widgetFields(tg, ADMIN))).toEqual({ outcome: "linked", kind: "admin" });
+      expect((await completeTelegramWidget({ kind: "admin", mode: "login", fields: widgetFields(tg, ADMIN) }, META)).outcome).toBe("signed_in");
+    } finally {
+      delete process.env.TELEGRAM_ADMIN_BOT_TOKEN;
+      resetEnvCache();
+    }
   });
 
   it("console staff link and sign in through the central bot", async () => {

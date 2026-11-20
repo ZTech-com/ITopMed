@@ -3097,6 +3097,6 @@
     "locked": "Hisob vaqtincha bloklangan. 15 daqiqadan keyin urinib ko'ring.",
     "disabled": "Telegram orqali kirish hozircha yoqilmagan.",
     "retry": "Qayta urinish",
-    "notPlatform": "Bu ITop Med xizmat boti. Klinikangizning o'z botidan foydalaning."
+    "notPlatform": "Bu bot ITop Med xodimlari uchun. Avval Telegramni ulang: login va parol bilan kiring, keyin Hisob xavfsizligi → Telegramni ulash."
   }
 }

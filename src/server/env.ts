@@ -39,11 +39,21 @@ const schema = z.object({
    */
   TELEGRAM_TRANSPORT: z.enum(["api", "dev-outbox", "none"]).optional(),
   /**
-   * Token of the CENTRAL ITop Med bot: the console's "Log In with Telegram" (Login
-   * Widget; @BotFather > /setdomain = the console's domain), its Mini App and /start.
+   * Token of the CENTRAL ITop Med bot: "Log in with Telegram" on /login for the staff
+   * of every clinic (Login Widget; @BotFather > /setdomain = APP_URL's host), its
+   * Mini App (/tg) and /start; also the console's, unless TELEGRAM_ADMIN_BOT_TOKEN is set.
    * Not the clinics' own bots (those are stored encrypted per clinic). Unset = central bot off.
    */
   TELEGRAM_BOT_TOKEN: z
+    .string()
+    .regex(/^\d{5,15}:[A-Za-z0-9_-]{30,64}$/, "must be a Telegram bot token")
+    .optional(),
+  /**
+   * Token of the CONSOLE's own bot: "Log in with Telegram" on the console's address
+   * (@BotFather > /setdomain = ADMIN_URL's host). A bot has one domain, so when the
+   * console has its own address it needs its own bot. Unset = the central bot.
+   */
+  TELEGRAM_ADMIN_BOT_TOKEN: z
     .string()
     .regex(/^\d{5,15}:[A-Za-z0-9_-]{30,64}$/, "must be a Telegram bot token")
     .optional(),

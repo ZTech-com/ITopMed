@@ -133,7 +133,17 @@ describe("who opened a clinic bot's Mini App", () => {
 });
 
 describe("the central ITop Med bot", () => {
-  it("is for platform staff only", async () => {
+  it("knows the linked staff of every clinic: one clinic → straight in", async () => {
+    const o = await clinicWithOwner(await platformActor());
+    const recLogin = uniq("reception");
+    await createStaffWithPassword(o.ctx, { fullName: "Synthetic Reception", email: `${uniq("r")}@clinic.test`, username: recLogin, roleKeys: ["receptionist"], password: PASSWORD }, META);
+    const reception = await clinicContext(recLogin, o.slug);
+    const tg = newTgId();
+    await linkClinicTelegram(reception.principal.user.id, reception.principal.sessionId, BigInt(tg), META);
+    expect(await resolveWebApp(initData({ id: tg }), null, META)).toMatchObject({ status: "signed_in", target: "clinic", go: `/c/${o.slug}/desk` });
+  });
+
+  it("refuses people it does not know; the SuperAdmin lands in the console", async () => {
     const tg = newTgId();
     expect(await resolveWebApp(initData({ id: tg }), null, META)).toEqual({ status: "error", reason: "not_platform" });
     const username = uniq("root");

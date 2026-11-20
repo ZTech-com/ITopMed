@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { AuthLayout } from "@/components/shell/auth-layout";
 import { Form, SubmitButton, TextField } from "@/components/ui/form";
 import { Alert } from "@/components/ui/primitives";
-import { TelegramNotice } from "@/components/telegram-login";
+import { TelegramLoginButton, TelegramNotice, telegramLoginAvailable } from "@/components/telegram-login";
 import { safeNext } from "@/lib/safe-next";
 import { getClinicPrincipal } from "@/server/auth/guards";
 import { needsFirstRun } from "@/server/local/first-run";
@@ -16,7 +16,7 @@ export default async function ClinicLoginPage({ searchParams }: { searchParams: 
   if (await needsFirstRun()) redirect("/welcome");
   const p = await getClinicPrincipal();
   if (p) redirect(next ?? "/clinics");
-  const t = await getTranslations();
+  const [t, telegram] = await Promise.all([getTranslations(), telegramLoginAvailable("clinic")]);
   return (
     <AuthLayout title={t("auth.clinicTitle")} subtitle={t("auth.clinicSubtitle")}>
       {sp.welcome ? (
@@ -30,11 +30,12 @@ export default async function ClinicLoginPage({ searchParams }: { searchParams: 
         </div>
       ) : null}
       <TelegramNotice code={sp.tg} />
+      <TelegramLoginButton kind="clinic" next={next} />
       <Form action={clinicLoginAction}>
         {next ? <input type="hidden" name="next" value={next} /> : null}
-        <TextField name="username" label={t("auth.username")} autoComplete="username" required autoFocus />
+        <TextField name="username" label={t("auth.username")} autoComplete="username" required autoFocus={!telegram} />
         <TextField name="password" type="password" label={t("auth.password")} autoComplete="current-password" required />
-        <SubmitButton full>{t("auth.submit")}</SubmitButton>
+        <SubmitButton full variant={telegram ? "secondary" : "primary"}>{t("auth.submit")}</SubmitButton>
         <p className="text-center text-[13px]">
           <Link href="/forgot-password" className="text-accent hover:underline">
             {t("auth.forgot")}

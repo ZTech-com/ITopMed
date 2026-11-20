@@ -3097,6 +3097,6 @@
     "locked": "The account is temporarily locked. Try again in 15 minutes.",
     "disabled": "Sign-in through Telegram is not enabled yet.",
     "retry": "Try again",
-    "notPlatform": "This is ITop Med's service bot. Please use your clinic's own bot."
+    "notPlatform": "This bot is for ITop Med staff. Link your Telegram first: sign in with your login and password, then Account security → Link Telegram."
   }
 }
