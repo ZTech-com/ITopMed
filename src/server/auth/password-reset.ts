@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { emailSchema } from "@/lib/validation";
 import { recordAudit } from "../audit";
-import { setContext, withAppContext } from "../db";
+import { sequential, setContext, withAppContext } from "../db";
 import { env } from "../env";
 import { createTranslator } from "use-intl/core";
 import { DEFAULT_LOCALE, isLocale } from "@/i18n/config";
@@ -58,36 +58,52 @@ async function createResetToken(userId: string, meta: RequestMeta, ttlMinutes: n
 }
 
 /**
- * Self-service reset WITHOUT email: the person gives their clinic and login; if
- * that login belongs to an active member of the clinic who linked Telegram, the
- * clinic's own bot sends the reset link to that Telegram chat. Always answers the
- * same way (no account discovery). Otherwise the clinic's Administrator sets a
- * new password (Staff page).
+ * Self-service reset WITHOUT email: the person gives only their login (no clinic
+ * address — the clinic comes from the account). If it belongs to an active
+ * account that linked Telegram, the link goes to that Telegram chat through the
+ * bot of a clinic where the person is an active member (each clinic's own bot,
+ * created by the SuperAdmin), else through the central ITop Med bot. Always
+ * answers the same way (no account discovery). Otherwise the clinic's
+ * Administrator sets a new password (Staff page).
  */
-export async function requestTelegramPasswordReset(slugRaw: string, usernameRaw: string, meta: RequestMeta): Promise<void> {
-  const slug = slugRaw.trim().toLowerCase();
+export async function requestTelegramPasswordReset(usernameRaw: string, meta: RequestMeta): Promise<void> {
   const username = usernameRaw.trim().toLowerCase();
-  if (!/^[a-z0-9-]{3,48}$/.test(slug) || !username || username.length > 120) return;
+  if (!username || username.length > 120) return;
   const ipHash = hashIp(meta.ip);
   if (!(await rateLimit(`reset:${ipHash ?? "noip"}`, 10, 60 * 60_000)) || !(await rateLimit(`reset:u:${username}`, 3, 60 * 60_000))) return;
 
-  const bot = await clinicBot(slug);
-  if (!bot) return;
   const found = await withAppContext({}, (tx) => tx.$queryRaw<{ id: string; status: string }[]>`SELECT id, status::text AS status FROM app_auth_lookup_login(${username})`);
   const user = found[0];
   if (!user || user.status !== "ACTIVE") return;
-  const tg = await withAppContext({ userId: user.id }, (tx) => tx.user.findUnique({ where: { id: user.id }, select: { telegramId: true } }));
-  if (!tg?.telegramId) return;
-  // Only this clinic's active member, through this clinic's bot.
-  const member = await withAppContext({}, (tx) => tx.$queryRaw<{ id: string | null }[]>`SELECT app_telegram_member(${tg.telegramId}::bigint, ${bot.tenantId}::uuid) AS id`);
-  if (member[0]?.id !== user.id) return;
+  const own = await withAppContext({ userId: user.id }, (tx) =>
+    sequential([
+      tx.user.findUnique({ where: { id: user.id }, select: { telegramId: true } }),
+      tx.membership.findMany({ where: { userId: user.id, status: "ACTIVE" }, select: { tenant: { select: { slug: true } } }, orderBy: { createdAt: "asc" } }),
+    ]),
+  );
+  const telegramId = own[0]?.telegramId;
+  if (!telegramId) return;
+
+  // The first of the person's clinics whose own bot knows them as an active member.
+  let sender: { token: string; name: string } | null = null;
+  for (const m of own[1]) {
+    const bot = await clinicBot(m.tenant.slug);
+    if (!bot) continue;
+    const member = await withAppContext({}, (tx) => tx.$queryRaw<{ id: string | null }[]>`SELECT app_telegram_member(${telegramId}::bigint, ${bot.tenantId}::uuid) AS id`);
+    if (member[0]?.id === user.id) {
+      sender = { token: bot.token, name: bot.name };
+      break;
+    }
+  }
+  if (!sender && own[1].length > 0 && env().TELEGRAM_BOT_TOKEN) sender = { token: env().TELEGRAM_BOT_TOKEN!, name: "ITop Med" };
+  if (!sender) return;
 
   const r = await createResetToken(user.id, meta, RESET_TTL_MINUTES, "telegram");
   const link = `${env().APP_URL.replace(/\/$/, "")}/reset-password/${r.token}`;
   const locale = isLocale(r.locale) ? r.locale : DEFAULT_LOCALE;
   const messages = (await import(`../../../messages/${locale}.json`)).default;
   const t = createTranslator({ locale, messages, namespace: "auth" });
-  await sendBotMessage(bot.token, tg.telegramId, t("resetTelegramMessage", { clinic: bot.name, minutes: RESET_TTL_MINUTES }), { text: t("resetTelegramButton"), url: link });
+  await sendBotMessage(sender.token, telegramId, t("resetTelegramMessage", { clinic: sender.name, minutes: RESET_TTL_MINUTES }), { text: t("resetTelegramButton"), url: link });
 }
 
 export async function isResetTokenValid(token: string): Promise<boolean> {

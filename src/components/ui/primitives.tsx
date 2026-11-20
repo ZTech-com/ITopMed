@@ -50,8 +50,8 @@ export function CardHeader({ title, description, action }: { title: ReactNode; d
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-5 py-4 sm:px-6">
       <div className="min-w-0">
-        <h2 className="text-[15px] font-semibold tracking-[-0.01em]">{title}</h2>
-        {description ? <p className="mt-0.5 text-[13px] text-text-2">{description}</p> : null}
+        <h2 className="text-balance text-[15px] font-semibold tracking-[-0.01em]">{title}</h2>
+        {description ? <p className="mt-0.5 text-pretty text-[13px] text-text-2">{description}</p> : null}
       </div>
       {action}
     </div>
@@ -67,8 +67,8 @@ export function PageHeader({ title, description, action, eyebrow }: { title: Rea
     <header className="mb-6 flex flex-wrap items-end justify-between gap-4 sm:mb-8">
       <div className="min-w-0 max-w-3xl">
         {eyebrow ? <p className="mb-1 text-[13px] font-medium text-text-3">{eyebrow}</p> : null}
-        <h1 className="text-[24px] font-semibold leading-tight tracking-[-0.022em] [overflow-wrap:anywhere] sm:text-[30px]">{title}</h1>
-        {description ? <p className="mt-2 text-[15px] leading-relaxed text-text-2">{description}</p> : null}
+        <h1 className="text-balance text-[24px] font-semibold leading-tight tracking-[-0.022em] [overflow-wrap:anywhere] sm:text-[30px]">{title}</h1>
+        {description ? <p className="mt-2 text-pretty text-[15px] leading-relaxed text-text-2">{description}</p> : null}
       </div>
       {/* Wraps on narrow screens instead of pushing the page wider than the phone. */}
       {action ? <div className="flex min-w-0 max-w-full flex-wrap gap-2">{action}</div> : null}
@@ -150,8 +150,8 @@ export function EmptyState({ title, description, action, icon }: { title: ReactN
   return (
     <div className="flex flex-col items-center px-6 py-14 text-center">
       {icon ? <div className="mb-4 grid size-12 place-items-center rounded-2xl bg-sunken text-text-3">{icon}</div> : null}
-      <p className="text-[15px] font-semibold">{title}</p>
-      {description ? <p className="mt-1 max-w-sm text-[14px] text-text-2">{description}</p> : null}
+      <p className="text-balance text-[15px] font-semibold">{title}</p>
+      {description ? <p className="mt-1 max-w-sm text-pretty text-[14px] text-text-2">{description}</p> : null}
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );
@@ -182,7 +182,7 @@ export function Table({ children, caption, phone = "cards" }: { children: ReactN
   return (
     // Focusable so keyboard users can scroll wide tables on narrow screens (WCAG 2.1.1).
     <div className="overflow-x-auto" tabIndex={0} role={caption ? "region" : undefined} aria-label={caption}>
-      <table className={cx("w-full border-collapse text-left text-[14px]", phone === "cards" ? "table-cards sm:min-w-[640px]" : "min-w-[640px]")}>
+      <table className={cx("w-full border-collapse text-left text-[14px] tabular-nums", phone === "cards" ? "table-cards sm:min-w-[640px]" : "min-w-[640px]")}>
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         {children}
       </table>

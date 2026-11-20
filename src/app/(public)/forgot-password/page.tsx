@@ -2,29 +2,23 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { AuthLayout } from "@/components/shell/auth-layout";
 import { Form, SubmitButton, TextField } from "@/components/ui/form";
-import { clinicSlugFromInput } from "@/server/auth/telegram-login";
 import { clinicPublic } from "@/server/telegram/clinic-bot";
 import { forgotPasswordAction } from "../../clinic-actions";
 
 /**
- * Password reset without email: the clinic's own Telegram bot sends the link to
- * the person's linked Telegram. Opened from /login/<slug> the clinic is known;
- * from /login the person types the clinic's address too.
+ * Password reset without email: only the login is asked (the clinic comes from
+ * the account); a Telegram bot sends the link to the person's linked Telegram.
+ * Opened from /login/<slug>, the clinic's name is shown and the way back leads there.
  */
 export default async function ForgotPasswordPage({ searchParams }: { searchParams: Promise<{ clinic?: string }> }) {
   const sp = await searchParams;
-  const slug = clinicSlugFromInput(sp.clinic);
+  const slug = sp.clinic && /^[a-z0-9-]{3,48}$/.test(sp.clinic) ? sp.clinic : null;
   const clinic = slug ? await clinicPublic(slug) : null;
   const t = await getTranslations("auth");
   return (
     <AuthLayout title={t("resetRequestTitle")} subtitle={clinic ? `${clinic.name} · ${t("resetTelegramSubtitle")}` : t("resetTelegramSubtitle")}>
       <Form action={forgotPasswordAction}>
-        {clinic ? (
-          <input type="hidden" name="clinic" value={clinic.slug} />
-        ) : (
-          <TextField name="clinic" label={t("clinicAddress")} hint={t("clinicAddressHint")} autoComplete="off" required autoFocus />
-        )}
-        <TextField name="username" label={t("username")} autoComplete="username" required autoFocus={Boolean(clinic)} />
+        <TextField name="username" label={t("username")} autoComplete="username" required autoFocus />
         <SubmitButton full>{t("resetRequestSubmit")}</SubmitButton>
         <p className="text-center text-[13px] text-text-2">{t("resetTelegramNoLink")}</p>
         <p className="text-center text-[13px]">

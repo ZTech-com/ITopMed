@@ -6,7 +6,7 @@ import { loginClinicUser, validateClinicSession } from "@/server/auth/clinic-aut
 import { createPlatformUser, loginPlatformUser, validatePlatformSession } from "@/server/auth/platform-auth";
 import { requestTelegramPasswordReset, resetPassword } from "@/server/auth/password-reset";
 import { mailboxRoot } from "@/server/local/paths";
-import { clinicSlugFromInput, completeTelegramWidget, widgetBot } from "@/server/auth/telegram-login";
+import { completeTelegramWidget, widgetBot } from "@/server/auth/telegram-login";
 import { openFlow, sealFlow, splitCallbackQuery, verifyWidgetAuth, type FlowState } from "@/server/auth/telegram-auth";
 import { createStaffWithPassword, listStaff } from "@/server/clinic/admin";
 import { setMemberPassword } from "@/server/clinic/members";
@@ -56,20 +56,6 @@ describe("Telegram Login Widget signature", () => {
   });
 });
 
-describe("clinic address typed on /login", () => {
-  it("finds the clinic's name in whatever people paste", () => {
-    expect(clinicSlugFromInput("shifo")).toBe("shifo");
-    expect(clinicSlugFromInput("  Shifo-Med ")).toBe("shifo-med");
-    expect(clinicSlugFromInput("/login/shifo")).toBe("shifo");
-    expect(clinicSlugFromInput("https://itopmed.itoppos.uz/login/shifo?x=1")).toBe("shifo");
-    expect(clinicSlugFromInput("itopmed.itoppos.uz/c/shifo/desk")).toBe("shifo");
-    expect(clinicSlugFromInput("itopmed.itoppos.uz/tg/shifo")).toBe("shifo");
-    expect(clinicSlugFromInput("")).toBeNull();
-    expect(clinicSlugFromInput("a b")).toBeNull();
-    expect(clinicSlugFromInput("../../etc")).toBeNull();
-  });
-});
-
 describe("Telegram link flow cookie", () => {
   const flow: FlowState = { state: "abc123", kind: "clinic", mode: "link", userId: "u", sessionId: "s", exp: now() + 600 };
   it("opens only with the matching state, before expiry, untampered", () => {
@@ -116,8 +102,6 @@ describe("sign-in with Telegram", () => {
     expect(await widgetBot("admin")).toBeNull();
     expect(await widgetBot("clinic", "no-such-clinic")).toBeNull();
     expect(await completeTelegramWidget({ kind: "clinic", mode: "login", slug: "no-such-clinic", fields: widgetFields(1, CENTRAL) }, META)).toMatchObject({ outcome: "error", code: "disabled" });
-    // /login has no bot of its own: the ITop Med bot is the founder's (console) only.
-    expect(await completeTelegramWidget({ kind: "clinic", mode: "login", fields: widgetFields(1, CENTRAL) }, META)).toMatchObject({ outcome: "error", code: "disabled" });
     const o = await clinicWithBot();
     expect(await link(linkFlow("clinic", { userId: "x", sessionId: "y" }, o.slug), widgetFields(newTgId(), o.token))).toMatchObject({ outcome: "error", code: "failed" });
     expect(await completeTelegramWidget({ kind: "clinic", mode: "link", slug: o.slug, fields: widgetFields(newTgId(), o.token), flow: null }, META)).toMatchObject({
@@ -185,7 +169,43 @@ describe("sign-in with Telegram", () => {
     expect(await login(o.slug, widgetFields(tg, o.token))).toMatchObject({ outcome: "error", code: "not_linked" });
   });
 
-  it("a forgotten password is reset through the clinic's bot, never by email", async () => {
+  it("the central bot (/login) signs in the staff of any clinic without a clinic address", async () => {
+    const o = await clinicWithBot();
+    const tg = newTgId();
+    const central = (fields: Record<string, string>) => completeTelegramWidget({ kind: "clinic", mode: "login", fields }, META);
+    expect(await central(widgetFields(tg, CENTRAL))).toMatchObject({ outcome: "error", code: "not_linked" });
+    // Linking through the central bot (no clinic in the flow).
+    const owner = { userId: o.ctx.principal.user.id, sessionId: o.ctx.principal.sessionId };
+    expect(await link(linkFlow("clinic", owner), widgetFields(tg, CENTRAL))).toEqual({ outcome: "linked", kind: "clinic" });
+    const r = await central(widgetFields(tg, CENTRAL));
+    expect(r).toMatchObject({ outcome: "signed_in", kind: "clinic", next: `/c/${o.slug}` });
+    // The same Telegram account also works with the clinic's own bot (Telegram ids are the same in every bot).
+    expect((await login(o.slug, widgetFields(tg, o.token))).outcome).toBe("signed_in");
+    // A clinic bot's signature is not the central bot's.
+    expect(await central(widgetFields(tg, o.token))).toMatchObject({ outcome: "error", code: "failed" });
+  });
+
+  it("the console uses its own bot when TELEGRAM_ADMIN_BOT_TOKEN is set", async () => {
+    const ADMIN = tokenFor("3234567890");
+    process.env.TELEGRAM_ADMIN_BOT_TOKEN = ADMIN;
+    resetEnvCache();
+    try {
+      const username = uniq("support");
+      await createPlatformUser({ email: `${uniq("s")}@itopmed.test`, username, fullName: "Synthetic Support", password: PASSWORD, role: "SUPPORT" });
+      const pw = await loginPlatformUser(username, PASSWORD, META);
+      if (!pw.ok) throw new Error("login failed");
+      const p = (await validatePlatformSession(pw.token))!;
+      const tg = newTgId();
+      expect(await link(linkFlow("admin", { userId: p.user.id, sessionId: p.sessionId }), widgetFields(tg, CENTRAL))).toMatchObject({ outcome: "error", code: "failed" });
+      expect(await link(linkFlow("admin", { userId: p.user.id, sessionId: p.sessionId }), widgetFields(tg, ADMIN))).toEqual({ outcome: "linked", kind: "admin" });
+      expect((await completeTelegramWidget({ kind: "admin", mode: "login", fields: widgetFields(tg, ADMIN) }, META)).outcome).toBe("signed_in");
+    } finally {
+      delete process.env.TELEGRAM_ADMIN_BOT_TOKEN;
+      resetEnvCache();
+    }
+  });
+
+  it("a forgotten password is reset with the login only, through the clinic's bot, never by email", async () => {
     const o = await clinicWithBot();
     const username = uniq("nurse");
     await createStaffWithPassword(o.ctx, { fullName: "Synthetic Nurse", email: `${uniq("n")}@clinic.test`, username, roleKeys: ["nurse"], password: PASSWORD }, META);
@@ -200,16 +220,15 @@ describe("sign-in with Telegram", () => {
     };
 
     // Telegram not linked yet: nothing is sent (the same answer is shown to the person).
-    await requestTelegramPasswordReset(o.slug, username, META);
+    await requestTelegramPasswordReset(username, META);
+    expect(outbox()).toEqual([]);
+    // Unknown login: nothing is sent either.
+    await requestTelegramPasswordReset(uniq("nobody"), META);
     expect(outbox()).toEqual([]);
 
     await link(linkFlow("clinic", { userId: nurse.user.id, sessionId: nurse.sessionId }, o.slug), widgetFields(tg, o.token));
-    // Another clinic's address does not reach this member.
-    const elsewhere = await clinicWithBot();
-    await requestTelegramPasswordReset(elsewhere.slug, username, META);
-    expect(outbox()).toEqual([]);
-
-    await requestTelegramPasswordReset(o.slug, username.toUpperCase(), META);
+    // No clinic address: the clinic (and its bot) comes from the account.
+    await requestTelegramPasswordReset(username.toUpperCase(), META);
     const sent = outbox();
     expect(sent).toHaveLength(1);
     const token = /\/reset-password\/([a-z2-7]+)/.exec(sent[0]!)?.[1];

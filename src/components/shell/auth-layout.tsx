@@ -26,8 +26,8 @@ export async function AuthLayout({ eyebrow, title, subtitle, children }: { eyebr
         <div className="animate-rise w-full max-w-[420px]">
           <div className="mb-7 text-center">
             {eyebrow ? <p className="mb-2 text-[13px] font-medium text-text-3">{eyebrow}</p> : null}
-            <h1 className="text-[26px] font-semibold tracking-[-0.022em]">{title}</h1>
-            {subtitle ? <p className="mt-2 text-[15px] leading-relaxed text-text-2">{subtitle}</p> : null}
+            <h1 className="text-balance text-[26px] font-semibold tracking-[-0.022em]">{title}</h1>
+            {subtitle ? <p className="mt-2 text-pretty text-[15px] leading-relaxed text-text-2">{subtitle}</p> : null}
           </div>
           <div className="rounded-[20px] border border-border bg-surface p-6 shadow-card sm:p-8">{children}</div>
           <div className="mx-auto mt-5 max-w-[300px]">
