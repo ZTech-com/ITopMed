@@ -55,6 +55,29 @@ async function writeOutbox(name: string, text: string) {
   await fs.writeFile(path.join(dir, `${new Date().toISOString().replace(/[:.]/g, "-")}_${name}.txt`), `SIMULATED TELEGRAM (dev-outbox transport)\n\n${text}\n`, "utf8");
 }
 
+/**
+ * One message from a given bot to a Telegram chat, with an optional link button.
+ * Honours the transport (dev-outbox writes a file). Never throws.
+ */
+export async function sendBotMessage(token: string, chatId: bigint, text: string, button?: { text: string; url: string }): Promise<boolean> {
+  const mode = telegramTransport();
+  if (mode === "none") return false;
+  try {
+    if (mode === "dev-outbox") {
+      await writeOutbox(`chat-${chatId}`, button ? `${text}\n\n[${button.text}] ${button.url}` : text);
+      return true;
+    }
+    await api(token, "sendMessage", {
+      chat_id: chatId.toString(),
+      text,
+      ...(button ? { reply_markup: { inline_keyboard: [[{ text: button.text, url: button.url }]] } } : {}),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function telegramEnabled() {
   return telegramTransport() !== "none";
 }

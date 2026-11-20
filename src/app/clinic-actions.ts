@@ -15,7 +15,8 @@ import { createBranch, createStaffWithPassword, inviteStaff, updateClinicSetting
 import { requestMeta } from "@/server/http";
 import { acceptInvitation, acceptInvitationAsExistingUser } from "@/server/tenancy/invitations";
 import { safeNext } from "@/lib/safe-next";
-import { requestPasswordReset, resetPassword } from "@/server/auth/password-reset";
+import { requestTelegramPasswordReset, resetPassword } from "@/server/auth/password-reset";
+import { clinicSlugFromInput } from "@/server/auth/telegram-login";
 import { createRole, deleteRole, updateRole } from "@/server/clinic/roles";
 import { setMemberPassword, setMemberStatus, updateMemberAccess, type MemberStatusAction } from "@/server/clinic/members";
 import { decideGrant, type GrantDecision } from "@/server/support/access";
@@ -122,8 +123,9 @@ export async function inviteStaffAction(_: FormState, fd: FormData): Promise<For
 
 export async function forgotPasswordAction(_: FormState, fd: FormData): Promise<FormState> {
   // Same answer whether or not the account exists (no account enumeration).
-  await requestPasswordReset(String(fd.get("email") ?? ""), await requestMeta());
-  return { ok: true, message: "auth.resetRequestSent", nonce: Date.now() };
+  const slug = clinicSlugFromInput(String(fd.get("clinic") ?? ""));
+  if (slug) await requestTelegramPasswordReset(slug, String(fd.get("username") ?? ""), await requestMeta());
+  return { ok: true, message: "auth.resetTelegramSent", nonce: Date.now() };
 }
 
 export async function resetPasswordAction(_: FormState, fd: FormData): Promise<FormState> {

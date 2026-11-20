@@ -22,12 +22,13 @@ export function telegramReturnPath(kind: TelegramLoginKind, mode: TelegramLoginM
 
 // ───────────── Which bot ─────────────
 //
-// Telegram gives a bot ONE domain (@BotFather > /setdomain), so there are three kinds:
-//  - a clinic's own bot: /login/<slug> and its Mini App (domain = APP_URL's host);
-//  - the central ITop Med bot (TELEGRAM_BOT_TOKEN): /login for the staff of every
-//    clinic, linking on /account/security, the Mini App /tg (domain = APP_URL's host);
-//  - the console bot (TELEGRAM_ADMIN_BOT_TOKEN, domain = ADMIN_URL's host); without it
-//    the console uses the central bot (when the console has no address of its own).
+// Telegram gives a bot ONE domain (@BotFather > /setdomain):
+//  - the ITop Med bot (TELEGRAM_BOT_TOKEN): the founder's console only
+//    (domain = ADMIN_URL's host, or APP_URL's without one);
+//  - each clinic's own bot: /login/<slug> and its Mini App /tg/<slug>, that
+//    clinic's staff and patients (domain = APP_URL's host).
+// /login itself has no Telegram button: it asks for the clinic's address and
+// opens /login/<slug>.
 
 const usernames = new Map<string, string>();
 
@@ -46,14 +47,10 @@ async function botUsername(token: string): Promise<string | null> {
   }
 }
 
-/** The console's bot token: its own bot, else the central bot. */
-const consoleToken = () => env().TELEGRAM_ADMIN_BOT_TOKEN ?? env().TELEGRAM_BOT_TOKEN ?? null;
-
-/** Token of the bot that signs a flow: the clinic's own bot (slug), the central bot (clinic, no slug), or the console's. */
+/** Token of the bot that signs a flow: the clinic's own bot, or the ITop Med bot for the console. */
 async function botToken(kind: TelegramLoginKind, slug: string | undefined): Promise<string | null> {
-  if (kind === "admin") return consoleToken();
-  if (slug) return (await clinicBot(slug))?.token ?? null;
-  return env().TELEGRAM_BOT_TOKEN ?? null;
+  if (kind === "admin") return env().TELEGRAM_BOT_TOKEN ?? null;
+  return slug ? ((await clinicBot(slug))?.token ?? null) : null;
 }
 
 /**
@@ -64,11 +61,11 @@ async function botToken(kind: TelegramLoginKind, slug: string | undefined): Prom
 export async function widgetBot(kind: TelegramLoginKind, slug?: string | null): Promise<{ username: string } | null> {
   // A clinic's local installation has no internet domain to give @BotFather: login + password there.
   if (telegramTransport() !== "api" || env().LOCAL_MODE === "1") return null;
-  if (kind === "clinic" && slug) {
-    const bot = await clinicBot(slug);
+  if (kind === "clinic") {
+    const bot = slug ? await clinicBot(slug) : null;
     return bot ? { username: bot.username } : null;
   }
-  const token = kind === "admin" ? consoleToken() : (env().TELEGRAM_BOT_TOKEN ?? null);
+  const token = env().TELEGRAM_BOT_TOKEN;
   const username = token ? await botUsername(token) : null;
   return username ? { username } : null;
 }
@@ -129,22 +126,18 @@ export async function completeTelegramWidget(req: WidgetRequest, meta: RequestMe
     if (!r.ok) return fail(r.reason);
     return { outcome: "signed_in", kind: "admin", token: r.token, locale: r.locale };
   }
-  // A clinic's own bot signs in that clinic's staff only; the central bot (/login) the staff of any clinic.
+  // A clinic's bot signs in that clinic's staff only.
   const bot = slug ? await clinicBot(slug) : null;
-  if (slug && !bot) return fail("disabled");
-  if (bot) {
-    const member = await withAppContext({}, (tx) => tx.$queryRaw<{ id: string | null }[]>`SELECT app_telegram_member(${tgId}::bigint, ${bot.tenantId}::uuid) AS id`);
-    if (!member[0]?.id) return fail("not_linked");
-  }
+  if (!bot) return fail("disabled");
+  const member = await withAppContext({}, (tx) => tx.$queryRaw<{ id: string | null }[]>`SELECT app_telegram_member(${tgId}::bigint, ${bot.tenantId}::uuid) AS id`);
+  if (!member[0]?.id) return fail("not_linked");
   const r = await loginClinicWithTelegram(tgId, meta);
   if (!r.ok) return fail(r.reason);
   let next = req.next;
   if (!next) {
     const p = await validateClinicSession(r.token);
-    // Through the central bot: straight into the clinic when the person works in only one.
-    const home = bot?.slug ?? (p?.clinics.length === 1 ? p.clinics[0]!.slug : null);
-    const ctx = p && home ? await resolveClinic(p, home) : null;
-    next = ctx && home ? homeForRoles(home, ctx.roleKeys) : "/clinics";
+    const ctx = p ? await resolveClinic(p, bot.slug) : null;
+    next = ctx ? homeForRoles(bot.slug, ctx.roleKeys) : "/clinics";
   }
   return { outcome: "signed_in", kind: "clinic", token: r.token, locale: r.locale, next };
 }
@@ -152,4 +145,25 @@ export async function completeTelegramWidget(req: WidgetRequest, meta: RequestMe
 /** For tests only. */
 export function resetBotUsernames() {
   usernames.clear();
+}
+
+/** Can this installation offer Telegram sign-in at all (real Bot API, internet domain)? */
+export function telegramPossible(): boolean {
+  return telegramTransport() === "api" && env().LOCAL_MODE !== "1";
+}
+
+/**
+ * The clinic's address as people type it on /login: "shifo", "/login/shifo",
+ * "https://itopmed.itoppos.uz/login/shifo" or "…/c/shifo/desk" → "shifo".
+ */
+export function clinicSlugFromInput(raw: string | undefined): string | null {
+  if (!raw) return null;
+  let path = raw.trim().toLowerCase().slice(0, 300);
+  path = path.replace(/^[a-z]+:\/\//, "").replace(/[?#].*$/, "");
+  const parts = path.split("/").filter(Boolean);
+  if (parts.includes("..")) return null;
+  if (parts.length > 1 && parts[0]!.includes(".")) parts.shift();
+  const at = parts.findIndex((x) => x === "login" || x === "c" || x === "tg" || x === "p");
+  const slug = at >= 0 ? parts[at + 1] : parts[parts.length - 1];
+  return slug && /^[a-z0-9-]{3,48}$/.test(slug) ? slug : null;
 }

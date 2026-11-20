@@ -28,7 +28,7 @@ export default async function ClinicOwnLoginPage({ params, searchParams }: { par
         <TextField name="password" type="password" label={t("auth.password")} autoComplete="current-password" required />
         <SubmitButton full variant={telegram ? "secondary" : "primary"}>{t("auth.submit")}</SubmitButton>
         <p className="text-center text-[13px]">
-          <Link href="/forgot-password" className="text-accent hover:underline">
+          <Link href={`/forgot-password?clinic=${clinic.slug}`} className="text-accent hover:underline">
             {t("auth.forgot")}
           </Link>
         </p>

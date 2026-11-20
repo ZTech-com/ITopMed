@@ -207,11 +207,13 @@ Har bir xodim **login va parol** bilan kiradi (masalan, `dr.karimov`). Login his
 
 **Telegram orqali kirish** (ixtiyoriy, faqat internetdagi serverda):
 1. Bot tokenidan boshqa hech narsa kerak emas. @BotFather → `/setdomain` → botni tanlang → domenni yozing. Bitta botga bitta domen beriladi:
-   - markaziy bot (`TELEGRAM_BOT_TOKEN`, `/login` sahifasi barcha klinikalar uchun) → `itopmed.itoppos.uz`;
-   - har bir klinikaning o'z boti (`/login/<klinika>`) → `itopmed.itoppos.uz`;
-   - konsol boti (`TELEGRAM_ADMIN_BOT_TOKEN`, `admin.itoppos.uz`) → `admin.itoppos.uz`.
+   - @ITopMedBot (`TELEGRAM_BOT_TOKEN`, faqat loyiha asoschisi — konsol) → `admin.itoppos.uz`;
+   - har bir klinikaning o'z boti (konsolda ulanadi; `/login/<klinika>` va bot ichidagi ilova) → `itopmed.itoppos.uz`.
+   Umumiy `/login` sahifasida xodim klinikasining manzilini yozadi va o'z klinikasining Telegram tugmasiga o'tadi.
 2. Xodim avval login va parol bilan kiradi, **Hisob xavfsizligi** sahifasida **«Telegramni ulash»** ni bosadi.
 3. Keyin kirish sahifasidagi **«Telegram orqali kirish»** tugmasi bilan parolsiz kiradi.
+
+**Parolni unutsa:** kirish sahifasida «Parolni unutdingizmi?» → loginini yozadi → klinika boti Telegram'iga yangi parol o'rnatish havolasini yuboradi (30 daqiqa amal qiladi). Email kerak emas. Telegram ulanmagan bo'lsa, klinika administratori «Xodimlar» sahifasida yangi parol o'rnatib beradi.
 
 Klinika ichidagi mahalliy o'rnatishda (`192.168.x.x`) Telegram ishlamaydi — Telegram faqat internetdagi domenni qabul qiladi. U yerda faqat login va parol.
 
