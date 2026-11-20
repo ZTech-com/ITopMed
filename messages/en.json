@@ -102,8 +102,8 @@
     "toClinic": "Clinic staff: sign in to your clinic",
     "consoleWho": "For SuperAdmin and network admins only. Clinic staff sign in on the clinic sign-in page.",
     "username": "Login",
-    "or": "or",
-    "telegram": "Sign in with Telegram"
+    "telegram": "Sign in with Telegram",
+    "orPassword": "or with login and password"
   },
   "invite": {
     "title": "Activate your account",
@@ -2966,7 +2966,9 @@
     "open": "Open ITop Med",
     "menu": "ITop Med",
     "cmdStart": "Start",
-    "cmdHelp": "Help"
+    "cmdHelp": "Help",
+    "phoneSaved": "Your number is confirmed. Now tap “Open ITop Med”.",
+    "phoneNotYours": "Send only your own number, using the “Share my number” button."
   },
   "telegramLogin": {
     "failed": "Signing in with Telegram did not work. Try again or use your login and password.",
@@ -2977,5 +2979,25 @@
     "taken": "This Telegram account is already linked to another ITop Med account.",
     "disabled": "Sign-in with Telegram is not enabled. Use your login and password.",
     "linked": "Telegram is linked. You can now use “Sign in with Telegram” on the sign-in page."
+  },
+  "telegramApp": {
+    "title": "ITop Med",
+    "loading": "Loading…",
+    "outside": "This page opens inside Telegram, from the ITop Med bot.",
+    "openWebsite": "Go to the website",
+    "chooseIntro": "How do you want to sign in?",
+    "asStaff": "As clinic staff",
+    "asAdmin": "ITop Med console",
+    "asPatient": "As a patient — {clinic}",
+    "shareIntro": "To find your patient account, share your phone number — the one registered at the clinic.",
+    "share": "Share my number",
+    "waiting": "Checking…",
+    "sharePrivacy": "The number is used only to connect you with your account at the clinic.",
+    "notFound": "No patient account was found for this number.",
+    "notFoundHint": "Ask the clinic's front desk to open a patient account for this number, then open the bot again. If you are clinic staff, sign in on the website with your login and password and link Telegram under “Account security”.",
+    "error": "Could not sign in. Close the bot and open it again.",
+    "locked": "The account is temporarily locked. Try again in 15 minutes.",
+    "disabled": "Sign-in through Telegram is not enabled yet.",
+    "retry": "Try again"
   }
 }

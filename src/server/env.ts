@@ -28,10 +28,11 @@ const schema = z.object({
    */
   LOCAL_MODE: z.enum(["0", "1"]).default("0"),
   /**
-   * Log In with Telegram (OpenID Connect, https://core.telegram.org/bots/telegram-login).
-   * Client ID and Secret come from @BotFather > the bot > Login Widget, where
+   * Log In with Telegram (OpenID Connect, https://core.telegram.org/bots/telegram-login),
+   * the main way to sign in on the website. Client ID (defaults to the central
+   * bot's id from TELEGRAM_BOT_TOKEN) and Secret come from @BotFather > the bot > Login Widget, where
    * `${APP_URL}/auth/telegram/callback` must be registered as an Allowed URL.
-   * Both empty = the Telegram button is not shown (password sign-in only).
+   * No secret = the Telegram button is not shown (login + password only).
    * Works only on a public HTTPS domain: Telegram refuses LAN addresses.
    */
   TELEGRAM_LOGIN_CLIENT_ID: z.string().regex(/^\d{1,20}$/, "must be the numeric Client ID").optional(),
@@ -90,6 +91,8 @@ export function telegramTransport(): "api" | "dev-outbox" | "none" {
 /** Telegram Login is offered only when both BotFather credentials are configured. */
 export function telegramLogin(): { clientId: string; clientSecret: string; redirectUri: string } | null {
   const e = env();
-  if (!e.TELEGRAM_LOGIN_CLIENT_ID || !e.TELEGRAM_LOGIN_CLIENT_SECRET) return null;
-  return { clientId: e.TELEGRAM_LOGIN_CLIENT_ID, clientSecret: e.TELEGRAM_LOGIN_CLIENT_SECRET, redirectUri: new URL("/auth/telegram/callback", e.APP_URL).toString() };
+  // The Client ID is the bot's id: the number before ":" in the central bot's token.
+  const clientId = e.TELEGRAM_LOGIN_CLIENT_ID ?? e.TELEGRAM_BOT_TOKEN?.split(":")[0];
+  if (!clientId || !e.TELEGRAM_LOGIN_CLIENT_SECRET) return null;
+  return { clientId, clientSecret: e.TELEGRAM_LOGIN_CLIENT_SECRET, redirectUri: new URL("/auth/telegram/callback", e.APP_URL).toString() };
 }

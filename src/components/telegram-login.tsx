@@ -4,26 +4,28 @@ import { telegramLogin } from "@/server/env";
 import { Alert, buttonClass } from "./ui/primitives";
 
 /**
- * "Log In with Telegram" button. A plain link to our own /auth/telegram/start:
- * no Telegram script runs on our pages. Hidden when the bot is not configured
- * (e.g. a clinic's local installation, which Telegram cannot reach).
+ * "Log In with Telegram" — the MAIN way to sign in on the website; login and
+ * password follow below it as the second way. A plain link to our own
+ * /auth/telegram/start: no Telegram script runs on our pages. Hidden when the
+ * bot is not configured (e.g. a clinic's local installation, which Telegram
+ * cannot reach); then the login form is the only way.
  */
 export async function TelegramLoginButton({ kind, next }: { kind: "clinic" | "admin"; next?: string | null }) {
   if (!telegramLogin()) return null;
   const t = await getTranslations("auth");
   const q = new URLSearchParams({ kind, mode: "login", ...(next ? { next } : {}) });
   return (
-    <>
-      <p className="flex items-center gap-3 text-[12px] text-text-3" aria-hidden>
-        <span className="h-px flex-1 bg-border" />
-        {t("or")}
-        <span className="h-px flex-1 bg-border" />
-      </p>
-      <a href={`/auth/telegram/start?${q.toString()}`} className={buttonClass("secondary", "md", "w-full")}>
+    <div className="mb-5 space-y-5">
+      <a href={`/auth/telegram/start?${q.toString()}`} className={buttonClass("primary", "lg", "w-full")}>
         <Send aria-hidden className="size-4" />
         {t("telegram")}
       </a>
-    </>
+      <p className="flex items-center gap-3 text-[13px] text-text-3">
+        <span aria-hidden className="h-px flex-1 bg-border" />
+        {t("orPassword")}
+        <span aria-hidden className="h-px flex-1 bg-border" />
+      </p>
+    </div>
   );
 }
 

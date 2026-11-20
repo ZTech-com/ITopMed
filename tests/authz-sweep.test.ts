@@ -30,6 +30,8 @@ const PUBLIC_PAGES = new Set([
   "(public)/tv/[token]/page.tsx",
   // Invited ITop Med employee has no account yet; the single-use token is the credential.
   "admin/(auth)/invite/[token]/page.tsx",
+  // Telegram Mini App entry: identity comes from Telegram's signed launch data, verified by /auth/telegram/webapp.
+  "(public)/tg/page.tsx",
 ]);
 
 /** Actions that run before anyone is signed in (they authenticate instead). */
@@ -80,7 +82,8 @@ describe("authorization sweep", () => {
     // api/tv: the waiting-room screen's data; its secret link is the credential (see src/server/queue/board.ts).
     // api/telegram/webhook: called by Telegram; the secret header derived from the bot token is the credential.
     // auth/telegram/callback: Telegram Login returns here; the encrypted flow cookie + state and the verified id_token authenticate.
-    const PUBLIC_ROUTES = new Set(["api/health/route.ts", "(public)/connect/ca.crt/route.ts", "(public)/connect/ios/route.ts", "api/tv/[token]/route.ts", "api/telegram/webhook/route.ts", "auth/telegram/callback/route.ts"]);
+    // auth/telegram/webapp: Mini App sign-in; Telegram's initData (HMAC with the bot token) authenticates, same-origin only.
+    const PUBLIC_ROUTES = new Set(["api/health/route.ts", "(public)/connect/ca.crt/route.ts", "(public)/connect/ios/route.ts", "api/tv/[token]/route.ts", "api/telegram/webhook/route.ts", "auth/telegram/callback/route.ts", "auth/telegram/webapp/route.ts"]);
     const missing = routes.filter((r) => !PUBLIC_ROUTES.has(r) && !GUARDS.test(fs.readFileSync(path.join(ROOT, r), "utf8")));
     expect(missing).toEqual([]);
   });

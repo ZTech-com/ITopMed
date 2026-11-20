@@ -77,10 +77,10 @@ export async function finishTelegramFlow(
   if (!cfg) return fail("disabled");
   if (!/^[\w.~-]{1,512}$/.test(code)) return fail("failed");
 
-  let sub: string;
+  let tgId: bigint;
   try {
     const idToken = await exchangeCode(cfg, code, flow.verifier, deps.fetch);
-    ({ sub } = await verifyIdToken(idToken, cfg.clientId, deps.keys ?? telegramKeys(deps.fetch)));
+    ({ id: tgId } = await verifyIdToken(idToken, cfg.clientId, deps.keys ?? telegramKeys(deps.fetch)));
   } catch (e) {
     // Reason codes only: no token, code or claim ever reaches the log.
     logger.warn("telegram.login.verify_failed", { reason: e instanceof TelegramLoginError ? e.reason : "network" });
@@ -90,8 +90,8 @@ export async function finishTelegramFlow(
   if (flow.mode === "link") {
     if (!flow.userId || !flow.sessionId) return fail("failed");
     try {
-      if (flow.kind === "admin") await linkPlatformTelegram(flow.userId, flow.sessionId, sub, meta);
-      else await linkClinicTelegram(flow.userId, flow.sessionId, sub, meta);
+      if (flow.kind === "admin") await linkPlatformTelegram(flow.userId, flow.sessionId, tgId, meta);
+      else await linkClinicTelegram(flow.userId, flow.sessionId, tgId, meta);
     } catch (e) {
       if (e instanceof DomainError && e.code === "errors.telegramTaken") return fail("taken");
       return fail("failed");
@@ -99,7 +99,7 @@ export async function finishTelegramFlow(
     return { outcome: "linked", kind: flow.kind };
   }
 
-  const r = flow.kind === "admin" ? await loginPlatformWithTelegram(sub, meta) : await loginClinicWithTelegram(sub, meta);
+  const r = flow.kind === "admin" ? await loginPlatformWithTelegram(tgId, meta) : await loginClinicWithTelegram(tgId, meta);
   if (!r.ok) return fail(r.reason);
   return { outcome: "signed_in", kind: flow.kind, token: r.token, locale: r.locale, next: flow.next };
 }

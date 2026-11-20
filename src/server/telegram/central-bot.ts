@@ -47,17 +47,32 @@ export function botText(locale: Locale) {
   return createTranslator({ locale, messages: MESSAGES[locale], namespace: "bot" });
 }
 
-/** Where the "open" button leads (opened as a Telegram Web App). */
+/** Where the "open" button leads (opened as a Telegram Web App): the Mini App entry that recognises the person. */
 export function webAppUrl(appUrl: string): string {
-  return new URL("/login", appUrl).toString();
+  return new URL("/tg", appUrl).toString();
 }
 
 interface TgUpdate {
   message?: {
     chat?: { id?: number; type?: string };
-    from?: { language_code?: string; is_bot?: boolean };
+    from?: { id?: number; language_code?: string; is_bot?: boolean };
     text?: string;
+    contact?: { phone_number?: string; user_id?: number };
   };
+}
+
+/**
+ * A phone number the sender shared about THEMSELVES (Telegram's "share my
+ * number" sets contact.user_id to the sender). Forwarded or typed contacts of
+ * other people are never accepted.
+ */
+export function ownContact(update: unknown): { tgId: bigint; phone: string } | null {
+  const msg = (update as TgUpdate | null)?.message;
+  const from = msg?.from?.id;
+  const c = msg?.contact;
+  if (msg?.chat?.type !== "private" || msg?.from?.is_bot || typeof from !== "number" || !Number.isSafeInteger(from) || from <= 0) return null;
+  if (!c || c.user_id !== from || typeof c.phone_number !== "string") return null;
+  return { tgId: BigInt(from), phone: c.phone_number };
 }
 
 /**
@@ -73,10 +88,14 @@ export function replyTo(update: unknown, appUrl: string): Record<string, unknown
   const t = botText(localeFromTelegram(msg.from?.language_code));
   const text = typeof msg.text === "string" ? msg.text.trim() : "";
   const isHelp = /^\/help(@\w+)?$/i.test(text);
+  if (msg.contact) {
+    // Someone else's number is refused; one's own is confirmed with the open button.
+    if (!ownContact(update)) return { method: "sendMessage", chat_id: chatId, text: t("phoneNotYours") };
+  }
   return {
     method: "sendMessage",
     chat_id: chatId,
-    text: isHelp ? t("help") : t("welcome"),
+    text: msg.contact ? t("phoneSaved") : isHelp ? t("help") : t("welcome"),
     reply_markup: { inline_keyboard: [[{ text: t("open"), web_app: { url: webAppUrl(appUrl) } }]] },
   };
 }

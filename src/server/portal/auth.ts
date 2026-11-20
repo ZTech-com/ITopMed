@@ -202,6 +202,71 @@ export async function loginPatient(tenant: PortalTenant, phoneRaw: string, passw
   return { ok: true, token, locale };
 }
 
+// ───────────── Telegram (central bot) ─────────────
+
+/**
+ * Stores the phone number Telegram verified for this Telegram user. Called only
+ * for a contact the person shared about THEMSELVES (checked by the caller).
+ */
+export async function saveTelegramContact(tgId: bigint, phoneRaw: string): Promise<boolean> {
+  const phone = normalizePhone(phoneRaw);
+  if (!phone || !/^\+[0-9]{9,15}$/.test(phone)) return false;
+  await withPortal({}, (tx) => tx.$executeRaw`SELECT tg_contact_save(${tgId}::bigint, ${phone})`);
+  return true;
+}
+
+export interface TelegramPatientAccount {
+  id: string;
+  tenantId: string;
+  slug: string;
+  name: string;
+}
+
+/** Whether the person shared their phone, and the active portal accounts that use it as login. */
+export async function telegramPatientAccounts(tgId: bigint): Promise<{ phoneKnown: boolean; accounts: TelegramPatientAccount[] }> {
+  return withPortal({}, async (tx) => {
+    const known = await tx.$queryRaw<{ known: boolean }[]>`SELECT tg_contact_known(${tgId}::bigint) AS known`;
+    const rows = await tx.$queryRaw<{ id: string; tenantId: string; slug: string; name: string }[]>`
+      SELECT id, "tenantId", slug, name FROM portal_telegram_accounts(${tgId}::bigint)`;
+    return { phoneKnown: Boolean(known[0]?.known), accounts: rows };
+  });
+}
+
+/**
+ * Signs a patient in through the central bot: the Telegram user (verified
+ * initData) shared a phone that is the login of this portal account.
+ */
+export async function loginPatientWithTelegram(
+  tgId: bigint,
+  accountId: string,
+  meta: RequestMeta,
+): Promise<{ ok: true; token: string; locale: string | null; slug: string } | { ok: false; reason: "invalid" | "locked" | "rate_limited" }> {
+  const ipHash = hashIp(meta.ip);
+  if (!(await rateLimit(`pttg:${ipHash ?? "noip"}`, 30, 15 * 60_000))) return { ok: false, reason: "rate_limited" };
+  const rows = await withPortal({}, (tx) =>
+    tx.$queryRaw<{ id: string; tenantId: string; slug: string; lockedUntil: Date | null }[]>`
+      SELECT id, "tenantId", slug, "lockedUntil" FROM portal_telegram_accounts(${tgId}::bigint)`,
+  );
+  const acc = rows.find((r) => r.id === accountId);
+  if (!acc) return { ok: false, reason: "invalid" };
+  if (acc.lockedUntil && acc.lockedUntil > new Date()) {
+    await withPortal({}, (tx) => audit(tx, acc.tenantId, meta, { action: "portal.login.telegram", outcome: "DENIED", actorId: acc.id, metadata: { reason: "locked" } }));
+    return { ok: false, reason: "locked" };
+  }
+  const token = randomToken();
+  const sessionId = sha256Hex(token);
+  const locale = await withPortal({ sessionId }, async (tx) => {
+    await tx.patientSession.create({
+      data: { id: sessionId, tenantId: acc.tenantId, accountId: acc.id, expiresAt: new Date(Date.now() + PATIENT_SESSION_ABSOLUTE_MS), ipHash, userAgent: meta.userAgent?.slice(0, 256) },
+    });
+    await tx.patientAccount.updateMany({ where: { id: acc.id }, data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() } });
+    await audit(tx, acc.tenantId, meta, { action: "portal.login.telegram", actorId: acc.id });
+    const a = await tx.patientAccount.findFirst({ where: { id: acc.id }, select: { locale: true } });
+    return a?.locale ?? null;
+  });
+  return { ok: true, token, locale, slug: acc.slug };
+}
+
 export interface PatientPrincipal {
   sessionId: string;
   accountId: string;

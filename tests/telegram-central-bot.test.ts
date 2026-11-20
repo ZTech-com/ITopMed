@@ -27,7 +27,7 @@ describe("central Telegram bot", () => {
     expect(r.method).toBe("sendMessage");
     expect(r.chat_id).toBe(42);
     expect(r.text).toContain("ITop Med");
-    expect(r.reply_markup.inline_keyboard[0]?.[0]?.web_app.url).toBe(`${APP}/login`);
+    expect(r.reply_markup.inline_keyboard[0]?.[0]?.web_app.url).toBe(`${APP}/tg`);
   });
 
   it("replies in the user's language and treats /help separately", () => {

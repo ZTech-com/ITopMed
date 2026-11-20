@@ -81,11 +81,11 @@ async function startSession(userId: string, action: string, meta: RequestMeta): 
 
 export type PlatformTelegramResult = { ok: true; token: string; locale: string } | { ok: false; reason: "not_linked" | "locked" | "rate_limited" };
 
-/** Signs in with a Telegram account linked earlier. `sub` comes from an already verified id_token. */
-export async function loginPlatformWithTelegram(sub: string, meta: RequestMeta): Promise<PlatformTelegramResult> {
+/** Signs in with a Telegram account linked earlier. `tgId` comes from a verified id_token or Mini App initData. */
+export async function loginPlatformWithTelegram(tgId: bigint, meta: RequestMeta): Promise<PlatformTelegramResult> {
   const ipHash = hashIp(meta.ip);
   if (!(await rateLimit(`ptg:${ipHash ?? "noip"}`, 20, 15 * 60_000))) return { ok: false, reason: "rate_limited" };
-  const user = await platformDb().platformUser.findUnique({ where: { telegramSub: sub }, select: { id: true, status: true, lockedUntil: true, locale: true } });
+  const user = await platformDb().platformUser.findUnique({ where: { telegramId: tgId }, select: { id: true, status: true, lockedUntil: true, locale: true } });
   if (!user || user.status !== "ACTIVE") {
     await withPlatform((tx) =>
       recordAudit(tx, {
@@ -110,20 +110,20 @@ export async function loginPlatformWithTelegram(sub: string, meta: RequestMeta):
 }
 
 /** Links a Telegram account to the signed-in employee's own account; the starting session must still be valid. */
-export async function linkPlatformTelegram(userId: string, sessionId: string, sub: string, meta: RequestMeta): Promise<void> {
+export async function linkPlatformTelegram(userId: string, sessionId: string, tgId: bigint, meta: RequestMeta): Promise<void> {
   await withPlatform(async (tx) => {
     const s = await tx.platformSession.findUnique({ where: { id: sessionId }, select: { platformUserId: true, revokedAt: true, expiresAt: true } });
     if (!s || s.platformUserId !== userId || s.revokedAt || s.expiresAt <= new Date()) throw new DomainError("errors.forbidden");
-    const taken = await tx.platformUser.findUnique({ where: { telegramSub: sub }, select: { id: true } });
+    const taken = await tx.platformUser.findUnique({ where: { telegramId: tgId }, select: { id: true } });
     if (taken && taken.id !== userId) throw new DomainError("errors.telegramTaken");
-    await tx.platformUser.update({ where: { id: userId }, data: { telegramSub: sub, telegramLinkedAt: new Date() } });
+    await tx.platformUser.update({ where: { id: userId }, data: { telegramId: tgId, telegramLinkedAt: new Date() } });
     await recordAudit(tx, { actorType: "PLATFORM_USER", actorId: userId, action: "platform.telegram.linked", ipHash: hashIp(meta.ip), userAgent: meta.userAgent });
   });
 }
 
 export async function unlinkPlatformTelegram(p: PlatformPrincipal, meta: RequestMeta): Promise<void> {
   await withPlatform(async (tx) => {
-    await tx.platformUser.update({ where: { id: p.user.id }, data: { telegramSub: null, telegramLinkedAt: null } });
+    await tx.platformUser.update({ where: { id: p.user.id }, data: { telegramId: null, telegramLinkedAt: null } });
     await recordAudit(tx, { actorType: "PLATFORM_USER", actorId: p.user.id, action: "platform.telegram.unlinked", ipHash: hashIp(meta.ip), userAgent: meta.userAgent });
   });
 }
@@ -153,7 +153,7 @@ export async function validatePlatformSession(token: string | undefined | null):
       fullName: s.user.fullName,
       role: s.user.role,
       locale: s.user.locale,
-      telegramLinked: Boolean(s.user.telegramSub),
+      telegramLinked: s.user.telegramId !== null,
       networkId: s.user.networkId,
     },
   };

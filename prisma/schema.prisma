@@ -48,8 +48,8 @@ model PlatformUser {
   networkId        String?       @db.Uuid
   status           AccountStatus @default(INVITED)
   locale           String        @default("uz-Latn")
-  /// Telegram Login (OpenID Connect `sub`) linked by the person themselves; null = not linked.
-  telegramSub      String?       @unique
+  /// Telegram user id, linked by the person themselves (website login or bot); null = not linked.
+  telegramId       BigInt?       @unique
   telegramLinkedAt DateTime?
   failedLoginCount Int           @default(0)
   lockedUntil      DateTime?
@@ -352,8 +352,8 @@ model User {
   status           AccountStatus @default(INVITED)
   /// Personal UI language; null = follow the clinic default.
   locale           String?
-  /// Telegram Login (OpenID Connect `sub`) linked by the person themselves; null = not linked.
-  telegramSub      String?       @unique
+  /// Telegram user id, linked by the person themselves (website login or bot); null = not linked.
+  telegramId       BigInt?       @unique
   telegramLinkedAt DateTime?
   failedLoginCount Int           @default(0)
   lockedUntil      DateTime?
@@ -2239,4 +2239,15 @@ model ClinicTemplate {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 
   @@index([tenantId, kind])
+}
+
+/// Phone number Telegram verified for a Telegram user (shared with the central
+/// bot by that person). No runtime role has grants: only the SECURITY DEFINER
+/// functions tg_contact_save / tg_contact_known / portal_telegram_accounts.
+model TelegramContact {
+  telegramId BigInt   @id
+  phone      String
+  verifiedAt DateTime @default(now())
+
+  @@index([phone])
 }

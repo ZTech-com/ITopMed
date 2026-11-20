@@ -1,6 +1,7 @@
 import { env } from "@/server/env";
 import { logger } from "@/server/logger";
-import { isValidWebhookSecret, replyTo } from "@/server/telegram/central-bot";
+import { saveTelegramContact } from "@/server/portal/auth";
+import { isValidWebhookSecret, ownContact, replyTo } from "@/server/telegram/central-bot";
 
 /**
  * Updates of the CENTRAL ITop Med bot (see src/server/telegram/central-bot.ts).
@@ -25,8 +26,11 @@ export async function POST(request: Request) {
   } catch {
     return new Response(null, { status: 400 });
   }
+  // A person shared their own phone number: remember it so the Mini App can find their patient account.
+  const contact = ownContact(update);
+  const saved = contact ? await saveTelegramContact(contact.tgId, contact.phone) : false;
   const reply = replyTo(update, env().APP_URL);
-  logger.info("telegram.central_update", { replied: Boolean(reply) });
+  logger.info("telegram.central_update", { replied: Boolean(reply), contactSaved: saved });
   // Telegram executes a method returned in the webhook response; an empty 200 = "received".
   return reply ? Response.json(reply) : new Response(null, { status: 200 });
 }

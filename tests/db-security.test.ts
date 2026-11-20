@@ -43,7 +43,7 @@ describe("database security", async () => {
 
   it("platform role cannot read clinic password hashes, Telegram links or sessions", async () => {
     await expect(platform.query(`SELECT "passwordHash" FROM "User"`)).rejects.toThrow(/permission denied/);
-    await expect(platform.query(`SELECT "telegramSub" FROM "User"`)).rejects.toThrow(/permission denied/);
+    await expect(platform.query(`SELECT "telegramId" FROM "User"`)).rejects.toThrow(/permission denied/);
     await expect(platform.query(`SELECT * FROM "Session"`)).rejects.toThrow(/permission denied/);
   });
 

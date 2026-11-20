@@ -102,8 +102,8 @@
     "toClinic": "Klinika xodimlari: klinikaga kirish",
     "consoleWho": "Faqat SuperAdmin va tarmoq adminlari uchun. Klinika xodimlari klinikaga kirish sahifasidan kiradi.",
     "username": "Login",
-    "or": "yoki",
-    "telegram": "Telegram orqali kirish"
+    "telegram": "Telegram orqali kirish",
+    "orPassword": "yoki login va parol bilan"
   },
   "invite": {
     "title": "Hisobni faollashtirish",
@@ -2966,7 +2966,9 @@
     "open": "ITop Medni ochish",
     "menu": "ITop Med",
     "cmdStart": "Boshlash",
-    "cmdHelp": "Yordam"
+    "cmdHelp": "Yordam",
+    "phoneSaved": "Raqamingiz tasdiqlandi. Endi «ITop Med'ni ochish» tugmasini bosing.",
+    "phoneNotYours": "Faqat o'z raqamingizni yuboring: «Raqamni yuborish» tugmasidan foydalaning."
   },
   "telegramLogin": {
     "failed": "Telegram orqali kirib bo'lmadi. Qaytadan urinib ko'ring yoki login va parol bilan kiring.",
@@ -2977,5 +2979,25 @@
     "taken": "Bu Telegram hisobi boshqa ITop Med hisobiga ulangan.",
     "disabled": "Telegram orqali kirish yoqilmagan. Login va parol bilan kiring.",
     "linked": "Telegram ulandi. Endi kirish sahifasida «Telegram orqali kirish» tugmasidan foydalanishingiz mumkin."
+  },
+  "telegramApp": {
+    "title": "ITop Med",
+    "loading": "Yuklanmoqda…",
+    "outside": "Bu sahifa Telegram ichida, ITop Med boti orqali ochiladi.",
+    "openWebsite": "Saytga o'tish",
+    "chooseIntro": "Qaysi sifatda kirasiz?",
+    "asStaff": "Klinika xodimi sifatida",
+    "asAdmin": "ITop Med boshqaruvi",
+    "asPatient": "Bemor sifatida — {clinic}",
+    "shareIntro": "Bemor kabinetingizni topish uchun telefon raqamingizni yuboring. Klinikada ro'yxatdan o'tgan raqam bo'lishi kerak.",
+    "share": "Raqamni yuborish",
+    "waiting": "Tekshirilmoqda…",
+    "sharePrivacy": "Raqam faqat sizni klinikadagi kabinetingiz bilan bog'lash uchun ishlatiladi.",
+    "notFound": "Bu raqam bilan bemor kabineti topilmadi.",
+    "notFoundHint": "Klinika registraturasida shu raqamga bemor kabinetini ochib berishlarini so'rang, keyin botni qayta oching. Klinika xodimi bo'lsangiz, saytga login va parol bilan kirib, «Hisob xavfsizligi»da Telegramni ulang.",
+    "error": "Kirib bo'lmadi. Botni yopib, qayta oching.",
+    "locked": "Hisob vaqtincha bloklangan. 15 daqiqadan keyin urinib ko'ring.",
+    "disabled": "Telegram orqali kirish hozircha yoqilmagan.",
+    "retry": "Qayta urinish"
   }
 }

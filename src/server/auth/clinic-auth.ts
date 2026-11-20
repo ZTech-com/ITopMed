@@ -78,13 +78,13 @@ export type TelegramSignInResult = { ok: true; token: string; locale: string | n
 
 /**
  * Signs in with a Telegram account the person linked to their ITop Med account
- * earlier. `sub` comes from an id_token already verified (see telegram-oidc.ts).
+ * earlier. `tgId` is the Telegram user id from a verified id_token or Mini App initData.
  */
-export async function loginClinicWithTelegram(sub: string, meta: RequestMeta): Promise<TelegramSignInResult> {
+export async function loginClinicWithTelegram(tgId: bigint, meta: RequestMeta): Promise<TelegramSignInResult> {
   const ipHash = hashIp(meta.ip);
   if (!(await rateLimit(`ctg:${ipHash ?? "noip"}`, 30, 15 * 60_000))) return { ok: false, reason: "rate_limited" };
   const rows = await withAppContext({}, (tx) =>
-    tx.$queryRaw<{ id: string; status: string; lockedUntil: Date | null }[]>`SELECT id, status::text AS status, "lockedUntil" FROM app_auth_lookup_telegram(${sub})`,
+    tx.$queryRaw<{ id: string; status: string; lockedUntil: Date | null }[]>`SELECT id, status::text AS status, "lockedUntil" FROM app_auth_lookup_telegram(${tgId}::bigint)`,
   );
   const user = rows[0];
   if (!user || user.status !== "ACTIVE") {
@@ -115,20 +115,20 @@ export async function loginClinicWithTelegram(sub: string, meta: RequestMeta): P
  * that started the flow must still be valid. One Telegram account can belong to
  * one ITop Med account only.
  */
-export async function linkClinicTelegram(userId: string, sessionId: string, sub: string, meta: RequestMeta): Promise<void> {
+export async function linkClinicTelegram(userId: string, sessionId: string, tgId: bigint, meta: RequestMeta): Promise<void> {
   await withAppContext({ userId, sessionId }, async (tx) => {
     const s = await tx.session.findUnique({ where: { id: sessionId }, select: { userId: true, revokedAt: true, expiresAt: true } });
     if (!s || s.userId !== userId || s.revokedAt || s.expiresAt <= new Date()) throw new DomainError("errors.forbidden");
-    const taken = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM app_auth_lookup_telegram(${sub})`;
+    const taken = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM app_auth_lookup_telegram(${tgId}::bigint)`;
     if (taken[0] && taken[0].id !== userId) throw new DomainError("errors.telegramTaken");
-    await tx.user.update({ where: { id: userId }, data: { telegramSub: sub, telegramLinkedAt: new Date() } });
+    await tx.user.update({ where: { id: userId }, data: { telegramId: tgId, telegramLinkedAt: new Date() } });
     await recordAudit(tx, { actorType: "USER", actorId: userId, action: "clinic.telegram.linked", ipHash: hashIp(meta.ip), userAgent: meta.userAgent });
   });
 }
 
 export async function unlinkClinicTelegram(p: ClinicPrincipal, meta: RequestMeta): Promise<void> {
   await withAppContext({ userId: p.user.id, sessionId: p.sessionId }, async (tx) => {
-    await tx.user.update({ where: { id: p.user.id }, data: { telegramSub: null, telegramLinkedAt: null } });
+    await tx.user.update({ where: { id: p.user.id }, data: { telegramId: null, telegramLinkedAt: null } });
     await recordAudit(tx, { actorType: "USER", actorId: p.user.id, action: "clinic.telegram.unlinked", ipHash: hashIp(meta.ip), userAgent: meta.userAgent });
   });
 }
@@ -157,7 +157,7 @@ export async function validateClinicSession(token: string | undefined | null): P
     });
     return {
       sessionId,
-      user: { id: user.id, username: user.username, email: user.email, fullName: user.fullName, locale: user.locale, telegramLinked: Boolean(user.telegramSub) },
+      user: { id: user.id, username: user.username, email: user.email, fullName: user.fullName, locale: user.locale, telegramLinked: user.telegramId !== null },
       clinics: memberships.map((m) => ({ tenantId: m.tenant.id, slug: m.tenant.slug, name: m.tenant.name, status: m.tenant.status, defaultLocale: m.tenant.defaultLocale })),
     };
   });

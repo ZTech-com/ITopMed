@@ -39,8 +39,9 @@ export function authorizationUrl(cfg: TelegramConfig, state: string, codeChallen
   u.searchParams.set("client_id", cfg.clientId);
   u.searchParams.set("redirect_uri", cfg.redirectUri);
   u.searchParams.set("response_type", "code");
-  // Only the stable subject is needed; no phone number, no name is stored.
-  u.searchParams.set("scope", "openid");
+  // "profile" carries the Telegram user id (the same id the bot's Mini App reports).
+  // Only that id is stored; name, username and photo are ignored.
+  u.searchParams.set("scope", "openid profile");
   u.searchParams.set("state", state);
   u.searchParams.set("code_challenge", codeChallenge);
   u.searchParams.set("code_challenge_method", "S256");
@@ -150,8 +151,8 @@ const ALGORITHMS: Record<string, (data: Buffer, key: KeyObject, sig: Buffer) => 
 };
 
 export interface TelegramIdentity {
-  /** Stable OpenID Connect subject of the Telegram account. */
-  sub: string;
+  /** Telegram user id. */
+  id: bigint;
 }
 
 /** Signature (Telegram's key), issuer, audience (our bot), expiry and issue time. */
@@ -160,7 +161,7 @@ export async function verifyIdToken(idToken: string, clientId: string, resolveKe
   if (parts.length !== 3 || idToken.length > 8192) throw new TelegramLoginError("bad_token");
   const [h, p, s] = parts as [string, string, string];
   let header: { alg?: unknown; kid?: unknown; typ?: unknown };
-  let claims: { iss?: unknown; aud?: unknown; sub?: unknown; exp?: unknown; iat?: unknown };
+  let claims: { iss?: unknown; aud?: unknown; id?: unknown; exp?: unknown; iat?: unknown };
   try {
     header = JSON.parse(Buffer.from(h, "base64url").toString("utf8"));
     claims = JSON.parse(Buffer.from(p, "base64url").toString("utf8"));
@@ -184,9 +185,17 @@ export async function verifyIdToken(idToken: string, clientId: string, resolveKe
   if (claims.iss !== TELEGRAM_ISSUER || !aud.includes(clientId)) throw new TelegramLoginError("bad_token");
   if (typeof claims.exp !== "number" || claims.exp + CLOCK_SKEW_S < nowS) throw new TelegramLoginError("bad_token");
   if (typeof claims.iat === "number" && claims.iat - CLOCK_SKEW_S > nowS) throw new TelegramLoginError("bad_token");
-  const sub = typeof claims.sub === "string" || typeof claims.sub === "number" ? String(claims.sub) : "";
-  if (!/^[0-9A-Za-z_-]{1,128}$/.test(sub)) throw new TelegramLoginError("bad_token");
-  return { sub };
+  const id = parseTelegramId(claims.id);
+  if (!id) throw new TelegramLoginError("bad_token");
+  return { id };
+}
+
+/** A Telegram user id (positive integer, at most 2^53) or null. */
+export function parseTelegramId(v: unknown): bigint | null {
+  const s = typeof v === "number" && Number.isSafeInteger(v) ? String(v) : typeof v === "string" ? v : "";
+  if (!/^[1-9][0-9]{0,15}$/.test(s)) return null;
+  const n = BigInt(s);
+  return n <= 9007199254740991n ? n : null;
 }
 
 /** For tests only. */
