@@ -11,8 +11,10 @@ import { platformDb } from "@/server/db";
 import { env } from "@/server/env";
 import { MODULES } from "@/server/modules/catalog";
 import { getTenantDetail } from "@/server/tenancy/provisioning";
-import { clinicBotAction, invitationAction, moduleAction, planAction, supportRequestAction, tenantStatusAction } from "../../../actions";
+import { clinicBotAction, recordPaymentAction, voidBillingEntryAction, invitationAction, moduleAction, planAction, supportRequestAction, tenantStatusAction } from "../../../actions";
 import { clinicBotStatus } from "@/server/telegram/clinic-bot";
+import { clinicActivity, clinicBillingDetail } from "@/server/platform/billing";
+import { moneyFormatter } from "@/components/money";
 import { effectiveStatus, listGrantsForPlatform } from "@/server/support/access";
 
 const LIFECYCLE: Record<TenantStatus, ("activate" | "suspend" | "reactivate" | "archive")[]> = {
@@ -44,6 +46,10 @@ export default async function ClinicDetailPage({ params, searchParams }: { param
   const actions = LIFECYCLE[tenant.status];
   const grants = await listGrantsForPlatform(p, tenant.id);
   const bot = await clinicBotStatus(p, tenant.id);
+  const isSuper = role === "SUPER_ADMIN";
+  const [billing, activityMap, money] = await Promise.all([isSuper ? clinicBillingDetail(p, tenant.id) : null, clinicActivity(), moneyFormatter()]);
+  const activity = activityMap.get(tenant.id) ?? null;
+  const today = new Date().toISOString().slice(0, 10);
   const canManage = platformCan(role, "tenants.manage");
   const appBase = env().APP_URL.replace(/\/$/, "");
   const url = `${env().APP_URL.replace(/\/$/, "")}/c/${tenant.slug}`;
@@ -86,6 +92,112 @@ export default async function ClinicDetailPage({ params, searchParams }: { param
                   { label: t("admin.clinicNew.timezone"), value: tenant.timezone },
                   { label: t("admin.clinicDetail.people"), value: format.number(tenant._count.memberships) },
                   { label: t("admin.clinicDetail.created"), value: format.dateTime(tenant.createdAt, { dateStyle: "medium", timeStyle: "short" }) },
+                ]}
+              />
+            </CardBody>
+          </Card>
+
+          <Card id="billing">
+            <CardHeader title={t("admin.billing.clinicTitle")} description={t("admin.billing.clinicHint")} />
+            {billing ? (
+              <CardBody className="space-y-5 text-[14px]">
+                <DescriptionList
+                  items={[
+                    { label: t("admin.billing.invoiced"), value: money(billing.balance?.invoicedMinor ?? 0n, billing.balance?.currency ?? tenant.currency) },
+                    { label: t("admin.billing.paid"), value: money(billing.balance?.paidMinor ?? 0n, billing.balance?.currency ?? tenant.currency) },
+                    {
+                      label: t("admin.control.debt"),
+                      value:
+                        billing.balance && billing.balance.debtMinor > 0n ? (
+                          <span className={billing.balance.overdueDays > 0 ? "font-semibold text-danger" : "font-semibold"}>
+                            {money(billing.balance.debtMinor, billing.balance.currency)}
+                            {billing.balance.overdueDays > 0 ? ` · ${t("admin.billing.overdueBy", { days: billing.balance.overdueDays })}` : ""}
+                          </span>
+                        ) : (
+                          t("admin.billing.noDebt")
+                        ),
+                    },
+                  ]}
+                />
+                <Form action={recordPaymentAction} successMessage="admin.billing.paymentSaved">
+                  <input type="hidden" name="tenantId" value={tenant.id} />
+                  <p className="font-medium">{t("admin.billing.recordPayment")}</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <TextField name="amount" label={t("admin.billing.amount")} inputMode="decimal" required />
+                    <SelectField
+                      name="method"
+                      label={t("admin.billing.method")}
+                      defaultValue="TRANSFER"
+                      options={(["TRANSFER", "CASH", "CARD", "OTHER"] as const).map((m) => ({ value: m, label: t(`admin.billing.methods.${m}`) }))}
+                    />
+                    <TextField name="receivedOn" type="date" label={t("admin.billing.receivedOn")} defaultValue={today} required />
+                  </div>
+                  <TextField name="note" label={t("admin.billing.note")} hint={t("admin.billing.noteHint")} />
+                  <SubmitButton>{t("admin.billing.savePayment")}</SubmitButton>
+                </Form>
+                <div>
+                  <p className="mb-2 font-medium">{t("admin.billing.invoices")}</p>
+                  {billing.invoices.length === 0 ? (
+                    <p className="text-text-2">{t("admin.billing.noInvoices")}</p>
+                  ) : (
+                    <ul className="divide-y divide-border rounded-[var(--radius-control)] border border-border">
+                      {billing.invoices.map((i) => (
+                        <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                          <span className="min-w-0">
+                            <span className="block break-all font-mono text-[13px]">{i.number}</span>
+                            <span className="text-[12px] text-text-3">{t("admin.billing.dueOn", { date: format.dateTime(i.dueDate, { dateStyle: "medium", timeZone: "UTC" }) })}</span>
+                          </span>
+                          <span className="flex items-center gap-2">
+                            <span className={i.voidedAt ? "tabular-nums text-text-3 line-through" : "tabular-nums"}>{money(i.amountMinor, i.currency)}</span>
+                            {!i.voidedAt ? <VoidForm kind="invoice" id={i.id} label={t("admin.billing.void")} confirm={t("admin.billing.voidConfirm")} /> : <Badge>{t("admin.billing.voidedBadge")}</Badge>}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div>
+                  <p className="mb-2 font-medium">{t("admin.billing.payments")}</p>
+                  {billing.payments.length === 0 ? (
+                    <p className="text-text-2">{t("admin.billing.noPayments")}</p>
+                  ) : (
+                    <ul className="divide-y divide-border rounded-[var(--radius-control)] border border-border">
+                      {billing.payments.map((x) => (
+                        <li key={x.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                          <span className="min-w-0">
+                            <span className="block">
+                              {format.dateTime(x.receivedOn, { dateStyle: "medium", timeZone: "UTC" })} · {t(`admin.billing.methods.${x.method}`)}
+                            </span>
+                            {x.note ? <span className="block break-words text-[12px] text-text-3">{x.note}</span> : null}
+                          </span>
+                          <span className="flex items-center gap-2">
+                            <span className={x.voidedAt ? "tabular-nums text-text-3 line-through" : "tabular-nums"}>{money(x.amountMinor, x.currency)}</span>
+                            {!x.voidedAt ? <VoidForm kind="payment" id={x.id} label={t("admin.billing.void")} confirm={t("admin.billing.voidConfirm")} /> : <Badge>{t("admin.billing.voidedBadge")}</Badge>}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </CardBody>
+            ) : (
+              <CardBody>
+                <p className="text-[14px] text-text-2">{t("admin.billing.superOnly")}</p>
+              </CardBody>
+            )}
+          </Card>
+
+          <Card id="activity">
+            <CardHeader title={t("admin.control.activityTitle")} description={t("admin.control.activityHint")} />
+            <CardBody>
+              <DescriptionList
+                items={[
+                  { label: t("admin.control.lastActivity"), value: activity?.lastLoginAt ? format.relativeTime(new Date(activity.lastLoginAt)) : t("common.never") },
+                  { label: t("admin.control.staffNow"), value: t("admin.control.staffValue", { d7: activity?.staff7d ?? 0, d30: activity?.staff30d ?? 0, all: activity?.activeStaff ?? 0 }) },
+                  { label: t("admin.control.visitsToday"), value: format.number(activity?.appointmentsToday ?? 0) },
+                  { label: t("admin.control.visits30d"), value: format.number(activity?.appointments30d ?? 0) },
+                  { label: t("admin.control.patients30d"), value: format.number(activity?.newPatients30d ?? 0) },
+                  { label: t("admin.control.invoices30d"), value: format.number(activity?.invoices30d ?? 0) },
                 ]}
               />
             </CardBody>
@@ -296,5 +408,23 @@ export default async function ClinicDetailPage({ params, searchParams }: { param
         </div>
       </div>
     </>
+  );
+}
+
+/** Voids an invoice or a payment after an explicit confirmation (never deletes: the record stays, struck through). */
+function VoidForm({ kind, id, label, confirm }: { kind: "invoice" | "payment"; id: string; label: string; confirm: string }) {
+  return (
+    <details className="text-[13px]">
+      <summary className="cursor-pointer text-danger">{label}</summary>
+      <Form action={voidBillingEntryAction} className="mt-2 space-y-2">
+        <input type="hidden" name="kind" value={kind} />
+        <input type="hidden" name="id" value={id} />
+        <label className="flex items-start gap-2">
+          <input type="checkbox" name="confirm" value="yes" required className="mt-0.5 size-4 accent-[var(--accent)]" />
+          <span>{confirm}</span>
+        </label>
+        <SubmitButton variant="danger">{label}</SubmitButton>
+      </Form>
+    </details>
   );
 }

@@ -19,6 +19,8 @@ Status legend: ✅ implemented & tested · 🟡 partial · ⏳ planned
 | Telegram is linked only by the signed-in person (from a still-valid session); one Telegram account per ITop Med account; an unknown Telegram account never creates an account. An administrator's new password also unlinks Telegram (`app_set_member_password`) | ✅ | `tests/login-telegram.test.ts` |
 | Session expiry (absolute + idle), revocation | ✅ | |
 | Platform staff invitations: single-use 48 h token (hash stored), SUPER_ADMIN only; the invitee chooses login and password | ✅ | `platform/staff.ts` |
+| The console (`/admin`, own address via `ADMIN_URL`) is for SUPER_ADMIN only: other platform accounts are signed out at login and refused by `requirePlatform` | ✅ | `auth/guards.ts`, `admin/actions.ts` |
+| ITop Med billing of clinics (`ClinicInvoice`, `ClinicPayment`, `BillingSettings`): platform role only; clinics see just their own debt through `app_billing_status()`. Console activity is counts only from `platform_tenant_activity()` (SECURITY DEFINER), so the platform role still reads no clinical rows | ✅ | `platform/billing.ts`; `tests/platform-billing.test.ts` |
 | HttpOnly, Secure, SameSite cookies, `__Host-` prefix in production | ✅ | `auth/cookies.ts` |
 | CSRF | ✅ | SameSite cookies + Next.js server-action Origin check |
 | XSS | ✅ | React escaping, nonce CSP with `strict-dynamic`, escaped email HTML |

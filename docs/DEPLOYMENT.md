@@ -73,5 +73,13 @@ What it creates (and nothing else): user `itopmed`; `/opt/itopmed` (own Node.js,
 - Status/logs: `systemctl status itopmed-app` · `journalctl -u itopmed-app -n 100`.
 - Rollback: point `/opt/itopmed/current` at the previous folder in `/opt/itopmed/releases` and restart the three services (migrations are additive; restore a backup if a migration must be undone).
 
+### SuperAdmin console on its own address (admin.itoppos.uz)
+1. DNS: an `A` record `admin.itoppos.uz` → the server's address.
+2. Add `ADMIN_URL=https://admin.itoppos.uz` to `/etc/itopmed/itopmed.env`.
+3. Deploy (push to `main`, or run the installer): it adds the console's Nginx site and certificate (a missing DNS record only postpones the certificate) and restarts the app. From then on `/admin` is served only there and the clinic address redirects `/admin` to it. Only SUPER_ADMIN accounts can use the console.
+
+### ITop Med billing of clinics
+The worker issues each ACTIVE clinic with an ACTIVE subscription one invoice per calendar month from its plan price (hourly, idempotent) and suspends clinics whose oldest unpaid invoice is more than `suspendAfterDays` past due (if automatic suspension is on). Payments are recorded by the SuperAdmin on the clinic page; rules on `/admin/billing`. Reactivating a suspended clinic is always a person's decision.
+
 ### Automatic deploy from GitHub (`.github/workflows/deploy.yml`)
 Every push to `main` (or "Run workflow" in the Actions tab): lint, typecheck, i18n, tests → `npm run package:linux` on GitHub's runner → the release is piped over SSH to the server. The deploy key's public half sits in root's `authorized_keys` with `command="/opt/itopmed/bin/itopmed-deploy"` (no shell, no forwarding): it can only hand over a release, which is size- and SHA-256-checked before the bundled installer runs. Repository secret needed: `DEPLOY_SSH_KEY` (private half). The installer puts `itopmed-deploy` in `/opt/itopmed/bin` (releases from 2026-11-20 on); on an older installation copy `scripts/deploy/itopmed-deploy.sh` there once by hand. Without it the workflow still checks and builds, and skips the deploy with a warning. The server's host key is pinned in the workflow.

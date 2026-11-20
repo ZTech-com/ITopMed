@@ -261,6 +261,44 @@ if ! certbot certificates 2>/dev/null | grep -q "Domains: $DOMAIN\$\|Domains: $D
 fi
 nginx -t && systemctl reload nginx
 
+# SuperAdmin console on its own address: set ADMIN_URL=https://admin.example.uz in
+# $ETC/itopmed.env and point that name's DNS at this server; the next run adds its
+# own site file and certificate. A missing DNS record only skips the certificate.
+ADMIN_DOMAIN="$(sed -n 's#^ADMIN_URL=https\?://\([^/]*\).*#\1#p' "$ETC/itopmed.env" | tail -1)"
+if [ -n "$ADMIN_DOMAIN" ] && [ "$ADMIN_DOMAIN" != "$DOMAIN" ]; then
+  log "Nginx site for the console: $ADMIN_DOMAIN"
+  ASITE="/etc/nginx/sites-available/$ADMIN_DOMAIN"
+  if [ ! -f "$ASITE" ]; then
+    cat > "$ASITE" <<EOF
+# ITop Med console ($ADMIN_DOMAIN) - added by scripts/deploy/server-install.sh.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $ADMIN_DOMAIN;
+    client_max_body_size 2m;
+
+    location / {
+        proxy_pass http://127.0.0.1:$APP_PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Forwarded-For \$remote_addr;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$host;
+        proxy_read_timeout 120s;
+    }
+}
+EOF
+    ln -sfn "$ASITE" "/etc/nginx/sites-enabled/$ADMIN_DOMAIN"
+    if nginx -t; then systemctl reload nginx; else rm -f "/etc/nginx/sites-enabled/$ADMIN_DOMAIN"; echo "nginx -t failed: console site removed" >&2; fi
+  fi
+  if ! certbot certificates 2>/dev/null | grep -q "Domains: $ADMIN_DOMAIN\$\|Domains: $ADMIN_DOMAIN "; then
+    certbot --nginx -d "$ADMIN_DOMAIN" --non-interactive --redirect ${CERT_EMAIL:+-m "$CERT_EMAIL"} --agree-tos --keep-until-expiring \
+      || echo "Certificate for $ADMIN_DOMAIN not issued yet (is its DNS record pointing here?) - the next deploy retries." >&2
+  fi
+  nginx -t && systemctl reload nginx
+fi
+
 log "Helper commands"
 install -d -m 0755 "$BASE/bin"
 install -m 0755 "$(dirname "$0")/itopmed-admin.sh" "$BASE/bin/itopmed-admin" 2>/dev/null || true

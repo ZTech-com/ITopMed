@@ -18,6 +18,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
   const nav: NavItem[] = [
     { href: "/admin", label: t("nav.dashboard"), icon: "dashboard", exact: true },
     ...(platformCan(role, "tenants.read") ? [{ href: "/admin/clinics", label: t("nav.clinics"), icon: "clinics" as const }] : []),
+    ...(platformCan(role, "subscriptions.manage") ? [{ href: "/admin/billing", label: t("nav.subscriptions"), icon: "billing" as const }] : []),
     ...(platformCan(role, "networks.manage") ? [{ href: "/admin/networks", label: t("nav.networks"), icon: "networks" as const }] : []),
     ...(platformCan(role, "staff.read") ? [{ href: "/admin/staff", label: t("nav.staff"), icon: "staff" as const }] : []),
     ...(platformCan(role, "audit.read") ? [{ href: "/admin/audit", label: t("nav.audit"), icon: "audit" as const }] : []),

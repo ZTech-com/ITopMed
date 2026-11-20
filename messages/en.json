@@ -68,7 +68,8 @@
     "networks": "Networks",
     "networkContext": "Network: {name}",
     "superAdminContext": "SuperAdmin · platform control",
-    "desk": "Front desk"
+    "desk": "Front desk",
+    "subscriptions": "Subscriptions & payments"
   },
   "auth": {
     "adminTitle": "ITop Med Administration",
@@ -98,12 +99,12 @@
     "backToSignIn": "Back to sign in",
     "portalInvalid": "Incorrect phone number or password.",
     "staffActivated": "Your account is active. Sign in with your login and password.",
-    "toConsole": "SuperAdmin and network admins: control panel",
     "toClinic": "Clinic staff: sign in to your clinic",
     "consoleWho": "For SuperAdmin and network admins only. Clinic staff sign in on the clinic sign-in page.",
     "username": "Login",
     "telegram": "Sign in with Telegram",
-    "orPassword": "or with login and password"
+    "orPassword": "or with login and password",
+    "consoleSuperOnly": "The console is for the SuperAdmin only."
   },
   "invite": {
     "title": "Activate your account",
@@ -342,6 +343,82 @@
       "disconnect": "Disconnect bot",
       "saved": "The bot is connected and set up.",
       "removed": "The bot was disconnected."
+    },
+    "control": {
+      "mrr": "Monthly revenue (plans)",
+      "debt": "Debt",
+      "overdueCount": "{count, plural, =0 {Nothing overdue} one {# clinic overdue} other {# clinics overdue}}",
+      "trialCount": "{count, plural, =0 {None on trial} other {On trial: #}}",
+      "staff7d": "Staff active in 7 days",
+      "inactive": "Unused for {days}+ days",
+      "nearLimit": "Near plan limits",
+      "suspendRule": "Automatic suspension",
+      "days": "after {count} days",
+      "autoOn": "On",
+      "autoOff": "Off",
+      "overdueTitle": "Overdue payments",
+      "overdueDays": "Days overdue",
+      "allTitle": "All clinics",
+      "allHint": "Subscription, debt and activity. Activity is counts only; no medical data is shown.",
+      "lastActivity": "Last sign-in",
+      "staffCol": "Staff (7 days / total)",
+      "visits30d": "Visits (30 days)",
+      "patients30d": "New patients (30 days)",
+      "limitBadge": "Limit",
+      "trialUntil": "Trial until {date}",
+      "activityTitle": "Activity",
+      "activityHint": "Counts only: who did what and medical data are not shown.",
+      "staffNow": "Staff",
+      "staffValue": "{d7} in 7 days, {d30} in 30 days, {all} in total",
+      "visitsToday": "Visits today",
+      "invoices30d": "Patient invoices (30 days)"
+    },
+    "billing": {
+      "title": "Subscriptions & payments",
+      "subtitle": "Clinics' payments to ITop Med: an invoice is issued every month from the plan; you record the payments.",
+      "rules": "Rules",
+      "rulesHint": "Invoices are issued on the 1st of every month.",
+      "dueDays": "Payment term (days)",
+      "dueDaysHint": "Days to pay after the invoice is issued.",
+      "suspendAfterDays": "Suspend after (days)",
+      "suspendAfterDaysHint": "Days after the due date before the clinic is suspended. Until then the clinic sees a warning.",
+      "autoSuspend": "Suspend overdue clinics automatically (you reactivate them)",
+      "runTitle": "Run now",
+      "runHint": "The server does this every hour by itself: issues this month's invoices and suspends overdue clinics.",
+      "runNow": "Run now",
+      "ran": "Done: {invoices} invoices issued, {suspended} clinics suspended.",
+      "balances": "Clinic balances",
+      "noInvoices": "No invoices yet.",
+      "invoiced": "Invoiced",
+      "paid": "Paid",
+      "clinicTitle": "Subscription payments",
+      "clinicHint": "Payments settle the oldest invoices first.",
+      "overdueBy": "{days} days overdue",
+      "noDebt": "No debt",
+      "recordPayment": "Record a payment",
+      "amount": "Amount",
+      "method": "Method",
+      "methods": {
+        "TRANSFER": "Bank transfer",
+        "CASH": "Cash",
+        "CARD": "Card",
+        "OTHER": "Other"
+      },
+      "receivedOn": "Received on",
+      "note": "Note",
+      "noteHint": "For example, the payment order number.",
+      "savePayment": "Save payment",
+      "paymentSaved": "Payment recorded.",
+      "invoices": "Invoices",
+      "payments": "Payments",
+      "noPayments": "No payments yet.",
+      "dueOn": "Due {date}",
+      "void": "Void",
+      "voidConfirm": "Yes, void it (the record stays, struck through)",
+      "voidedBadge": "Voided",
+      "voided": "Voided.",
+      "settingsSaved": "Rules saved.",
+      "superOnly": "Visible to the SuperAdmin only."
     }
   },
   "clinic": {
@@ -1460,6 +1537,10 @@
       "revoked": "Screen turned off: the link no longer works.",
       "voiceOn": "with sound",
       "voiceOff": "silent"
+    },
+    "subscription": {
+      "overdueTitle": "ITop Med subscription unpaid",
+      "overdueBody": "Amount due: {amount}. Without payment the clinic will be suspended on {date}. Contact ITop Med about payment."
     }
   },
   "status": {
@@ -1601,7 +1682,8 @@
     "templateFieldLines": "Some field lines are invalid: check the key (Latin letters/digits), label and min-max format.",
     "templateUnknownPlaceholders": "The report text uses a '{{'key'}}' that is not among the fields.",
     "username": "Login: 3–64 characters — lowercase Latin letters, digits and . _ - (for example dr.karimov).",
-    "telegramSecret": "The Client Secret is too short."
+    "telegramSecret": "The Client Secret is too short.",
+    "amount": "Enter a valid amount."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

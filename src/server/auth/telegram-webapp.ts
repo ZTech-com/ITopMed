@@ -87,8 +87,8 @@ export async function resolveWebApp(initData: string, choice: string | null, met
     for (const a of patients.accounts.filter((x) => x.tenantId === bot.tenantId)) choices.push({ key: `patient:${a.id}`, kind: "patient", clinic: a.name });
     if (choices.length === 0) return { status: "patient", phoneKnown: patients.phoneKnown };
   } else {
-    const admin = await platformDb().platformUser.findUnique({ where: { telegramId: tgId }, select: { status: true } });
-    if (admin?.status === "ACTIVE") choices.push({ key: "admin", kind: "admin", clinic: null });
+    const admin = await platformDb().platformUser.findUnique({ where: { telegramId: tgId }, select: { status: true, role: true } });
+    if (admin?.status === "ACTIVE" && admin.role === "SUPER_ADMIN") choices.push({ key: "admin", kind: "admin", clinic: null });
     if (choices.length === 0) return { status: "error", reason: "not_platform" };
   }
 

@@ -13,12 +13,16 @@ import { logger } from "../src/server/logger";
 import { processDueNotifications } from "../src/server/notifications/notifications";
 import { pollTelegram } from "../src/server/notifications/telegram";
 import { isLocalInstall, syncPatientFiles } from "../src/server/clinic/data-mode";
+import { generateMonthlyInvoices, suspendOverdueClinics } from "../src/server/platform/billing";
 
 // Short enough that a patient connecting Telegram sees the confirmation quickly.
 const INTERVAL_MS = 20_000;
 // Local app: the folder of patient Excel files is refreshed this often (only changed patients).
 const FILES_EVERY_MS = 120_000;
 let filesAt = 0;
+// ITop Med's own billing of clinics: monthly invoices and automatic suspension of overdue clinics.
+const BILLING_EVERY_MS = 60 * 60_000;
+let billingAt = 0;
 
 async function pass() {
   const tenants = await platformDb().tenant.findMany({ where: { status: { in: ["TRIAL", "ACTIVE"] } }, select: { id: true } });
@@ -47,6 +51,16 @@ async function pass() {
       } catch {
         // already logged by syncPatientFiles; retried next time
       }
+    }
+  }
+  if (!isLocalInstall() && Date.now() - billingAt >= BILLING_EVERY_MS) {
+    billingAt = Date.now();
+    try {
+      const invoices = await generateMonthlyInvoices();
+      const suspended = await suspendOverdueClinics();
+      if (invoices || suspended) logger.info("worker.billing", { invoices, suspended });
+    } catch (e) {
+      logger.error("worker.billing_failed", { error: e instanceof Error ? e.name : "unknown" });
     }
   }
   const swept = (await platformDb().$queryRaw<{ n: number }[]>`SELECT rate_limit_sweep() AS n`)[0]?.n ?? 0;

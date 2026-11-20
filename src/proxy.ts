@@ -5,7 +5,36 @@ import { NextResponse, type NextRequest } from "next/server";
  * Authorization is NOT done here: every page and server action checks the
  * session and permissions on the server itself (defence in depth).
  */
+/** Paths the console's own host (ADMIN_URL) serves besides /admin. */
+const ADMIN_HOST_PATHS = /^\/(admin|auth\/telegram|api\/health|tg(\/|$)|_next|icons|favicon|apple-icon|icon|manifest|admin\.webmanifest|sw\.js)/;
+
+/**
+ * Console on its own address (ADMIN_URL, e.g. admin.itoppos.uz): there only the
+ * console (and what it needs) is served; on the clinic address /admin redirects
+ * there. Convenience routing only - every console page still checks the
+ * SuperAdmin session itself.
+ */
+function adminHostRedirect(request: NextRequest): NextResponse | null {
+  const adminUrl = process.env.ADMIN_URL;
+  if (!adminUrl || process.env.LOCAL_MODE === "1") return null;
+  let admin: URL;
+  try {
+    admin = new URL(adminUrl);
+  } catch {
+    return null;
+  }
+  const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "").split(",")[0]!.trim().toLowerCase();
+  const path = request.nextUrl.pathname;
+  if (host === admin.host.toLowerCase()) {
+    return ADMIN_HOST_PATHS.test(path) ? null : NextResponse.redirect(new URL("/admin", admin));
+  }
+  if (path === "/admin" || path.startsWith("/admin/")) return NextResponse.redirect(new URL(`${path}${request.nextUrl.search}`, admin));
+  return null;
+}
+
 export function proxy(request: NextRequest) {
+  const moved = adminHostRedirect(request);
+  if (moved) return moved;
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDev = process.env.NODE_ENV === "development";
   // Single-computer installation (`npm run local`): the app is opened over plain

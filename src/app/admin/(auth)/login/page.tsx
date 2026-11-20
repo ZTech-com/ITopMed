@@ -13,13 +13,18 @@ import { adminLoginAction } from "../../actions";
 
 export const metadata: Metadata = { title: "ITop Med Boshqaruv", manifest: "/admin.webmanifest" };
 
-export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ activated?: string; tg?: string }> }) {
+export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ activated?: string; tg?: string; only?: string }> }) {
   if (await needsFirstRun()) redirect("/welcome");
   const p = await getPlatformPrincipal();
-  if (p) redirect("/admin");
+  if (p?.user.role === "SUPER_ADMIN") redirect("/admin");
   const [t, sp] = await Promise.all([getTranslations("auth"), searchParams]);
   return (
     <AuthLayout eyebrow="ITop Med" title={t("adminTitle")} subtitle={t("adminSubtitle")}>
+      {sp.only ? (
+        <div className="mb-5">
+          <Alert tone="warning">{t("consoleSuperOnly")}</Alert>
+        </div>
+      ) : null}
       <TelegramNotice code={sp.tg} />
       <TelegramLoginButton kind="admin" />
       <Form action={adminLoginAction}>

@@ -174,6 +174,8 @@ model Tenant {
   invitations          Invitation[]
   modules              TenantModule[]
   subscription         Subscription?
+  clinicInvoices       ClinicInvoice[]
+  clinicPayments       ClinicPayment[]
   supportGrants        SupportAccessGrant[]
   rooms                Room[]
   services             Service[]
@@ -2252,4 +2254,59 @@ model TelegramContact {
   verifiedAt DateTime @default(now())
 
   @@index([phone])
+}
+
+// ───────────────────────────── ITop Med billing of clinics ─────────────────────
+
+enum PlatformPaymentMethod {
+  CASH
+  TRANSFER
+  CARD
+  OTHER
+}
+
+/// Monthly subscription invoice of a clinic (made from its plan price; one per month).
+model ClinicInvoice {
+  id          String    @id @db.Uuid
+  tenantId    String    @db.Uuid
+  number      String    @unique
+  periodStart DateTime  @db.Date
+  periodEnd   DateTime  @db.Date
+  amountMinor BigInt
+  currency    String    @default("UZS")
+  dueDate     DateTime  @db.Date
+  voidedAt    DateTime?
+  createdAt   DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, periodStart])
+  @@index([tenantId])
+}
+
+/// A payment from a clinic to ITop Med, entered by the SuperAdmin. Settles the oldest invoices first.
+model ClinicPayment {
+  id           String                @id @db.Uuid
+  tenantId     String                @db.Uuid
+  amountMinor  BigInt
+  currency     String                @default("UZS")
+  method       PlatformPaymentMethod
+  receivedOn   DateTime              @db.Date
+  note         String?
+  recordedById String                @db.Uuid
+  voidedAt     DateTime?
+  createdAt    DateTime              @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId])
+}
+
+/// One row (id = 1): when invoices fall due and when an overdue clinic is suspended.
+model BillingSettings {
+  id               Int      @id @default(1)
+  dueDays          Int      @default(10)
+  suspendAfterDays Int      @default(15)
+  autoSuspend      Boolean  @default(true)
+  updatedAt        DateTime @default(now()) @updatedAt
 }

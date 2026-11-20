@@ -28,6 +28,11 @@ const schema = z.object({
    */
   LOCAL_MODE: z.enum(["0", "1"]).default("0"),
   /**
+   * The SuperAdmin console's own address (e.g. https://admin.itoppos.uz). When
+   * set, /admin is served only there and the clinic address redirects /admin to it.
+   */
+  ADMIN_URL: z.url().optional(),
+  /**
    * Log In with Telegram (OpenID Connect, https://core.telegram.org/bots/telegram-login),
    * the main way to sign in on the website. Client ID (defaults to the central
    * bot's id from TELEGRAM_BOT_TOKEN) and Secret come from @BotFather > the bot > Login Widget, where
@@ -94,5 +99,5 @@ export function telegramLogin(): { clientId: string; clientSecret: string; redir
   // The Client ID is the bot's id: the number before ":" in the central bot's token.
   const clientId = e.TELEGRAM_LOGIN_CLIENT_ID ?? e.TELEGRAM_BOT_TOKEN?.split(":")[0];
   if (!clientId || !e.TELEGRAM_LOGIN_CLIENT_SECRET) return null;
-  return { clientId, clientSecret: e.TELEGRAM_LOGIN_CLIENT_SECRET, redirectUri: new URL("/auth/telegram/callback", e.APP_URL).toString() };
+  return { clientId, clientSecret: e.TELEGRAM_LOGIN_CLIENT_SECRET, redirectUri: new URL("/auth/telegram/callback", e.ADMIN_URL ?? e.APP_URL).toString() };
 }

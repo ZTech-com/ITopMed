@@ -6,6 +6,9 @@ import { requireClinic } from "@/server/auth/guards";
 import type { Permission } from "@/server/authz/permissions";
 import { DOCTOR_ROLE_KEYS } from "@/server/clinic/doctors";
 import { clinicLogoutAction } from "../../clinic-actions";
+import { moneyFormatter } from "@/components/money";
+import { Alert } from "@/components/ui/primitives";
+import { subscriptionDue } from "@/server/clinic/subscription";
 
 export default async function ClinicLayout({ children, params }: { children: React.ReactNode; params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -45,6 +48,9 @@ export default async function ClinicLayout({ children, params }: { children: Rea
     ...(can("support_access.decide") ? [{ href: `${base}/support-access`, label: t("nav.supportAccess"), icon: "support" as const }] : []),
     ...(can("audit.read") ? [{ href: `${base}/audit`, label: t("nav.clinicAudit"), icon: "audit" as const }] : []),
   ];
+  // Subscription payment overdue: only those who manage the clinic see it.
+  const due = await subscriptionDue(ctx);
+  const money = due ? await moneyFormatter() : null;
   return (
     <AppShell
       context={ctx.tenant.name}
@@ -54,6 +60,13 @@ export default async function ClinicLayout({ children, params }: { children: Rea
       securityHref={`/account/security?next=${encodeURIComponent(base)}`}
       primary={nav.slice(0, 4)}
     >
+      {due && money ? (
+        <div className="mb-6" role="status">
+          <Alert tone="warning" title={t("clinic.subscription.overdueTitle")}>
+            {t("clinic.subscription.overdueBody", { amount: money(due.debtMinor, due.currency), date: due.suspendOn ? due.suspendOn.toISOString().slice(0, 10) : "—" })}
+          </Alert>
+        </div>
+      ) : null}
       {children}
     </AppShell>
   );

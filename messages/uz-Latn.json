@@ -68,7 +68,8 @@
     "networks": "Tarmoqlar",
     "networkContext": "Tarmoq: {name}",
     "superAdminContext": "SuperAdmin · bosh boshqaruv",
-    "desk": "Qabulxona"
+    "desk": "Qabulxona",
+    "subscriptions": "Obuna va to'lovlar"
   },
   "auth": {
     "adminTitle": "ITop Med boshqaruvi",
@@ -98,12 +99,12 @@
     "backToSignIn": "Kirish sahifasiga qaytish",
     "portalInvalid": "Telefon raqami yoki parol notoʻgʻri.",
     "staffActivated": "Hisobingiz faollashtirildi. Login va parolingiz bilan kiring.",
-    "toConsole": "SuperAdmin va tarmoq adminlari: boshqaruv paneli",
     "toClinic": "Klinika xodimlari: klinikaga kirish",
     "consoleWho": "Faqat SuperAdmin va tarmoq adminlari uchun. Klinika xodimlari klinikaga kirish sahifasidan kiradi.",
     "username": "Login",
     "telegram": "Telegram orqali kirish",
-    "orPassword": "yoki login va parol bilan"
+    "orPassword": "yoki login va parol bilan",
+    "consoleSuperOnly": "Boshqaruv paneli faqat SuperAdmin uchun."
   },
   "invite": {
     "title": "Hisobni faollashtirish",
@@ -342,6 +343,82 @@
       "disconnect": "Botni uzish",
       "saved": "Bot ulandi va sozlandi.",
       "removed": "Bot uzildi."
+    },
+    "control": {
+      "mrr": "Oylik tushum (tarif bo'yicha)",
+      "debt": "Qarz",
+      "overdueCount": "{count, plural, =0 {Muddati o'tgan yo'q} other {# ta klinikada muddati o'tgan}}",
+      "trialCount": "{count, plural, =0 {Sinovda yo'q} other {Sinovda: #}}",
+      "staff7d": "7 kunda kirgan xodimlar",
+      "inactive": "{days} kundan beri ishlatilmayapti",
+      "nearLimit": "Tarif chegarasiga yaqin",
+      "suspendRule": "Avtomatik to'xtatish",
+      "days": "{count} kundan keyin",
+      "autoOn": "Yoqilgan",
+      "autoOff": "O'chirilgan",
+      "overdueTitle": "To'lov muddati o'tganlar",
+      "overdueDays": "Kechikish (kun)",
+      "allTitle": "Barcha klinikalar",
+      "allHint": "Obuna, qarz va faollik. Faollik — faqat sonlar, tibbiy ma'lumot ko'rinmaydi.",
+      "lastActivity": "Oxirgi kirish",
+      "staffCol": "Xodimlar (7 kun / jami)",
+      "visits30d": "Qabullar (30 kun)",
+      "patients30d": "Yangi bemorlar (30 kun)",
+      "limitBadge": "Chegara",
+      "trialUntil": "Sinov {date} gacha",
+      "activityTitle": "Faollik",
+      "activityHint": "Faqat sonlar: kim nima qilgani va tibbiy ma'lumot ko'rinmaydi.",
+      "staffNow": "Xodimlar",
+      "staffValue": "7 kunda {d7}, 30 kunda {d30}, jami {all}",
+      "visitsToday": "Bugungi qabullar",
+      "invoices30d": "Bemor hisoblari (30 kun)"
+    },
+    "billing": {
+      "title": "Obuna va to'lovlar",
+      "subtitle": "Klinikalarning ITop Med'ga to'lovlari: har oy tarif bo'yicha hisob chiqadi, to'lovlarni siz yozasiz.",
+      "rules": "Qoidalar",
+      "rulesHint": "Hisob har oyning 1-sanasida chiqadi.",
+      "dueDays": "To'lov muddati (kun)",
+      "dueDaysHint": "Hisob chiqqandan keyin necha kun ichida to'lanadi.",
+      "suspendAfterDays": "To'xtatish (kun)",
+      "suspendAfterDaysHint": "Muddat o'tgandan keyin necha kundan so'ng klinika to'xtatiladi. Shu vaqtgacha klinikada ogohlantirish chiqadi.",
+      "autoSuspend": "Muddati o'tgan klinikani avtomatik to'xtatish (qayta yoqishni siz qilasiz)",
+      "runTitle": "Hozir hisoblash",
+      "runHint": "Server buni har soatda o'zi qiladi: shu oy hisoblarini chiqaradi va muddati o'tganlarni to'xtatadi.",
+      "runNow": "Hozir ishga tushirish",
+      "ran": "Tayyor: {invoices} ta hisob chiqdi, {suspended} ta klinika to'xtatildi.",
+      "balances": "Klinikalar balansi",
+      "noInvoices": "Hali hisob yo'q.",
+      "invoiced": "Hisoblangan",
+      "paid": "To'langan",
+      "clinicTitle": "Obuna to'lovlari",
+      "clinicHint": "To'lovlar eng eski hisobni birinchi yopadi.",
+      "overdueBy": "{days} kun kechikkan",
+      "noDebt": "Qarz yo'q",
+      "recordPayment": "To'lovni yozish",
+      "amount": "Summa",
+      "method": "Usul",
+      "methods": {
+        "TRANSFER": "Bank o'tkazmasi",
+        "CASH": "Naqd",
+        "CARD": "Karta",
+        "OTHER": "Boshqa"
+      },
+      "receivedOn": "Qabul qilingan sana",
+      "note": "Izoh",
+      "noteHint": "Masalan, to'lov topshirig'i raqami.",
+      "savePayment": "To'lovni saqlash",
+      "paymentSaved": "To'lov yozildi.",
+      "invoices": "Hisoblar",
+      "payments": "To'lovlar",
+      "noPayments": "Hali to'lov yo'q.",
+      "dueOn": "Muddat: {date}",
+      "void": "Bekor qilish",
+      "voidConfirm": "Ha, bekor qilaman (yozuv o'chmaydi, chizilgan holda qoladi)",
+      "voidedBadge": "Bekor qilingan",
+      "voided": "Bekor qilindi.",
+      "settingsSaved": "Qoidalar saqlandi.",
+      "superOnly": "Faqat SuperAdmin ko'radi."
     }
   },
   "clinic": {
@@ -1460,6 +1537,10 @@
       "revoked": "Ekran oʻchirildi: havola endi ishlamaydi.",
       "voiceOn": "ovoz yoqilgan",
       "voiceOff": "ovozsiz"
+    },
+    "subscription": {
+      "overdueTitle": "ITop Med obunasi to'lanmagan",
+      "overdueBody": "Qarz: {amount}. To'lov qilinmasa, {date} kuni klinika ishi to'xtatiladi. To'lov bo'yicha ITop Med bilan bog'laning."
     }
   },
   "status": {
@@ -1601,7 +1682,8 @@
     "templateFieldLines": "Maydonlar qatorlarida xato bor: kalit (lotin harf/raqam), nomi, min-max formatini tekshiring.",
     "templateUnknownPlaceholders": "Hisobot matnida maydonlar roʻyxatida yoʻq '{{'kalit'}}' bor.",
     "username": "Login 3–64 belgi: kichik lotin harflari, raqamlar va . _ - (masalan, dr.karimov).",
-    "telegramSecret": "Client Secret juda qisqa."
+    "telegramSecret": "Client Secret juda qisqa.",
+    "amount": "Summani to'g'ri kiriting."
   },
   "errors": {
     "generic": "Nimadir notoʻgʻri ketdi. Qayta urinib koʻring.",

@@ -15,6 +15,8 @@ export const getClinicPrincipal = cache(async () => validateClinicSession(await 
 export async function requirePlatform(permission?: PlatformPermission) {
   const p = await getPlatformPrincipal();
   if (!p) redirect("/admin/login");
+  // The console (admin.itoppos.uz) is the SuperAdmin's alone.
+  if (p.user.role !== "SUPER_ADMIN") redirect("/admin/login?only=1");
   // Resources the role may not use are reported as not found (no information leak).
   if (permission && !platformCan(p.user.role, permission)) notFound();
   return p;
