@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -75,9 +76,9 @@ export default async function ConnectPage() {
       {secure ? (
         <div className="space-y-4">
           <Alert tone="success">{t("secureOk")}</Alert>
-          <a href="/login" className={buttonClass("primary", "md", "w-full")}>
+          <Link href="/login" className={buttonClass("primary", "md", "w-full")}>
             {t("open")}
-          </a>
+          </Link>
           <p className="text-[14px] leading-relaxed text-text-2">{t(`install.${platform}`)}</p>
         </div>
       ) : (

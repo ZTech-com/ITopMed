@@ -57,9 +57,9 @@ model PlatformUser {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  network         Network?                  @relation(fields: [networkId], references: [id])
+  network         Network?             @relation(fields: [networkId], references: [id])
   sessions        PlatformSession[]
-  invitationsSent PlatformInvitation[]      @relation("PlatformInviter")
+  invitationsSent PlatformInvitation[] @relation("PlatformInviter")
   tenantsCreated  Tenant[]
   supportGrants   SupportAccessGrant[]
 
@@ -2167,15 +2167,17 @@ model Prescription {
 
 /// The clinic's own Telegram bot (created with @BotFather). The token is a secret: AES-GCM encrypted, never shown again.
 model TelegramBot {
-  tenantId     String   @id @db.Uuid
-  tokenEnc     String
-  username     String
-  enabled      Boolean  @default(true)
+  tenantId       String   @id @db.Uuid
+  tokenEnc       String
+  username       String
+  enabled        Boolean  @default(true)
   /// Last processed getUpdates id + 1.
-  updateOffset BigInt   @default(0)
-  connectedAt  DateTime @default(now())
-  updatedById  String?  @db.Uuid
-  updatedAt    DateTime @updatedAt
+  updateOffset   BigInt   @default(0)
+  /// Login Widget client secret of this bot (AES-GCM, clinic-bound); null = no Telegram sign-in on /login/<slug>.
+  loginSecretEnc String?
+  connectedAt    DateTime @default(now())
+  updatedById    String?  @db.Uuid
+  updatedAt      DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
 }

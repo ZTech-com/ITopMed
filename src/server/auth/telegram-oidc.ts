@@ -60,6 +60,8 @@ export interface FlowState {
   userId?: string;
   sessionId?: string;
   next?: string;
+  /** Clinic whose own bot runs this flow (/login/<slug>); absent = the central bot (console). */
+  slug?: string;
   /** Unix seconds. */
   exp: number;
 }
@@ -84,6 +86,7 @@ export function openFlow(sealed: string | undefined | null, returnedState: strin
   if (typeof f.exp !== "number" || f.exp < nowS) return null;
   if (f.kind !== "clinic" && f.kind !== "admin") return null;
   if (f.mode !== "login" && f.mode !== "link") return null;
+  if (f.slug !== undefined && !/^[a-z0-9-]{3,48}$/.test(f.slug)) return null;
   return f;
 }
 

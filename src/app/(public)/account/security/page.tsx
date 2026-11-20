@@ -1,11 +1,10 @@
 import { getTranslations } from "next-intl/server";
-import { TelegramLinkLink, TelegramNotice } from "@/components/telegram-login";
+import { TelegramLinkLink, TelegramNotice, telegramLoginAvailable } from "@/components/telegram-login";
 import { AuthLayout } from "@/components/shell/auth-layout";
 import { Form, SubmitButton } from "@/components/ui/form";
 import { Badge, ButtonLink, DescriptionList } from "@/components/ui/primitives";
 import { safeNext } from "@/lib/safe-next";
 import { requireClinicUser } from "@/server/auth/guards";
-import { telegramLogin } from "@/server/env";
 import { unlinkTelegramAction } from "../../../clinic-actions";
 
 /** Account-level sign-in settings for clinic staff (the account may belong to several clinics). */
@@ -14,7 +13,8 @@ export default async function AccountSecurityPage({ searchParams }: { searchPara
   const sp = await searchParams;
   const next = safeNext(sp.next) ?? "/clinics";
   const t = await getTranslations("security");
-  const telegramOn = Boolean(telegramLogin());
+  let telegramOn = false;
+  for (const c of p.clinics) if (await telegramLoginAvailable("clinic", c.slug)) telegramOn = true;
   return (
     <AuthLayout title={t("title")} subtitle={p.user.fullName}>
       <TelegramNotice code={sp.tg} />
@@ -31,7 +31,7 @@ export default async function AccountSecurityPage({ searchParams }: { searchPara
             <SubmitButton variant="secondary">{t("telegramUnlink")}</SubmitButton>
           </Form>
         ) : (
-          <TelegramLinkLink kind="clinic" />
+          <TelegramLinkLink kind="clinic" slugs={p.clinics.map((c) => c.slug)} />
         )}
         <ButtonLink href={next} variant="secondary" className="w-full">
           {t("continue")}

@@ -33,10 +33,10 @@ export async function GET(request: Request) {
   if (!flow) return land("/login?tg=failed");
   const code = q.get("code");
   // The person pressed "Cancel" on Telegram's page (or Telegram reported an error).
-  if (!code) return land(telegramReturnPath(flow.kind, flow.mode, "cancelled", flow.next));
+  if (!code) return land(telegramReturnPath(flow.kind, flow.mode, "cancelled", flow.next, flow.slug));
 
   const r = await finishTelegramFlow(flow, code, await requestMeta());
-  if (r.outcome === "error") return land(telegramReturnPath(r.kind, r.mode, r.code, r.next));
+  if (r.outcome === "error") return land(telegramReturnPath(r.kind, r.mode, r.code, r.next, r.slug));
   if (r.outcome === "linked") return land(telegramReturnPath(r.kind, "link", "linked"));
 
   if (r.kind === "admin") await setAdminSessionCookie(r.token);

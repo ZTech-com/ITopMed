@@ -11,7 +11,8 @@ import { platformDb } from "@/server/db";
 import { env } from "@/server/env";
 import { MODULES } from "@/server/modules/catalog";
 import { getTenantDetail } from "@/server/tenancy/provisioning";
-import { invitationAction, moduleAction, planAction, supportRequestAction, tenantStatusAction } from "../../../actions";
+import { clinicBotAction, invitationAction, moduleAction, planAction, supportRequestAction, tenantStatusAction } from "../../../actions";
+import { clinicBotStatus } from "@/server/telegram/clinic-bot";
 import { effectiveStatus, listGrantsForPlatform } from "@/server/support/access";
 
 const LIFECYCLE: Record<TenantStatus, ("activate" | "suspend" | "reactivate" | "archive")[]> = {
@@ -42,6 +43,9 @@ export default async function ClinicDetailPage({ params, searchParams }: { param
   const enabled = new Map(tenant.modules.map((m) => [m.moduleKey, m.enabled]));
   const actions = LIFECYCLE[tenant.status];
   const grants = await listGrantsForPlatform(p, tenant.id);
+  const bot = await clinicBotStatus(p, tenant.id);
+  const canManage = platformCan(role, "tenants.manage");
+  const appBase = env().APP_URL.replace(/\/$/, "");
   const url = `${env().APP_URL.replace(/\/$/, "")}/c/${tenant.slug}`;
 
   return (
@@ -84,6 +88,47 @@ export default async function ClinicDetailPage({ params, searchParams }: { param
                   { label: t("admin.clinicDetail.created"), value: format.dateTime(tenant.createdAt, { dateStyle: "medium", timeStyle: "short" }) },
                 ]}
               />
+            </CardBody>
+          </Card>
+
+          <Card id="telegram-bot">
+            <CardHeader title={t("admin.clinicBot.title")} description={t("admin.clinicBot.hint")} />
+            <CardBody className="space-y-4 text-[14px]">
+              {bot ? (
+                <DescriptionList
+                  items={[
+                    { label: t("admin.clinicBot.bot"), value: <span className="font-medium">@{bot.username}</span> },
+                    { label: t("admin.clinicBot.connectedAt"), value: format.dateTime(bot.connectedAt, { dateStyle: "medium", timeStyle: "short" }) },
+                    { label: t("admin.clinicBot.login"), value: <Badge tone={bot.loginEnabled ? "success" : "neutral"}>{bot.loginEnabled ? t("admin.clinicBot.loginOn") : t("admin.clinicBot.loginOff")}</Badge> },
+                    { label: t("admin.clinicBot.miniApp"), value: <span className="break-all font-mono text-[13px]">{appBase}/tg/{tenant.slug}</span> },
+                    { label: t("admin.clinicBot.loginPage"), value: <span className="break-all font-mono text-[13px]">{appBase}/login/{tenant.slug}</span> },
+                  ]}
+                />
+              ) : (
+                <p className="text-text-2">{t("admin.clinicBot.none")}</p>
+              )}
+              {canManage ? (
+                <Form action={clinicBotAction} successMessage="admin.clinicBot.saved">
+                  <input type="hidden" name="tenantId" value={tenant.id} />
+                  <ol className="list-decimal space-y-1 pl-5 text-text-2">
+                    <li>{t("admin.clinicBot.step1")}</li>
+                    <li>{t("admin.clinicBot.step2", { url: `${appBase}/auth/telegram/callback` })}</li>
+                    <li>{t("admin.clinicBot.step3")}</li>
+                  </ol>
+                  <TextField name="token" type="password" label={t("admin.clinicBot.token")} hint={t("admin.clinicBot.tokenHint")} autoComplete="off" required />
+                  <TextField name="loginSecret" type="password" label={t("admin.clinicBot.secret")} hint={t("admin.clinicBot.secretHint")} autoComplete="off" />
+                  <div className="flex flex-wrap gap-2">
+                    <SubmitButton>{bot ? t("admin.clinicBot.replace") : t("admin.clinicBot.connect")}</SubmitButton>
+                  </div>
+                </Form>
+              ) : null}
+              {canManage && bot ? (
+                <Form action={clinicBotAction} successMessage="admin.clinicBot.removed">
+                  <input type="hidden" name="tenantId" value={tenant.id} />
+                  <input type="hidden" name="op" value="disconnect" />
+                  <SubmitButton variant="danger">{t("admin.clinicBot.disconnect")}</SubmitButton>
+                </Form>
+              ) : null}
             </CardBody>
           </Card>
 

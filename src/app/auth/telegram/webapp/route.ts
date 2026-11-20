@@ -6,7 +6,7 @@ import { env } from "@/server/env";
 import { isSameOriginRequest, requestMeta } from "@/server/http";
 
 /**
- * Mini App sign-in (the central bot's "Open" button → /tg → here).
+ * Mini App sign-in (a clinic bot's menu button → /tg/<slug>, or the central bot → /tg → here).
  * Public by nature: the credential is Telegram's signed initData, verified with
  * the bot token in resolveWebApp. Same-origin only, so another site cannot sign
  * a visitor into someone else's account (login CSRF).
@@ -17,7 +17,7 @@ const json = (body: unknown, status = 200) => Response.json(body, { status, head
 
 export async function POST(request: Request) {
   if (!isSameOriginRequest(request, env().APP_URL)) return json({ status: "error", reason: "invalid" }, 403);
-  let body: { initData?: unknown; choice?: unknown };
+  let body: { initData?: unknown; choice?: unknown; slug?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -25,7 +25,8 @@ export async function POST(request: Request) {
   }
   const initData = typeof body.initData === "string" ? body.initData : "";
   const choice = typeof body.choice === "string" && body.choice.length <= 64 ? body.choice : null;
-  const r = await resolveWebApp(initData, choice, await requestMeta());
+  const slug = typeof body.slug === "string" && /^[a-z0-9-]{3,48}$/.test(body.slug) ? body.slug : null;
+  const r = await resolveWebApp(initData, choice, await requestMeta(), slug);
   if (r.status !== "signed_in") return json(r);
 
   if (r.target === "admin") await setAdminSessionCookie(r.token);

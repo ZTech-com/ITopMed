@@ -21,6 +21,8 @@ export async function GET(request: Request) {
   const kind: TelegramLoginKind = q.get("kind") === "admin" ? "admin" : "clinic";
   const mode: TelegramLoginMode = q.get("mode") === "link" ? "link" : "login";
   const next = kind === "clinic" && mode === "login" ? (safeNext(q.get("next")) ?? undefined) : undefined;
+  const rawSlug = q.get("slug");
+  const slug = kind === "clinic" && rawSlug && /^[a-z0-9-]{3,48}$/.test(rawSlug) ? rawSlug : undefined;
 
   let owner: { userId: string; sessionId: string } | null = null;
   if (mode === "link") {
@@ -29,8 +31,8 @@ export async function GET(request: Request) {
     owner = { userId: p.user.id, sessionId: p.sessionId };
   }
 
-  const r = await beginTelegramFlow(kind, mode, owner, next, await requestMeta());
-  if (!r.ok) return go(telegramReturnPath(kind, mode, r.code, next));
+  const r = await beginTelegramFlow(kind, mode, owner, next, await requestMeta(), slug);
+  if (!r.ok) return go(telegramReturnPath(kind, mode, r.code, next, slug));
   await setTelegramFlowCookie(r.sealed, FLOW_TTL_S);
   return go(r.url);
 }

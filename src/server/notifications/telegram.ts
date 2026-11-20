@@ -5,14 +5,15 @@ import { z } from "zod";
 import { recordAudit } from "../audit";
 import type { ClinicContext } from "../auth/clinic-auth";
 import type { RequestMeta } from "../auth/platform-auth";
-import { auditClinic, inClinic, requirePermission } from "../clinic/context";
+import { inClinic, requirePermission } from "../clinic/context";
 import { isLocalOnly } from "../clinic/data-mode";
 import { withAppContext, withPortal, type Tx } from "../db";
-import { telegramTransport } from "../env";
+import { env, telegramTransport } from "../env";
 import { DomainError } from "../errors";
 import { logger } from "../logger";
-import type { PatientPrincipal } from "../portal/auth";
-import { decryptField, encryptField, hashIp, randomToken, sha256Hex, uuidv7 } from "../security/crypto";
+import { saveTelegramContact, type PatientPrincipal } from "../portal/auth";
+import { ownContact } from "../telegram/central-bot";
+import { decryptField, hashIp, randomToken, sha256Hex, uuidv7 } from "../security/crypto";
 import { rateLimit } from "../security/rate-limit";
 import { mailboxRoot } from "../local/paths";
 
@@ -20,7 +21,8 @@ import { mailboxRoot } from "../local/paths";
  * Telegram notifications through the CLINIC's own bot (created by the clinic
  * with @BotFather — the official Bot API, https://core.telegram.org/bots/api).
  *
- *  - The clinic pastes the bot token once; it is AES-GCM encrypted and never shown again.
+ *  - ITop Med creates the bot and the SuperAdmin connects it in the console
+ *    (src/server/telegram/clinic-bot.ts); the token is AES-GCM encrypted and never shown again.
  *  - A patient connects from the portal: a one-time deep link (t.me/<bot>?start=<code>)
  *    opens the bot; the worker reads "/start <code>" and links that chat to the patient.
  *    Connecting records the patient's TELEGRAM_NOTIFICATIONS consent; disconnecting withdraws it.
@@ -31,9 +33,11 @@ import { mailboxRoot } from "../local/paths";
 
 const TOKEN_RE = /^\d{5,15}:[A-Za-z0-9_-]{30,64}$/;
 const CODE_TTL_MS = 15 * 60_000;
-const ctxKey = (tenantId: string) => `telegram:${tenantId}`;
+export const ctxKey = (tenantId: string) => `telegram:${tenantId}`;
+/** The clinic bot's Mini App (menu button, /start reply). */
+export const miniAppUrl = (slug: string) => new URL(`/tg/${slug}`, env().APP_URL).toString();
 
-async function api<T>(token: string, method: string, body: Record<string, unknown>): Promise<T> {
+export async function api<T>(token: string, method: string, body: Record<string, unknown>): Promise<T> {
   const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -58,37 +62,6 @@ export function telegramEnabled() {
 // ───────────── Clinic: connect the bot ─────────────
 
 export const botTokenSchema = z.string().trim().regex(TOKEN_RE, "validation.telegramToken");
-
-export async function connectTelegramBot(ctx: ClinicContext, tokenRaw: unknown, meta: RequestMeta) {
-  requirePermission(ctx, "clinic.settings.manage");
-  if (!telegramEnabled()) throw new DomainError("errors.telegramOff");
-  if (await inClinic(ctx, (tx) => isLocalOnly(tx, ctx.tenant.id))) throw new DomainError("errors.localModeNoInternet");
-  const token = botTokenSchema.parse(tokenRaw);
-  let username: string;
-  if (telegramTransport() === "api") {
-    try {
-      username = (await api<{ username: string }>(token, "getMe", {})).username;
-    } catch {
-      throw new DomainError("errors.telegramTokenInvalid");
-    }
-  } else {
-    username = "itopmed_simulated_bot";
-  }
-  await inClinic(ctx, async (tx) => {
-    const data = { tokenEnc: encryptField(token, ctxKey(ctx.tenant.id)), username, enabled: true, updateOffset: 0n, updatedById: ctx.principal.user.id };
-    await tx.telegramBot.upsert({ where: { tenantId: ctx.tenant.id }, create: { tenantId: ctx.tenant.id, ...data }, update: { ...data, connectedAt: new Date() } });
-    await auditClinic(tx, ctx, meta, { action: "telegram.bot_connected", entityType: "TelegramBot", entityId: ctx.tenant.id, metadata: { username } });
-  });
-  return username;
-}
-
-export async function disconnectTelegramBot(ctx: ClinicContext, meta: RequestMeta) {
-  requirePermission(ctx, "clinic.settings.manage");
-  await inClinic(ctx, async (tx) => {
-    await tx.telegramBot.deleteMany({ where: { tenantId: ctx.tenant.id } });
-    await auditClinic(tx, ctx, meta, { action: "telegram.bot_disconnected", entityType: "TelegramBot", entityId: ctx.tenant.id });
-  });
-}
 
 export async function telegramStatus(ctx: ClinicContext) {
   requirePermission(ctx, "clinic.settings.read");
@@ -159,16 +132,26 @@ async function botToken(tx: Tx, tenantId: string): Promise<string | null> {
   return bot?.enabled ? decryptField(bot.tokenEnc, ctxKey(tenantId)) : null;
 }
 
-/** Reads new bot messages (API transport) and links chats. Safe to call every worker pass. */
+interface TgUpdate {
+  update_id: number;
+  message?: { chat: { id: number; type?: string }; from?: { id?: number; is_bot?: boolean }; text?: string; contact?: { phone_number?: string; user_id?: number } };
+}
+
+/**
+ * Reads new messages of the clinic's bot (API transport): links patient chats
+ * ("/start <code>"), stores a phone number the person shared about themselves
+ * (for the Mini App), answers "/start" with the Mini App button. Safe every pass.
+ */
 export async function pollTelegram(tenantId: string): Promise<number> {
   if (telegramTransport() !== "api") return 0;
   const state = await withAppContext({ tenantId }, async (tx) => {
     if (await isLocalOnly(tx, tenantId)) return null; // local-only clinic: no internet calls
     const b = await tx.telegramBot.findUnique({ where: { tenantId }, select: { tokenEnc: true, enabled: true, updateOffset: true } });
-    return b?.enabled ? { token: decryptField(b.tokenEnc, ctxKey(tenantId)), offset: b.updateOffset } : null;
+    const t = await tx.tenant.findUnique({ where: { id: tenantId }, select: { slug: true } });
+    return b?.enabled && t ? { token: decryptField(b.tokenEnc, ctxKey(tenantId)), offset: b.updateOffset, slug: t.slug } : null;
   });
   if (!state) return 0;
-  let updates: { update_id: number; message?: { chat: { id: number }; text?: string } }[];
+  let updates: TgUpdate[];
   try {
     updates = await api(state.token, "getUpdates", { offset: Number(state.offset), timeout: 0, allowed_updates: ["message"] });
   } catch {
@@ -176,12 +159,22 @@ export async function pollTelegram(tenantId: string): Promise<number> {
     return 0;
   }
   let linked = 0;
+  const openButton = { inline_keyboard: [[{ text: "ITop Med", web_app: { url: miniAppUrl(state.slug) } }]] };
   for (const u of updates) {
-    const m = /^\/start\s+([a-z2-7]+)$/.exec(u.message?.text?.trim() ?? "");
-    if (m && u.message) {
-      const ok = await handleTelegramStart(tenantId, m[1]!, BigInt(u.message.chat.id));
+    const msg = u.message;
+    if (!msg || msg.chat.type !== "private" || msg.from?.is_bot) continue;
+    const m = /^\/start\s+([a-z2-7]+)$/.exec(msg.text?.trim() ?? "");
+    if (m) {
+      const ok = await handleTelegramStart(tenantId, m[1]!, BigInt(msg.chat.id));
       if (ok) linked++;
-      await api(state.token, "sendMessage", { chat_id: u.message.chat.id, text: ok ? "✅ ITop Med: OK" : "ITop Med: link expired / havola eskirgan" }).catch(() => undefined);
+      await api(state.token, "sendMessage", { chat_id: msg.chat.id, text: ok ? "✅ ITop Med: OK" : "ITop Med: link expired / havola eskirgan" }).catch(() => undefined);
+    } else if (msg.contact) {
+      // The Mini App asked for the number: only the sender's OWN contact is accepted.
+      const own = ownContact(u);
+      const saved = own ? await saveTelegramContact(own.tgId, own.phone) : false;
+      await api(state.token, "sendMessage", { chat_id: msg.chat.id, text: saved ? "✅ ITop Med" : "ITop Med: ❌", ...(saved ? { reply_markup: openButton } : {}) }).catch(() => undefined);
+    } else if (/^\/start(@\w+)?$/.test(msg.text?.trim() ?? "")) {
+      await api(state.token, "sendMessage", { chat_id: msg.chat.id, text: "ITop Med", reply_markup: openButton }).catch(() => undefined);
     }
   }
   if (updates.length) {

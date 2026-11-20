@@ -1,19 +1,26 @@
 import { Send } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { telegramLogin } from "@/server/env";
+import { clinicBot } from "@/server/telegram/clinic-bot";
 import { Alert, buttonClass } from "./ui/primitives";
+
+/** Is "Sign in with Telegram" available: the clinic's own bot with a Login Widget secret, or the central bot for the console. */
+export async function telegramLoginAvailable(kind: "clinic" | "admin", slug?: string | null): Promise<boolean> {
+  if (kind === "admin") return Boolean(telegramLogin());
+  return Boolean(slug && (await clinicBot(slug))?.loginSecret);
+}
 
 /**
  * "Log In with Telegram" — the MAIN way to sign in on the website; login and
  * password follow below it as the second way. A plain link to our own
- * /auth/telegram/start: no Telegram script runs on our pages. Hidden when the
- * bot is not configured (e.g. a clinic's local installation, which Telegram
- * cannot reach); then the login form is the only way.
+ * /auth/telegram/start: no Telegram script runs on our pages. Clinic staff use
+ * their clinic's own bot (/login/<slug>), console staff the central bot. Hidden
+ * when no bot is set up; then the login form is the only way.
  */
-export async function TelegramLoginButton({ kind, next }: { kind: "clinic" | "admin"; next?: string | null }) {
-  if (!telegramLogin()) return null;
+export async function TelegramLoginButton({ kind, next, slug }: { kind: "clinic" | "admin"; next?: string | null; slug?: string | null }) {
+  if (!(await telegramLoginAvailable(kind, slug))) return null;
   const t = await getTranslations("auth");
-  const q = new URLSearchParams({ kind, mode: "login", ...(next ? { next } : {}) });
+  const q = new URLSearchParams({ kind, mode: "login", ...(next ? { next } : {}), ...(kind === "clinic" && slug ? { slug } : {}) });
   return (
     <div className="mb-5 space-y-5">
       <a href={`/auth/telegram/start?${q.toString()}`} className={buttonClass("primary", "lg", "w-full")}>
@@ -29,12 +36,22 @@ export async function TelegramLoginButton({ kind, next }: { kind: "clinic" | "ad
   );
 }
 
-/** Link/unlink control for the person's own security page. */
-export async function TelegramLinkLink({ kind }: { kind: "clinic" | "admin" }) {
-  if (!telegramLogin()) return null;
+/**
+ * Link control for the person's own security page. The Telegram user id is the
+ * same in every bot, so clinic staff link through any of their clinics' bots.
+ */
+export async function TelegramLinkLink({ kind, slugs = [] }: { kind: "clinic" | "admin"; slugs?: string[] }) {
+  let slug: string | null = null;
+  if (kind === "clinic") {
+    for (const s of slugs) if ((await clinicBot(s))?.loginSecret) {
+      slug = s;
+      break;
+    }
+    if (!slug) return null;
+  } else if (!telegramLogin()) return null;
   const t = await getTranslations("security");
   return (
-    <a href={`/auth/telegram/start?kind=${kind}&mode=link`} className={buttonClass("secondary", "md")}>
+    <a href={`/auth/telegram/start?kind=${kind}&mode=link${slug ? `&slug=${slug}` : ""}`} className={buttonClass("secondary", "md")}>
       <Send aria-hidden className="size-4" />
       {t("telegramLink")}
     </a>

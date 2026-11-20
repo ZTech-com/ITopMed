@@ -318,6 +318,30 @@
       "clinicRemoved": "Klinika tarmoqdan chiqarildi.",
       "clinicAdded": "Klinika tarmoqqa qo'shildi.",
       "adminCreated": "Tarmoq admini yaratildi. Login va parolni unga o'zingiz bering."
+    },
+    "clinicBot": {
+      "title": "Telegram bot",
+      "hint": "Klinikaning o'z boti: bemorlarga xabarnomalar, Telegram ichidagi ilova (xodim va bemor kirishi) va saytda «Telegram orqali kirish».",
+      "bot": "Bot",
+      "connectedAt": "Ulangan",
+      "login": "Saytda Telegram orqali kirish",
+      "loginOn": "Yoqilgan",
+      "loginOff": "Secret kiritilmagan",
+      "miniApp": "Telegram ichidagi ilova",
+      "loginPage": "Klinikaning kirish sahifasi",
+      "none": "Bot hali ulanmagan.",
+      "step1": "@BotFather'da shu klinika uchun yangi bot yarating va tokenni oling.",
+      "step2": "Saytda kirish uchun: @BotFather → bot → Login Widget'da Allowed URL sifatida {url} va sayt manzilini qo'shing, Client Secret'ni oling.",
+      "step3": "Ikkalasini shu yerga kiriting. Botning menyu tugmasi va /start avtomatik sozlanadi.",
+      "token": "Bot tokeni",
+      "tokenHint": "Shifrlab saqlanadi va boshqa hech qayerda ko'rsatilmaydi.",
+      "secret": "Login Widget Client Secret",
+      "secretHint": "Ixtiyoriy. Bo'sh qolsa, saytda faqat login va parol bilan kiriladi.",
+      "connect": "Botni ulash",
+      "replace": "Saqlash (almashtirish)",
+      "disconnect": "Botni uzish",
+      "saved": "Bot ulandi va sozlandi.",
+      "removed": "Bot uzildi."
     }
   },
   "clinic": {
@@ -1267,15 +1291,9 @@
       "simulated": "Bu o'rnatishda SIMULYATSIYA: xabarlar Telegramga yuborilmaydi, serverda fayl sifatida saqlanadi.",
       "connectedAt": "{date} da ulangan",
       "linkedPatients": "{count, plural, other {# ta bemor ulangan}}",
-      "disconnect": "Botni uzish",
-      "connected": "Bot ulandi. Endi bemorlar uni portalda ulashi mumkin.",
-      "step1": "Telegramda @BotFather ni oching va /newbot yuboring.",
-      "step2": "Nom (masalan, klinikangiz nomi) va \"bot\" bilan tugaydigan username tanlang.",
-      "step3": "BotFather yuborgan tokenni nusxalab, quyiga joylang.",
-      "token": "Bot tokeni",
-      "tokenHint": "Shifrlangan holda saqlanadi va qayta ko'rsatilmaydi. Tokeni bor odam botni boshqara oladi.",
-      "connect": "Botni ulash",
-      "notConnected": "Bot ulanmagan."
+      "notConnected": "Bot ulanmagan.",
+      "byItopmed": "Klinika botini ITop Med ulaydi va sozlaydi. O'zgartirish kerak bo'lsa, ITop Med'ga murojaat qiling.",
+      "loginPage": "Xodimlar uchun kirish sahifasi:"
     },
     "desk": {
       "title": "Qabulxona",
@@ -1582,7 +1600,8 @@
     "telegram": "Telegram nomi: 5–32 ta lotin harfi, raqam yoki _.",
     "templateFieldLines": "Maydonlar qatorlarida xato bor: kalit (lotin harf/raqam), nomi, min-max formatini tekshiring.",
     "templateUnknownPlaceholders": "Hisobot matnida maydonlar roʻyxatida yoʻq '{{'kalit'}}' bor.",
-    "username": "Login 3–64 belgi: kichik lotin harflari, raqamlar va . _ - (masalan, dr.karimov)."
+    "username": "Login 3–64 belgi: kichik lotin harflari, raqamlar va . _ - (masalan, dr.karimov).",
+    "telegramSecret": "Client Secret juda qisqa."
   },
   "errors": {
     "generic": "Nimadir notoʻgʻri ketdi. Qayta urinib koʻring.",
@@ -2998,6 +3017,7 @@
     "error": "Kirib bo'lmadi. Botni yopib, qayta oching.",
     "locked": "Hisob vaqtincha bloklangan. 15 daqiqadan keyin urinib ko'ring.",
     "disabled": "Telegram orqali kirish hozircha yoqilmagan.",
-    "retry": "Qayta urinish"
+    "retry": "Qayta urinish",
+    "notPlatform": "Bu ITop Med xizmat boti. Klinikangizning o'z botidan foydalaning."
   }
 }

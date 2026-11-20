@@ -32,6 +32,9 @@ const PUBLIC_PAGES = new Set([
   "admin/(auth)/invite/[token]/page.tsx",
   // Telegram Mini App entry: identity comes from Telegram's signed launch data, verified by /auth/telegram/webapp.
   "(public)/tg/page.tsx",
+  "(public)/tg/[slug]/page.tsx",
+  // A clinic's own sign-in page (its bot's Telegram button + login form).
+  "(public)/login/[slug]/page.tsx",
 ]);
 
 /** Actions that run before anyone is signed in (they authenticate instead). */

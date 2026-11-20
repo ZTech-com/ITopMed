@@ -4,9 +4,8 @@ import { redirect } from "next/navigation";
 import { AuthLayout } from "@/components/shell/auth-layout";
 import { Form, SubmitButton, TextField } from "@/components/ui/form";
 import { Alert } from "@/components/ui/primitives";
-import { TelegramLoginButton, TelegramNotice } from "@/components/telegram-login";
+import { TelegramNotice } from "@/components/telegram-login";
 import { safeNext } from "@/lib/safe-next";
-import { telegramLogin } from "@/server/env";
 import { getClinicPrincipal } from "@/server/auth/guards";
 import { needsFirstRun } from "@/server/local/first-run";
 import { clinicLoginAction } from "../../clinic-actions";
@@ -31,12 +30,11 @@ export default async function ClinicLoginPage({ searchParams }: { searchParams: 
         </div>
       ) : null}
       <TelegramNotice code={sp.tg} />
-      <TelegramLoginButton kind="clinic" next={next} />
       <Form action={clinicLoginAction}>
         {next ? <input type="hidden" name="next" value={next} /> : null}
-        <TextField name="username" label={t("auth.username")} autoComplete="username" required autoFocus={!telegramLogin()} />
+        <TextField name="username" label={t("auth.username")} autoComplete="username" required autoFocus />
         <TextField name="password" type="password" label={t("auth.password")} autoComplete="current-password" required />
-        <SubmitButton full variant={telegramLogin() ? "secondary" : "primary"}>{t("auth.submit")}</SubmitButton>
+        <SubmitButton full>{t("auth.submit")}</SubmitButton>
         <p className="text-center text-[13px]">
           <Link href="/forgot-password" className="text-accent hover:underline">
             {t("auth.forgot")}

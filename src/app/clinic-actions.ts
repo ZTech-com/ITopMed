@@ -7,7 +7,8 @@ import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
 import type { FormState } from "@/lib/form-state";
 import { loginSchema } from "@/lib/validation";
 import { toFormState } from "@/server/actions-util";
-import { loginClinicUser, logoutClinic, unlinkClinicTelegram, validateClinicSession } from "@/server/auth/clinic-auth";
+import { loginClinicUser, logoutClinic, resolveClinic, unlinkClinicTelegram, validateClinicSession } from "@/server/auth/clinic-auth";
+import { homeForRoles } from "@/server/auth/landing";
 import { clearClinicCookie, readClinicToken, setClinicSessionCookie } from "@/server/auth/cookies";
 import { requireClinic } from "@/server/auth/guards";
 import { createBranch, createStaffWithPassword, inviteStaff, updateClinicSettings } from "@/server/clinic/admin";
@@ -36,8 +37,11 @@ export async function clinicLoginAction(_: FormState, fd: FormData): Promise<For
   const r = await loginClinicUser(parsed.data.username, parsed.data.password, await requestMeta());
   if (!r.ok) return { message: `auth.${r.reason === "rate_limited" ? "rateLimited" : r.reason}`, values: { username: parsed.data.username } };
   await setClinicSessionCookie(r.token);
-  await applyLocale(r.token);
-  redirect(safeNext(fd.get("next")) ?? "/clinics");
+  const p = await applyLocale(r.token);
+  // From a clinic's own page (/login/<slug>): straight to that clinic, on the page for the person's role.
+  const slug = String(fd.get("$slug") ?? "");
+  const ctx = p && /^[a-z0-9-]{3,48}$/.test(slug) ? await resolveClinic(p, slug) : null;
+  redirect(ctx ? homeForRoles(ctx.tenant.slug, ctx.roleKeys) : (safeNext(fd.get("next")) ?? "/clinics"));
 }
 
 /** Removes the Telegram sign-in from the person's own account. */

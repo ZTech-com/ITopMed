@@ -8,8 +8,9 @@ import uzLatn from "../../../messages/uz-Latn.json";
 import { safeEqual } from "../security/crypto";
 
 /**
- * The CENTRAL ITop Med bot (one bot for the whole platform, token in
- * TELEGRAM_BOT_TOKEN). Telegram delivers updates to /api/telegram/webhook.
+ * The CENTRAL ITop Med bot (token in TELEGRAM_BOT_TOKEN), for ITop Med's own
+ * staff: its Mini App (/tg) and console sign-in. Clinics have their own bots
+ * (src/server/telegram/clinic-bot.ts). Telegram delivers updates to /api/telegram/webhook.
  *
  * This first part answers /start and /help with a button that opens ITop Med
  * inside Telegram. Telegram login and the Mini App build on it.

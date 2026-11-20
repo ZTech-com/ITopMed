@@ -1,6 +1,7 @@
 "use client";
 
 import { Phone, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, buttonClass } from "./ui/primitives";
@@ -39,7 +40,7 @@ function postEvent(eventType: string, eventData: Record<string, unknown> = {}) {
   else if (window.parent !== window) window.parent.postMessage(JSON.stringify({ eventType, eventData }), "https://web.telegram.org");
 }
 
-export function TelegramMiniApp() {
+export function TelegramMiniApp({ slug }: { slug?: string }) {
   const t = useTranslations("telegramApp");
   const [state, setState] = useState<State>({ s: "loading" });
   const initData = useRef<string | null>(null);
@@ -49,7 +50,7 @@ export function TelegramMiniApp() {
     const res = await fetch("/auth/telegram/webapp", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ initData: initData.current, choice }),
+      body: JSON.stringify({ initData: initData.current, choice, slug }),
       cache: "no-store",
     }).catch(() => null);
     const r = (await res?.json().catch(() => null)) as
@@ -66,7 +67,7 @@ export function TelegramMiniApp() {
     if (r.status === "choose") return { s: "choose", choices: r.choices };
     if (r.status === "patient") return { s: "patient", phoneKnown: r.phoneKnown, waiting: false };
     return { s: "error", reason: r.reason };
-  }, []);
+  }, [slug]);
 
   useEffect(() => {
     initData.current = readInitData();
@@ -106,9 +107,9 @@ export function TelegramMiniApp() {
     return (
       <div className="space-y-4">
         <Alert tone="neutral">{t("outside")}</Alert>
-        <a href="/login" className={buttonClass("primary", "md", "w-full")}>
+        <Link href="/login" className={buttonClass("primary", "md", "w-full")}>
           {t("openWebsite")}
-        </a>
+        </Link>
       </div>
     );
 
@@ -151,7 +152,7 @@ export function TelegramMiniApp() {
 
   return (
     <div className="space-y-4">
-      <Alert tone="warning">{t(state.reason === "disabled" ? "disabled" : state.reason === "locked" ? "locked" : "error")}</Alert>
+      <Alert tone="warning">{t(state.reason === "disabled" ? "disabled" : state.reason === "locked" ? "locked" : state.reason === "not_platform" ? "notPlatform" : "error")}</Alert>
       <button
         type="button"
         className={buttonClass("secondary", "md", "w-full")}

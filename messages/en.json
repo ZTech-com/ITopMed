@@ -318,6 +318,30 @@
       "clinicRemoved": "The clinic was removed from the network.",
       "clinicAdded": "The clinic was added to the network.",
       "adminCreated": "Network admin created. Hand them the login and password yourself."
+    },
+    "clinicBot": {
+      "title": "Telegram bot",
+      "hint": "The clinic's own bot: patient notifications, the app inside Telegram (staff and patient sign-in) and “Sign in with Telegram” on the website.",
+      "bot": "Bot",
+      "connectedAt": "Connected",
+      "login": "Sign-in with Telegram on the website",
+      "loginOn": "On",
+      "loginOff": "No secret set",
+      "miniApp": "App inside Telegram",
+      "loginPage": "Clinic sign-in page",
+      "none": "No bot connected yet.",
+      "step1": "Create a new bot for this clinic in @BotFather and get its token.",
+      "step2": "For website sign-in: @BotFather → the bot → Login Widget — add {url} and the site address as Allowed URLs and get the Client Secret.",
+      "step3": "Enter both here. The bot's menu button and /start are set up automatically.",
+      "token": "Bot token",
+      "tokenHint": "Stored encrypted and never shown again.",
+      "secret": "Login Widget Client Secret",
+      "secretHint": "Optional. If empty, the website offers login and password only.",
+      "connect": "Connect bot",
+      "replace": "Save (replace)",
+      "disconnect": "Disconnect bot",
+      "saved": "The bot is connected and set up.",
+      "removed": "The bot was disconnected."
     }
   },
   "clinic": {
@@ -1267,15 +1291,9 @@
       "simulated": "SIMULATED in this installation: messages are saved as files on the server, not sent to Telegram.",
       "connectedAt": "connected {date}",
       "linkedPatients": "{count, plural, one {# patient connected} other {# patients connected}}",
-      "disconnect": "Disconnect the bot",
-      "connected": "The bot is connected. Patients can now connect it in the portal.",
-      "step1": "In Telegram open @BotFather and send /newbot.",
-      "step2": "Choose a name (e.g. your clinic) and a username ending in \"bot\".",
-      "step3": "Copy the token BotFather sends and paste it below.",
-      "token": "Bot token",
-      "tokenHint": "Stored encrypted and never shown again. Anyone with the token controls the bot.",
-      "connect": "Connect the bot",
-      "notConnected": "No bot connected."
+      "notConnected": "No bot connected.",
+      "byItopmed": "ITop Med connects and sets up the clinic's bot. Contact ITop Med to change it.",
+      "loginPage": "Staff sign-in page:"
     },
     "desk": {
       "title": "Front desk",
@@ -1582,7 +1600,8 @@
     "telegram": "Telegram name: 5–32 Latin letters, digits or _.",
     "templateFieldLines": "Some field lines are invalid: check the key (Latin letters/digits), label and min-max format.",
     "templateUnknownPlaceholders": "The report text uses a '{{'key'}}' that is not among the fields.",
-    "username": "Login: 3–64 characters — lowercase Latin letters, digits and . _ - (for example dr.karimov)."
+    "username": "Login: 3–64 characters — lowercase Latin letters, digits and . _ - (for example dr.karimov).",
+    "telegramSecret": "The Client Secret is too short."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -2998,6 +3017,7 @@
     "error": "Could not sign in. Close the bot and open it again.",
     "locked": "The account is temporarily locked. Try again in 15 minutes.",
     "disabled": "Sign-in through Telegram is not enabled yet.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "notPlatform": "This is ITop Med's service bot. Please use your clinic's own bot."
   }
 }

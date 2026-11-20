@@ -5,21 +5,21 @@ import { loginPatientWithTelegram, telegramPatientAccounts } from "../portal/aut
 import { platformDb, withAppContext } from "../db";
 import { hashIp, safeEqual } from "../security/crypto";
 import { rateLimit } from "../security/rate-limit";
-import { loginClinicWithTelegram, validateClinicSession } from "./clinic-auth";
-import { staffHome } from "./landing";
+import { clinicBot } from "../telegram/clinic-bot";
+import { loginClinicWithTelegram, resolveClinic, validateClinicSession } from "./clinic-auth";
+import { homeForRoles } from "./landing";
 import { loginPlatformWithTelegram, type RequestMeta } from "./platform-auth";
 import { parseTelegramId } from "./telegram-oidc";
 
 /**
- * The central bot's Mini App (opened from the bot's button inside Telegram).
+ * Mini Apps of the clinics' bots (/tg/<slug>) and of the central ITop Med bot (/tg).
  * Telegram hands the page signed launch data (initData); its HMAC is checked
  * with the bot token (https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app)
  * before the Telegram user id in it is trusted. Then:
- *   - linked clinic staff → their clinic, on the page for their role;
- *   - linked ITop Med staff → the console;
- *   - a patient whose Telegram-verified phone is a portal login → that portal;
- *   - more than one of these → the person chooses;
- *   - nobody → the patient page (share phone number / not registered yet).
+ *   - clinic bot: that clinic's linked staff → their role's page; its patient
+ *     whose Telegram-verified phone is a portal login → the portal; both → the
+ *     person chooses; nobody → the patient page (share phone / not registered);
+ *   - central bot: linked ITop Med staff → the console.
  */
 
 /** Launch data older than this is refused (Telegram re-signs it at every launch). */
@@ -59,44 +59,48 @@ export type WebAppResult =
   | { status: "signed_in"; target: "clinic" | "admin" | "patient"; token: string; locale: string | null; go: string }
   | { status: "choose"; choices: Choice[] }
   | { status: "patient"; phoneKnown: boolean }
-  | { status: "error"; reason: "invalid" | "disabled" | "locked" | "rate_limited" };
+  | { status: "error"; reason: "invalid" | "disabled" | "locked" | "rate_limited" | "not_platform" };
 
-async function candidates(tgId: bigint) {
-  const [clinic, admin, patients] = await Promise.all([
-    withAppContext({}, (tx) =>
-      tx.$queryRaw<{ id: string; status: string }[]>`SELECT id, status::text AS status FROM app_auth_lookup_telegram(${tgId}::bigint)`,
-    ).then((r) => (r[0]?.status === "ACTIVE" ? r[0] : null)),
-    platformDb()
-      .platformUser.findUnique({ where: { telegramId: tgId }, select: { id: true, status: true } })
-      .then((u) => (u?.status === "ACTIVE" ? u : null)),
-    telegramPatientAccounts(tgId),
-  ]);
-  return { clinic, admin, patients };
-}
-
-/** Resolves a Mini App launch. `choice` is one of the keys offered earlier (re-checked here). */
-export async function resolveWebApp(initData: string, choice: string | null, meta: RequestMeta): Promise<WebAppResult> {
-  const token = env().TELEGRAM_BOT_TOKEN;
-  if (!token) return { status: "error", reason: "disabled" };
+/**
+ * Resolves a Mini App launch.
+ *  - `slug` given: the CLINIC's bot (/tg/<slug>). Only that clinic counts: its
+ *    staff (active membership) land on their role's page, its patients in its
+ *    portal; both → choose; nobody → patient page.
+ *  - no slug: the central ITop Med bot, for platform staff only.
+ * `choice` must be one of the keys offered earlier (re-checked here).
+ */
+export async function resolveWebApp(initData: string, choice: string | null, meta: RequestMeta, slug: string | null = null): Promise<WebAppResult> {
   if (!(await rateLimit(`tgapp:${hashIp(meta.ip) ?? "noip"}`, 60, 15 * 60_000))) return { status: "error", reason: "rate_limited" };
+  const bot = slug ? await clinicBot(slug) : null;
+  const token = slug ? bot?.token : env().TELEGRAM_BOT_TOKEN;
+  if (!token) return { status: "error", reason: "disabled" };
   const tgId = verifyInitData(initData, token);
   if (!tgId) return { status: "error", reason: "invalid" };
 
-  const c = await candidates(tgId);
   const choices: Choice[] = [];
-  if (c.clinic) choices.push({ key: "staff", kind: "staff", clinic: null });
-  if (c.admin) choices.push({ key: "admin", kind: "admin", clinic: null });
-  for (const a of c.patients.accounts) choices.push({ key: `patient:${a.id}`, kind: "patient", clinic: a.name });
+  if (bot) {
+    const member = await withAppContext({}, (tx) =>
+      tx.$queryRaw<{ id: string | null }[]>`SELECT app_telegram_member(${tgId}::bigint, ${bot.tenantId}::uuid) AS id`,
+    );
+    if (member[0]?.id) choices.push({ key: "staff", kind: "staff", clinic: bot.name });
+    const patients = await telegramPatientAccounts(tgId);
+    for (const a of patients.accounts.filter((x) => x.tenantId === bot.tenantId)) choices.push({ key: `patient:${a.id}`, kind: "patient", clinic: a.name });
+    if (choices.length === 0) return { status: "patient", phoneKnown: patients.phoneKnown };
+  } else {
+    const admin = await platformDb().platformUser.findUnique({ where: { telegramId: tgId }, select: { status: true } });
+    if (admin?.status === "ACTIVE") choices.push({ key: "admin", kind: "admin", clinic: null });
+    if (choices.length === 0) return { status: "error", reason: "not_platform" };
+  }
 
-  if (choices.length === 0) return { status: "patient", phoneKnown: c.patients.phoneKnown };
   const pick = choice ? choices.find((x) => x.key === choice) : choices.length === 1 ? choices[0] : undefined;
   if (!pick) return { status: "choose", choices };
 
-  if (pick.kind === "staff") {
+  if (pick.kind === "staff" && bot) {
     const r = await loginClinicWithTelegram(tgId, meta);
     if (!r.ok) return { status: "error", reason: r.reason === "not_linked" ? "invalid" : r.reason };
     const p = await validateClinicSession(r.token);
-    return { status: "signed_in", target: "clinic", token: r.token, locale: r.locale, go: p ? await staffHome(p) : "/clinics" };
+    const ctx = p ? await resolveClinic(p, bot.slug) : null;
+    return { status: "signed_in", target: "clinic", token: r.token, locale: r.locale, go: ctx ? homeForRoles(bot.slug, ctx.roleKeys) : "/clinics" };
   }
   if (pick.kind === "admin") {
     const r = await loginPlatformWithTelegram(tgId, meta);

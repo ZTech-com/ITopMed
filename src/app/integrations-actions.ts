@@ -6,7 +6,6 @@ import { toFormState } from "@/server/actions-util";
 import { requireClinic } from "@/server/auth/guards";
 import { requestMeta } from "@/server/http";
 import { saveNotificationSettings, sendDueNow } from "@/server/notifications/notifications";
-import { connectTelegramBot, disconnectTelegramBot } from "@/server/notifications/telegram";
 
 export async function notificationSettingsAction(_: FormState, fd: FormData): Promise<FormState> {
   const slug = String(fd.get("$slug") ?? "");
@@ -41,17 +40,4 @@ export async function dispatchNowAction(_: FormState, fd: FormData): Promise<For
   } catch (e) {
     return toFormState(e);
   }
-}
-
-export async function telegramBotAction(_: FormState, fd: FormData): Promise<FormState> {
-  const slug = String(fd.get("$slug") ?? "");
-  const ctx = await requireClinic(slug, "clinic.settings.manage");
-  try {
-    if (fd.get("op") === "disconnect") await disconnectTelegramBot(ctx, await requestMeta());
-    else await connectTelegramBot(ctx, fd.get("token"), await requestMeta());
-  } catch (e) {
-    return toFormState(e);
-  }
-  revalidatePath(`/c/${slug}/integrations`);
-  return { ok: true, nonce: Date.now() };
 }

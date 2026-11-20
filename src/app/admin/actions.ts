@@ -11,6 +11,7 @@ import { clearAdminCookie, readAdminToken, setAdminSessionCookie } from "@/serve
 import { requirePlatform } from "@/server/auth/guards";
 import { loginPlatformUser, logoutPlatform, unlinkPlatformTelegram } from "@/server/auth/platform-auth";
 import { createNetwork, setTenantNetwork } from "@/server/platform/networks";
+import { connectClinicBot, disconnectClinicBot } from "@/server/telegram/clinic-bot";
 import {
   acceptPlatformInvitation,
   createPlatformAccount,
@@ -121,6 +122,20 @@ export async function invitationAction(_: FormState, fd: FormData): Promise<Form
   }
   revalidatePath(`/admin/clinics/${String(fd.get("tenantId"))}`);
   return { ok: true, message: op === "resend" ? "admin.clinicDetail.resent" : "admin.clinicDetail.revoked", nonce: Date.now() };
+}
+
+/** The clinic's own Telegram bot (notifications, Mini App, website sign-in). Tokens are never echoed back. */
+export async function clinicBotAction(_: FormState, fd: FormData): Promise<FormState> {
+  const actor = await requirePlatform("tenants.manage");
+  const tenantId = String(fd.get("tenantId") ?? "");
+  try {
+    if (fd.get("op") === "disconnect") await disconnectClinicBot(actor, tenantId, await requestMeta());
+    else await connectClinicBot(actor, tenantId, { token: fd.get("token"), loginSecret: fd.get("loginSecret") ?? "" }, await requestMeta());
+  } catch (e) {
+    return toFormState(e);
+  }
+  revalidatePath(`/admin/clinics/${tenantId}`);
+  return { ok: true, nonce: Date.now() };
 }
 
 // ───────────── Platform staff ─────────────

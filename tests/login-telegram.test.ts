@@ -6,6 +6,7 @@ import { beginTelegramFlow, finishTelegramFlow } from "@/server/auth/telegram-lo
 import { TELEGRAM_ISSUER, openFlow, sealFlow, verifyIdToken, type Fetch, type FlowState, type KeyResolver } from "@/server/auth/telegram-oidc";
 import { createStaffWithPassword, listStaff } from "@/server/clinic/admin";
 import { setMemberPassword } from "@/server/clinic/members";
+import { connectClinicBot } from "@/server/telegram/clinic-bot";
 import { resetEnvCache } from "@/server/env";
 import { acceptInvitation } from "@/server/tenancy/invitations";
 import { provisionClinic } from "@/server/tenancy/provisioning";
@@ -80,22 +81,31 @@ describe("sign-in with Telegram", () => {
     resetEnvCache();
   });
 
-  const flowFor = (kind: "clinic" | "admin", mode: "login" | "link", owner?: { userId: string; sessionId: string }): FlowState => ({
+  const flowFor = (kind: "clinic" | "admin", mode: "login" | "link", owner?: { userId: string; sessionId: string }, slug?: string): FlowState => ({
     state: "s",
     verifier: "v",
     kind,
     mode,
     ...(owner ?? {}),
+    ...(slug ? { slug } : {}),
     exp: now() + 600,
   });
+  /** A clinic whose own bot (Client ID = CLIENT_ID) has a Login Widget secret. */
+  const clinicWithBot = async () => {
+    const o = await clinicWithOwner(await platformActor());
+    await connectClinicBot(await platformActor(), o.tenantId, { token: `${CLIENT_ID}:${"A".repeat(35)}`, loginSecret: "synthetic-clinic-secret" }, META);
+    return o;
+  };
 
   it("is off until the bot is configured, and link mode needs a signed-in account", async () => {
     delete process.env.TELEGRAM_LOGIN_CLIENT_ID;
+    delete process.env.TELEGRAM_LOGIN_CLIENT_SECRET;
     resetEnvCache();
+    expect(await beginTelegramFlow("admin", "login", null, undefined, META)).toEqual({ ok: false, code: "disabled" });
+    // Clinic sign-in needs that clinic's own bot; there is no clinic flow without one.
     expect(await beginTelegramFlow("clinic", "login", null, undefined, META)).toEqual({ ok: false, code: "disabled" });
-    process.env.TELEGRAM_LOGIN_CLIENT_ID = CLIENT_ID;
-    resetEnvCache();
-    const r = await beginTelegramFlow("clinic", "login", null, undefined, META);
+    const o = await clinicWithBot();
+    const r = await beginTelegramFlow("clinic", "login", null, undefined, META, o.slug);
     expect(r.ok).toBe(true);
     if (r.ok) {
       const u = new URL(r.url);
@@ -104,54 +114,60 @@ describe("sign-in with Telegram", () => {
       expect(u.searchParams.get("code_challenge_method")).toBe("S256");
       expect(u.searchParams.get("redirect_uri")).toBe("http://localhost:3000/auth/telegram/callback");
     }
-    await expect(beginTelegramFlow("clinic", "link", null, undefined, META)).rejects.toThrow("errors.forbidden");
+    await expect(beginTelegramFlow("clinic", "link", null, undefined, META, o.slug)).rejects.toThrow("errors.forbidden");
   });
 
   it("clinic staff: unknown Telegram is refused; after linking it signs in; one Telegram per account", async () => {
-    const o = await clinicWithOwner(await platformActor());
+    const o = await clinicWithBot();
     const sub = newTgId();
-    const notLinked = await finishTelegramFlow(flowFor("clinic", "login"), "code-1", META, { fetch: tokenEndpoint(sub), keys });
+    const notLinked = await finishTelegramFlow(flowFor("clinic", "login", undefined, o.slug), "code-1", META, { fetch: tokenEndpoint(sub), keys });
     expect(notLinked).toMatchObject({ outcome: "error", code: "not_linked" });
 
     const owner = { userId: o.ctx.principal.user.id, sessionId: o.ctx.principal.sessionId };
-    expect(await finishTelegramFlow(flowFor("clinic", "link", owner), "code-2", META, { fetch: tokenEndpoint(sub), keys })).toEqual({ outcome: "linked", kind: "clinic" });
+    expect(await finishTelegramFlow(flowFor("clinic", "link", owner, o.slug), "code-2", META, { fetch: tokenEndpoint(sub), keys })).toEqual({ outcome: "linked", kind: "clinic" });
 
-    const signedIn = await finishTelegramFlow(flowFor("clinic", "login"), "code-3", META, { fetch: tokenEndpoint(sub), keys });
+    const signedIn = await finishTelegramFlow(flowFor("clinic", "login", undefined, o.slug), "code-3", META, { fetch: tokenEndpoint(sub), keys });
     expect(signedIn.outcome).toBe("signed_in");
     if (signedIn.outcome !== "signed_in") return;
     const p = await validateClinicSession(signedIn.token);
     expect(p?.user.id).toBe(owner.userId);
     expect(p?.user.telegramLinked).toBe(true);
+    expect(signedIn.next).toBe(`/c/${o.slug}`);
 
     // The same Telegram account cannot be linked to a second ITop Med account.
     const other = await clinicWithOwner(await platformActor());
-    const taken = await finishTelegramFlow(flowFor("clinic", "link", { userId: other.ctx.principal.user.id, sessionId: other.ctx.principal.sessionId }), "code-4", META, { fetch: tokenEndpoint(sub), keys });
+    const taken = await finishTelegramFlow(flowFor("clinic", "link", { userId: other.ctx.principal.user.id, sessionId: other.ctx.principal.sessionId }, o.slug), "code-4", META, { fetch: tokenEndpoint(sub), keys });
     expect(taken).toMatchObject({ outcome: "error", code: "taken" });
 
+    // Another clinic's bot does not sign this clinic's staff in.
+    const elsewhere = await clinicWithBot();
+    expect(await finishTelegramFlow(flowFor("clinic", "login", undefined, elsewhere.slug), "code-6", META, { fetch: tokenEndpoint(sub), keys })).toMatchObject({ outcome: "error", code: "not_linked" });
+
     // A link started from a session that has since ended is refused.
-    const gone = await finishTelegramFlow(flowFor("clinic", "link", { userId: owner.userId, sessionId: "0".repeat(64) }), "code-5", META, { fetch: tokenEndpoint(newTgId()), keys });
+    const gone = await finishTelegramFlow(flowFor("clinic", "link", { userId: owner.userId, sessionId: "0".repeat(64) }, o.slug), "code-5", META, { fetch: tokenEndpoint(newTgId()), keys });
     expect(gone).toMatchObject({ outcome: "error", code: "failed" });
   });
 
   it("a forged token never signs anyone in", async () => {
+    const o = await clinicWithBot();
     const forger: Fetch = async () => Response.json({ id_token: idToken({ sub: "1", id: 1 }, { key: generateKeyPairSync("rsa", { modulusLength: 2048 }).privateKey }) });
-    expect(await finishTelegramFlow(flowFor("clinic", "login"), "code", META, { fetch: forger, keys })).toMatchObject({ outcome: "error", code: "failed" });
+    expect(await finishTelegramFlow(flowFor("clinic", "login", undefined, o.slug), "code", META, { fetch: forger, keys })).toMatchObject({ outcome: "error", code: "failed" });
   });
 
   it("a new password from the administrator also removes the member's Telegram sign-in", async () => {
-    const o = await clinicWithOwner(await platformActor());
+    const o = await clinicWithBot();
     const username = uniq("nurse");
     await createStaffWithPassword(o.ctx, { fullName: "Synthetic Nurse", email: `${uniq("n")}@clinic.test`, username, roleKeys: ["nurse"], password: PASSWORD }, META);
     const login = await loginClinicUser(username, PASSWORD, META);
     if (!login.ok) throw new Error("login failed");
     const nurse = (await validateClinicSession(login.token))!;
     const sub = newTgId();
-    await finishTelegramFlow(flowFor("clinic", "link", { userId: nurse.user.id, sessionId: nurse.sessionId }), "c", META, { fetch: tokenEndpoint(sub), keys });
-    expect((await finishTelegramFlow(flowFor("clinic", "login"), "c", META, { fetch: tokenEndpoint(sub), keys })).outcome).toBe("signed_in");
+    await finishTelegramFlow(flowFor("clinic", "link", { userId: nurse.user.id, sessionId: nurse.sessionId }, o.slug), "c", META, { fetch: tokenEndpoint(sub), keys });
+    expect((await finishTelegramFlow(flowFor("clinic", "login", undefined, o.slug), "c", META, { fetch: tokenEndpoint(sub), keys })).outcome).toBe("signed_in");
 
     const m = (await listStaff(o.ctx)).members.find((x) => x.user.username === username)!;
     await setMemberPassword(o.ctx, m.id, { password: "Synthetic-New-2026x" }, META);
-    expect(await finishTelegramFlow(flowFor("clinic", "login"), "c", META, { fetch: tokenEndpoint(sub), keys })).toMatchObject({ outcome: "error", code: "not_linked" });
+    expect(await finishTelegramFlow(flowFor("clinic", "login", undefined, o.slug), "c", META, { fetch: tokenEndpoint(sub), keys })).toMatchObject({ outcome: "error", code: "not_linked" });
   });
 
   it("console staff link and sign in with Telegram too", async () => {

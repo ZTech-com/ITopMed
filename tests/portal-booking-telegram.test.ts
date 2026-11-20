@@ -7,7 +7,8 @@ import { inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
 import { addScheduleBlock, addScheduleException, saveDoctorProfile } from "@/server/clinic/doctors";
 import { updateClinicPolicy } from "@/server/clinic/policy";
 import { platformDb, withAppContext } from "@/server/db";
-import { connectTelegramBot, createTelegramLink, disconnectMyTelegram, handleTelegramStart, myTelegram, telegramStatus } from "@/server/notifications/telegram";
+import { clinicBotStatus, connectClinicBot } from "@/server/telegram/clinic-bot";
+import { createTelegramLink, disconnectMyTelegram, handleTelegramStart, myTelegram, telegramStatus } from "@/server/notifications/telegram";
 import { processDueNotifications } from "@/server/notifications/notifications";
 import { registerPatient } from "@/server/patients/patients";
 import { activatePortalAccount, loginPatient, portalTenant, validatePatientSession } from "@/server/portal/auth";
@@ -124,16 +125,19 @@ describe("patient portal self-booking", () => {
 });
 
 describe("Telegram notifications", () => {
-  it("clinic connects its bot; a patient links their chat with a one-time code; reminders go to Telegram; disconnect stops them", async () => {
+  it("ITop Med connects the clinic's bot; a patient links their chat with a one-time code; reminders go to Telegram; disconnect stops them", async () => {
     const s = await setup();
     const { p, id } = await s.patient(`+99894${String(Date.now()).slice(-7)}`);
     expect((await myTelegram(p)).bot).toBeNull();
     await expect(createTelegramLink(p, META)).rejects.toThrow("errors.telegramOff");
 
-    await expect(connectTelegramBot(s.a.ctx, "not-a-token", META)).rejects.toThrow();
-    const username = await connectTelegramBot(s.a.ctx, FAKE_TOKEN, META); // dev-outbox transport in tests: SIMULATED
+    const admin = await platformActor();
+    await expect(connectClinicBot(admin, s.a.tenantId, { token: "not-a-token" }, META)).rejects.toThrow();
+    await expect(connectClinicBot(await platformActor("SUPPORT"), s.a.tenantId, { token: FAKE_TOKEN }, META)).rejects.toThrow("errors.forbidden");
+    const { username } = await connectClinicBot(admin, s.a.tenantId, { token: FAKE_TOKEN }, META); // dev-outbox transport in tests: SIMULATED
     expect(username).toBe("itopmed_simulated_bot");
-    // The token is stored encrypted; platform staff cannot read the bot table at all.
+    expect(await clinicBotStatus(admin, s.a.tenantId)).toMatchObject({ username, enabled: true, loginEnabled: false });
+    // The token is stored encrypted; the platform role hands it over but cannot read the bot table at all.
     const owner = new pg.Client({ connectionString: process.env.MIGRATION_DATABASE_URL });
     await owner.connect();
     const stored = (await owner.query(`SELECT "tokenEnc" FROM "TelegramBot" WHERE "tenantId" = $1`, [s.a.tenantId])).rows[0].tokenEnc as string;
