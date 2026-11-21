@@ -32,7 +32,9 @@
     "mainNav": "Main navigation",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "sectionsNav": "Other sections",
+    "accountMenu": "Account menu"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -406,7 +408,11 @@
       "incomeToday": "Today",
       "incomeWeek": "7 days",
       "debtTotal": "Patients' debt",
-      "chartLabel": "Income, last 14 days"
+      "chartLabel": "Income, last 14 days",
+      "vsYesterday": "vs yesterday",
+      "vsPrevWeek": "vs previous 7 days",
+      "doctorsToday": "Working today",
+      "doctorsTodayHint": "doctors"
     },
     "settings": {
       "title": "Clinic settings",

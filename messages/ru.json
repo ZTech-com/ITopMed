@@ -32,7 +32,9 @@
     "mainNav": "Основная навигация",
     "openMenu": "Открыть меню",
     "closeMenu": "Закрыть меню",
-    "loading": "Загрузка…"
+    "loading": "Загрузка…",
+    "sectionsNav": "Другие разделы",
+    "accountMenu": "Меню аккаунта"
   },
   "nav": {
     "dashboard": "Обзор",
@@ -406,7 +408,11 @@
       "incomeToday": "Сегодня",
       "incomeWeek": "7 дней",
       "debtTotal": "Долги пациентов",
-      "chartLabel": "Выручка за 14 дней"
+      "chartLabel": "Выручка за 14 дней",
+      "vsYesterday": "к вчерашнему дню",
+      "vsPrevWeek": "к прошлым 7 дням",
+      "doctorsToday": "Работают сегодня",
+      "doctorsTodayHint": "врачей"
     },
     "settings": {
       "title": "Настройки клиники",

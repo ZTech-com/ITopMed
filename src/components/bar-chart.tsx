@@ -7,20 +7,21 @@ export function BarChart({ label, bars }: { label: string; bars: { key: string; 
   const max = Math.max(1, ...bars.map((b) => b.value));
   return (
     <figure className="space-y-2">
-      <div className="flex h-36 items-end gap-1 sm:gap-1.5" role="img" aria-label={label}>
+      <div className="flex h-40 items-end gap-1.5 sm:gap-2" role="img" aria-label={label}>
         {bars.map((b) => (
           // Each day is a quiet track, so an empty week still reads as a week (not a blank box).
-          <div key={b.key} className="flex h-full min-w-0 flex-1 flex-col justify-end overflow-hidden rounded-[8px] bg-surface-2" title={`${b.short}: ${b.display}`}>
+          <div key={b.key} className="flex h-full min-w-0 flex-1 flex-col justify-end overflow-hidden rounded-[10px] bg-tile" title={`${b.short}: ${b.display}`}>
+            {/* Hatched blue for the days, solid ink for the highlighted one (today). */}
             <div
-              className={`w-full rounded-[8px] ${b.highlight ? "bg-accent-solid" : "bg-accent"}`}
+              className={`w-full rounded-[10px] ${b.highlight ? "bg-[var(--chart-b)]" : "hatch"}`}
               style={{ height: `${b.value > 0 ? Math.max(3, Math.round((b.value / max) * 100)) : 0}%` }}
             />
           </div>
         ))}
       </div>
-      <div className="flex gap-1 sm:gap-1.5" aria-hidden>
+      <div className="flex gap-1.5 sm:gap-2" aria-hidden>
         {bars.map((b) => (
-          <span key={b.key} className={`min-w-0 flex-1 text-center text-[11px] tabular-nums ${b.highlight ? "font-semibold text-text" : "text-text-3"}`}>
+          <span key={b.key} className={`min-w-0 flex-1 text-center text-[12px] tabular-nums ${b.highlight ? "font-semibold text-text" : "text-text-3"}`}>
             {b.short}
           </span>
         ))}

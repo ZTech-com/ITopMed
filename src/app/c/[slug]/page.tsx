@@ -1,7 +1,7 @@
-import { CalendarClock, CheckCircle2, Circle, DoorOpen, Stethoscope, UserRound, UserX } from "lucide-react";
+import { CalendarClock, CalendarDays, CheckCircle2, Circle, DoorOpen, HandCoins, Stethoscope, UserRound, UserX, Wallet } from "lucide-react";
 import Link from "next/link";
 import { getFormatter, getTranslations } from "next-intl/server";
-import { Alert, Badge, ButtonLink, Card, CardBody, CardHeader, EmptyState, PageHeader, Stat } from "@/components/ui/primitives";
+import { Alert, Badge, ButtonLink, Card, CardBody, CardHeader, Delta, EmptyState, PageHeader, Stat } from "@/components/ui/primitives";
 import { roleLabel } from "@/lib/role-label";
 import { requireClinic } from "@/server/auth/guards";
 import { doctorsWorkingOn, getDoctorDetail, getMyDoctorProfileId, listDoctors } from "@/server/clinic/doctors";
@@ -64,6 +64,17 @@ export default async function ClinicDashboard({ params, searchParams }: { params
     : [];
 
   const [income, money] = await Promise.all([incomeSummary(ctx), moneyFormatter()]);
+  // Changes against the previous period, from the same 14-day series (no extra query).
+  const change = (now: number, before: number) => {
+    if (before <= 0) return null;
+    const pct = Math.round(((now - before) / before) * 100);
+    return { value: `${Math.abs(pct)}%`, direction: pct > 0 ? ("up" as const) : pct < 0 ? ("down" as const) : ("flat" as const) };
+  };
+  const series = income ? income.days.map((d) => Number(d.amountMinor)) : [];
+  const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+  const todayDelta = series.length >= 2 ? change(series.at(-1)!, series.at(-2)!) : null;
+  const weekDelta = series.length >= 14 ? change(sum(series.slice(-7)), sum(series.slice(-14, -7))) : null;
+
   const isOwner = ctx.roleKeys.includes("clinic_owner") && ctx.permissions.has("clinic.settings.manage");
   const setupParam = (await searchParams).setup;
   const setupDone = setupParam === "done" || setupParam === "ready";
@@ -71,7 +82,24 @@ export default async function ClinicDashboard({ params, searchParams }: { params
 
   return (
     <>
-      <PageHeader eyebrow={`${ctx.tenant.name} · ${todayLabel}`} title={t("clinic.dashboard.welcome", { name: ctx.principal.user.fullName })} />
+      <PageHeader
+        eyebrow={`${ctx.tenant.name} · ${todayLabel}`}
+        title={t("clinic.dashboard.welcome", { name: ctx.principal.user.fullName })}
+        action={
+          has("queue.manage") ? (
+            <>
+              <ButtonLink href={`${base}/desk`} size="lg">
+                {t("nav.desk")}
+              </ButtonLink>
+              {has("patients.read") ? (
+                <ButtonLink href={`${base}/patients`} size="lg" variant="secondary">
+                  {t("nav.patients")}
+                </ButtonLink>
+              ) : null}
+            </>
+          ) : undefined
+        }
+      />
       {setupDone ? <Alert tone="success">{t(setupParam === "ready" ? "setup.ready" : "setup.done")}</Alert> : null}
       {showSetup ? (
         <Card>
@@ -92,20 +120,40 @@ export default async function ClinicDashboard({ params, searchParams }: { params
 
       <div className="space-y-6">
         {income ? (
-          <Card>
-            <CardHeader title={t("clinic.dashboard.incomeTitle")} action={has("queue.manage") ? <ButtonLink href={`${base}/desk`} size="sm">{t("nav.desk")}</ButtonLink> : undefined} />
-            <CardBody className="space-y-5">
-              <div className="grid gap-3 sm:grid-cols-3">
-                <Stat label={t("clinic.dashboard.incomeToday")} value={money(income.todayMinor, income.currency)} />
-                <Stat label={t("clinic.dashboard.incomeWeek")} value={money(income.weekMinor, income.currency)} />
-                <Stat label={t("clinic.dashboard.debtTotal")} value={money(income.debtMinor, income.currency)} />
+          <div className="grid gap-4 lg:grid-cols-12 lg:gap-6">
+            {/* The figures: today is the hero (the one blue panel), the rest are quiet tiles. */}
+            <Card className="p-3 sm:p-4 lg:col-span-5">
+              <div className="grid h-full grid-cols-2 gap-3">
+                <Stat
+                  variant="hero"
+                  label={t("clinic.dashboard.incomeToday")}
+                  value={money(income.todayMinor, income.currency)}
+                  icon={<Wallet />}
+                  delta={todayDelta ? <span className="rounded-[8px] bg-white/20 px-1.5 py-0.5 font-semibold">{todayDelta.direction === "down" ? "\u2193" : "\u2191"} {todayDelta.value}</span> : undefined}
+                  hint={todayDelta ? t("clinic.dashboard.vsYesterday") : undefined}
+                />
+                <Stat
+                  variant="inset"
+                  label={t("clinic.dashboard.incomeWeek")}
+                  value={money(income.weekMinor, income.currency)}
+                  icon={<CalendarDays />}
+                  delta={weekDelta ? <Delta {...weekDelta} /> : undefined}
+                  hint={weekDelta ? t("clinic.dashboard.vsPrevWeek") : undefined}
+                />
+                <Stat variant="inset" className={working ? undefined : "col-span-2"} label={t("clinic.dashboard.debtTotal")} value={money(income.debtMinor, income.currency)} icon={<HandCoins />} />
+                {working ? <Stat variant="inset" label={t("clinic.dashboard.doctorsToday")} value={format.number(working.length)} hint={t("clinic.dashboard.doctorsTodayHint")} icon={<UserRound />} /> : null}
               </div>
-              <BarChart
-                label={t("clinic.dashboard.chartLabel")}
-                bars={income.days.map((d) => ({ key: d.date, short: d.date.slice(8), value: Number(d.amountMinor), display: money(d.amountMinor, income.currency) as unknown as string, highlight: d.date === today }))}
-              />
-            </CardBody>
-          </Card>
+            </Card>
+            <Card className="lg:col-span-7">
+              <CardHeader title={t("clinic.dashboard.incomeTitle")} description={t("clinic.dashboard.chartLabel")} />
+              <CardBody>
+                <BarChart
+                    label={t("clinic.dashboard.chartLabel")}
+                    bars={income.days.map((d) => ({ key: d.date, short: d.date.slice(8), value: Number(d.amountMinor), display: money(d.amountMinor, income.currency) as unknown as string, highlight: d.date === today }))}
+                />
+              </CardBody>
+            </Card>
+          </div>
         ) : null}
         {myDetail ? (
           <Card>

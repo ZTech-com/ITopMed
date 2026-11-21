@@ -2,7 +2,7 @@
 
 import { Globe, Moon, Sun, SunMoon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useTransition } from "react";
+import { useId, useTransition } from "react";
 import { setLocaleAction, setThemeAction } from "@/app/actions/preferences";
 import { LOCALES, LOCALE_NATIVE_NAMES } from "@/i18n/config";
 import { cx } from "../ui/primitives";
@@ -15,17 +15,18 @@ export function Preferences({ theme, compact }: { theme: "light" | "dark" | "sys
   const t = useTranslations("common");
   const locale = useLocale();
   const [pending, start] = useTransition();
+  const uid = useId(); // rendered in the account menu and the phone menu: ids must differ
   const ThemeIcon = theme === "dark" ? Moon : theme === "light" ? Sun : SunMoon;
 
   return (
     <div className={cx("flex gap-2", compact ? "flex-row" : "flex-col")} aria-busy={pending}>
       <form action={setLocaleAction} className="relative min-w-0 flex-1">
-        <label className="sr-only" htmlFor="pref-locale">
+        <label className="sr-only" htmlFor={`${uid}-locale`}>
           {t("language")}
         </label>
         <Globe aria-hidden className={cx("pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-text-3", compact ? "left-2.5" : "left-3")} />
         <select
-          id="pref-locale"
+          id={`${uid}-locale`}
           name="locale"
           defaultValue={locale}
           className={cx(selectClass, compact ? "pl-8 pr-1.5 text-[12.5px]" : "pl-9")}
@@ -46,12 +47,12 @@ export function Preferences({ theme, compact }: { theme: "light" | "dark" | "sys
         </noscript>
       </form>
       <form action={setThemeAction} className="relative min-w-0 flex-1">
-        <label className="sr-only" htmlFor="pref-theme">
+        <label className="sr-only" htmlFor={`${uid}-theme`}>
           {t("theme")}
         </label>
         <ThemeIcon aria-hidden className={cx("pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-text-3", compact ? "left-2.5" : "left-3")} />
         <select
-          id="pref-theme"
+          id={`${uid}-theme`}
           name="theme"
           defaultValue={theme}
           className={cx(selectClass, compact ? "pl-8 pr-1.5 text-[12.5px]" : "pl-9")}

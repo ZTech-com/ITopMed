@@ -32,7 +32,9 @@
     "mainNav": "Asosiy navigatsiya",
     "openMenu": "Menyuni ochish",
     "closeMenu": "Menyuni yopish",
-    "loading": "Yuklanmoqda…"
+    "loading": "Yuklanmoqda…",
+    "sectionsNav": "Boshqa boʻlimlar",
+    "accountMenu": "Hisob menyusi"
   },
   "nav": {
     "dashboard": "Bosh sahifa",
@@ -406,7 +408,11 @@
       "incomeToday": "Bugun",
       "incomeWeek": "7 kun",
       "debtTotal": "Bemorlar qarzi",
-      "chartLabel": "Oxirgi 14 kun tushumi"
+      "chartLabel": "Oxirgi 14 kun tushumi",
+      "vsYesterday": "kechaga nisbatan",
+      "vsPrevWeek": "oldingi 7 kunga nisbatan",
+      "doctorsToday": "Bugun ishlaydi",
+      "doctorsTodayHint": "shifokor"
     },
     "settings": {
       "title": "Klinika sozlamalari",

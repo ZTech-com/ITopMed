@@ -32,7 +32,9 @@
     "mainNav": "Асосий навигация",
     "openMenu": "Менюни очиш",
     "closeMenu": "Менюни ёпиш",
-    "loading": "Юкланмоқда…"
+    "loading": "Юкланмоқда…",
+    "sectionsNav": "Бошқа бўлимлар",
+    "accountMenu": "Ҳисоб менюси"
   },
   "nav": {
     "dashboard": "Бош саҳифа",
@@ -406,7 +408,11 @@
       "incomeToday": "Бугун",
       "incomeWeek": "7 кун",
       "debtTotal": "Беморлар қарзи",
-      "chartLabel": "Охирги 14 кун тушуми"
+      "chartLabel": "Охирги 14 кун тушуми",
+      "vsYesterday": "кечага нисбатан",
+      "vsPrevWeek": "олдинги 7 кунга нисбатан",
+      "doctorsToday": "Бугун ишлайди",
+      "doctorsTodayHint": "шифокор"
     },
     "settings": {
       "title": "Клиника созламалари",
