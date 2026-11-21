@@ -70,7 +70,7 @@ export function PageHeader({ title, description, action, eyebrow }: { title: Rea
       <div className="min-w-0 max-w-3xl">
         {eyebrow ? <p className="mb-2 text-[13.5px] font-medium text-text-3">{eyebrow}</p> : null}
         {/* Large but not heavy: size and tight tracking carry the title, weight stays calm. */}
-        <h1 className="text-balance text-[28px] font-semibold leading-[1.1] tracking-[-0.035em] [overflow-wrap:anywhere] sm:text-[36px] xl:text-[42px]">{title}</h1>
+        <h1 className="text-balance text-[28px] font-semibold leading-[1.1] tracking-[-0.035em] [overflow-wrap:anywhere] sm:text-[34px] xl:text-[38px]">{title}</h1>
         {description ? <p className="mt-2.5 text-pretty text-[15.5px] leading-relaxed text-text-2">{description}</p> : null}
       </div>
       {/* Wraps on narrow screens instead of pushing the page wider than the phone. */}
@@ -160,10 +160,15 @@ export function Alert({ tone = "accent", title, children }: { tone?: Tone; title
 
 export function EmptyState({ title, description, action, icon }: { title: ReactNode; description?: ReactNode; action?: ReactNode; icon?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center px-6 py-14 text-center">
-      {icon ? <div className="mb-4 grid size-12 place-items-center rounded-full bg-sunken text-text-3">{icon}</div> : null}
-      <p className="text-balance text-[15px] font-semibold">{title}</p>
-      {description ? <p className="mt-1 max-w-sm text-pretty text-[14px] text-text-2">{description}</p> : null}
+    <div className="flex flex-col items-center px-6 py-12 text-center sm:py-16">
+      {icon ? (
+        // A white tile on a hatched disc: the same pattern as the charts, so empty reads as "nothing yet", not "broken".
+        <div aria-hidden className="hatch-track mb-5 grid size-24 place-items-center rounded-full">
+          <div className="grid size-14 place-items-center rounded-[18px] bg-surface text-text-2 shadow-pop [&_svg]:size-6">{icon}</div>
+        </div>
+      ) : null}
+      <p className="text-balance text-[16px] font-semibold tracking-[-0.01em]">{title}</p>
+      {description ? <p className="mt-1.5 max-w-md text-pretty text-[14px] leading-relaxed text-text-2">{description}</p> : null}
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );
@@ -239,7 +244,7 @@ export function Table({ children, caption, phone = "cards" }: { children: ReactN
     // Focusable so keyboard users can scroll wide tables on narrow screens (WCAG 2.1.1).
     // Sits in a quiet rounded well inside its card: grey head, white rows.
     <div className="mx-3 mb-3 mt-2 overflow-x-auto rounded-[var(--radius-tile)] border border-border sm:mx-4 sm:mb-4" tabIndex={0} role={caption ? "region" : undefined} aria-label={caption}>
-      <table className={cx("w-full border-collapse text-left text-[14px] tabular-nums", phone === "cards" ? "table-cards sm:min-w-[640px]" : "min-w-[640px]")}>
+      <table className={cx("w-full border-collapse text-left text-[14px] tabular-nums [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-surface-2", phone === "cards" ? "table-cards sm:min-w-[640px]" : "min-w-[640px]")}>
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         {children}
       </table>

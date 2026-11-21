@@ -14,7 +14,7 @@ export default async function BillingPage() {
   const rows = o.rows.filter((r) => r.balance).sort((a, b) => Number((b.balance?.debtMinor ?? 0n) - (a.balance?.debtMinor ?? 0n)));
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <PageHeader title={t("admin.billing.title")} description={t("admin.billing.subtitle")} />
 
       <div className="grid gap-6 lg:grid-cols-2">

@@ -39,7 +39,7 @@ export default async function NewClinicPage({ searchParams }: { searchParams: Pr
   );
 
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl">
       <PageHeader title={t("title")} description={t("subtitleNew")} />
       <Form action={createClinicAction} className="space-y-6">
         <Card>

@@ -38,7 +38,7 @@ export default async function InventoryItemPage({ params, searchParams }: { para
   );
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <PageHeader
         eyebrow={`${t("clinic.inventory.title")} · ${item.code}`}
         title={item.name}

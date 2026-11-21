@@ -27,7 +27,7 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
   const [t, format] = await Promise.all([getTranslations(), getFormatter()]);
   if (!ctx.permissions.has("emr.read")) {
     return (
-      <div className="max-w-2xl">
+      <div className="mx-auto w-full max-w-2xl">
         <Alert tone="neutral">{t("clinic.record.noClinicalAccess")}</Alert>
       </div>
     );
@@ -43,7 +43,7 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
     if (e instanceof DomainError && e.code === "errors.notFound") notFound();
     if (e instanceof DomainError && e.code === "errors.noCareRelationship") {
       return (
-        <div className="max-w-2xl space-y-6">
+        <div className="mx-auto w-full max-w-2xl space-y-6">
           <PageHeader title={t("clinic.record.title")} />
           <Card>
             <CardBody className="space-y-4">
@@ -77,7 +77,7 @@ export default async function RecordPage({ params }: { params: Promise<{ slug: s
   const tz = ctx.tenant.timezone;
   const s = ctx.tenant.slug;
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <PageHeader
         eyebrow={`${t("clinic.record.title")} · ${patient.mrn}`}
         title={patientName(patient)}

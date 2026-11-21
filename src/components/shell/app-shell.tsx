@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { setThemeAction } from "@/app/actions/preferences";
 import { InstallApp } from "../install-app";
 import { AccountMenu } from "./account-menu";
-import { RailForm, RailLink, RailNav, TopNav } from "./frame-nav";
+import { RailForm, RailLink, RailNav, SectionRail, SectionTopNav, TopNav } from "./frame-nav";
 import { MobileTabBar } from "./mobile-tab-bar";
 import { NavLinks, type NavGroup, type NavItem } from "./nav-links";
 import { Preferences } from "./preferences";
@@ -74,6 +74,9 @@ export async function AppShell({
 }) {
   const t = await getTranslations();
   const theme = await currentTheme();
+  // Sections mode: every group has a rail icon → the rail lists sections and the
+  // top bar the pages of the current one. Otherwise: first screens on top, rest in the rail.
+  const sections = !!navGroups?.length && navGroups.every((g) => g.icon);
   const top = nav.length <= TOP_MAX ? nav : nav.slice(0, TOP_MAX - 1);
   const rail = nav.slice(top.length);
 
@@ -95,7 +98,7 @@ export async function AppShell({
             <span className="sr-only xl:hidden">ITop Med · {context}</span>
           </Link>
           <div className="flex min-w-0 flex-1">
-            <TopNav items={top} label={t("a11y.mainNav")} />
+            {sections ? <SectionTopNav items={nav} groups={navGroups!} label={t("a11y.mainNav")} /> : <TopNav items={top} label={t("a11y.mainNav")} />}
           </div>
           <AccountMenu name={user.name} detail={user.detail} signOut={signOut} securityHref={securityHref} theme={theme} />
         </header>
@@ -142,7 +145,7 @@ export async function AppShell({
               <RailForm action={setThemeAction} label={t("common.themeDark")} icon="moon" field={{ name: "theme", value: "dark" }} pressed={theme === "dark"} />
             </div>
             <div className="flex min-h-0 flex-1 flex-col justify-center">
-              <RailNav items={rail} label={t("a11y.sectionsNav")} />
+              {sections ? <SectionRail items={nav} groups={navGroups!} label={t("a11y.sectionsNav")} /> : <RailNav items={rail} label={t("a11y.sectionsNav")} />}
             </div>
             <div className="flex flex-col gap-1 rounded-full bg-surface p-1.5">
               {securityHref ? <RailLink href={securityHref} label={t("common.accountSecurity")} icon="security" /> : null}

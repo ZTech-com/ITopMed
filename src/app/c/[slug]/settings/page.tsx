@@ -24,7 +24,7 @@ export default async function ClinicSettingsPage({ params }: { params: Promise<{
   const optional = t("common.optional");
 
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl">
       <PageHeader
         title={t("clinic.settings.title")}
         description={t("clinic.settings.subtitle")}

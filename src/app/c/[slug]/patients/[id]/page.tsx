@@ -27,7 +27,7 @@ export default async function PatientPage({ params, searchParams }: { params: Pr
   const ident = (type: string) => p.identifiers.find((i) => i.type === type)?.value ?? "—";
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <PageHeader
         eyebrow={`${t("clinic.patients.title")} · ${p.mrn}`}
         title={patientName(p)}

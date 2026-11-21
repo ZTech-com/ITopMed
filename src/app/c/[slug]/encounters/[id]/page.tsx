@@ -110,7 +110,7 @@ export default async function EncounterPage({ params, searchParams }: { params: 
   const owes = billing.debt.get(e.patient.id) ?? 0n;
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <PageHeader
         eyebrow={`${t("clinic.visit.encounter")} · ${format.dateTime(e.startedAt, { dateStyle: "medium", timeStyle: "short", timeZone: tz })}`}
         title={patientName(e.patient)}

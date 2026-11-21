@@ -10,7 +10,7 @@ export default async function SuppliersPage({ params }: { params: Promise<{ slug
   const ctx = await requireClinic(slug, "inventory.manage");
   const [t, suppliers] = await Promise.all([getTranslations(), listSuppliers(ctx)]);
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="mx-auto w-full max-w-3xl space-y-6">
       <PageHeader eyebrow={t("clinic.inventory.title")} title={t("clinic.inventory.suppliers")} description={t("clinic.inventory.suppliersHint")} />
       <Card>
         {suppliers.length === 0 ? (

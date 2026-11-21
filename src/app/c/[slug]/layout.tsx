@@ -22,13 +22,13 @@ export default async function ClinicLayout({ children, params }: { children: Rea
   const nav: NavItem[] = [
     { href: base, label: t("nav.dashboard"), icon: "dashboard", group: "daily" as const, exact: true },
     ...(can("queue.manage") ? [{ href: `${base}/desk`, label: t("nav.desk"), icon: "desk" as const, group: "daily" as const }] : []),
-    ...(isDoctor && can("emr.write") ? [{ href: `${base}/my-queue`, label: t("nav.myQueue"), icon: "visits" as const, group: "daily" as const }] : []),
-    ...(can("vitals.write") && !isDoctor ? [{ href: `${base}/nurse`, label: t("nav.nurse"), icon: "nurse" as const, group: "daily" as const }] : []),
+    ...(isDoctor && can("emr.write") ? [{ href: `${base}/my-queue`, label: t("nav.myQueue"), icon: "visits" as const, group: "care" as const }] : []),
+    ...(can("vitals.write") && !isDoctor ? [{ href: `${base}/nurse`, label: t("nav.nurse"), icon: "nurse" as const, group: "care" as const }] : []),
     ...(can("patients.read") ? [{ href: `${base}/patients`, label: t("nav.patients"), icon: "patients" as const, group: "daily" as const }] : []),
     ...(can("queue.manage") ? [{ href: `${base}/queue`, label: t("nav.queue"), icon: "queue" as const, group: "daily" as const }] : []),
     ...(can("appointments.manage") ? [{ href: `${base}/appointments`, label: t("nav.appointments"), icon: "booking" as const, group: "daily" as const }] : []),
-    ...(can("lab.read") || can("lab.process") ? [{ href: `${base}/lab`, label: t("nav.lab"), icon: "lab" as const, group: "daily" as const }] : []),
-    ...(isDoctor ? [{ href: `${base}/my-schedule`, label: t("nav.mySchedule"), icon: "calendar" as const, group: "daily" as const }] : []),
+    ...(can("lab.read") || can("lab.process") ? [{ href: `${base}/lab`, label: t("nav.lab"), icon: "lab" as const, group: "care" as const }] : []),
+    ...(isDoctor ? [{ href: `${base}/my-schedule`, label: t("nav.mySchedule"), icon: "calendar" as const, group: "care" as const }] : []),
     ...(can("billing.read") ? [{ href: `${base}/billing`, label: t("nav.billing"), icon: "billing" as const, group: "finance" as const }] : []),
     ...(can("cash.shift") ? [{ href: `${base}/cash`, label: t("nav.cash"), icon: "cash" as const, group: "finance" as const }] : []),
     ...(can("finance.manage") ? [{ href: `${base}/expenses`, label: t("nav.expenses"), icon: "expenses" as const, group: "finance" as const }] : []),
@@ -56,10 +56,11 @@ export default async function ClinicLayout({ children, params }: { children: Rea
       context={ctx.tenant.name}
       nav={nav}
       navGroups={[
-        { id: "daily", label: t("nav.groupDaily") },
-        { id: "finance", label: t("nav.groupFinance") },
-        { id: "clinic", label: t("nav.groupClinic") },
-        { id: "admin", label: t("nav.groupAdmin"), collapsible: true },
+        { id: "daily", label: t("nav.groupDaily"), icon: "dashboard" },
+        { id: "care", label: t("nav.groupCare"), icon: "services" },
+        { id: "finance", label: t("nav.groupFinance"), icon: "cash" },
+        { id: "clinic", label: t("nav.groupClinic"), icon: "clinics" },
+        { id: "admin", label: t("nav.groupAdmin"), collapsible: true, icon: "settings" },
       ]}
       user={{ name: ctx.principal.user.fullName, detail: ctx.roleKeys.map((r) => roleLabel(t as never, r)).join(", ") }}
       signOut={clinicLogoutAction}

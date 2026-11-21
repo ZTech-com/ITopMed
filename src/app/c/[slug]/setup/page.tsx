@@ -30,7 +30,7 @@ export default async function SetupPage({ params }: { params: Promise<{ slug: st
   );
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="mx-auto w-full max-w-3xl space-y-6">
       <PageHeader eyebrow={ctx.tenant.name} title={t("setup.title")} description={t("setup.subtitle")} />
       <Form action={setupAction}>
         <input type="hidden" name="$slug" value={ctx.tenant.slug} />

@@ -22,6 +22,8 @@ export interface NavGroup {
   id: string;
   label: string;
   collapsible?: boolean;
+  /** Rail icon of the section (desktop sections mode). */
+  icon?: IconName;
 }
 
 function isActive(item: NavItem, pathname: string) {

@@ -15,7 +15,7 @@ export default async function NewPatientPage({ params }: { params: Promise<{ slu
   const ctx = await requireClinic(slug, "patients.create");
   const t = await getTranslations();
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl">
       <PageHeader eyebrow={t("clinic.patients.title")} title={t("clinic.patients.register")} />
       <Form action={registerPatientAction} className="space-y-6">
         <input type="hidden" name="$slug" value={ctx.tenant.slug} />

@@ -18,7 +18,7 @@ export default async function DiscountsPage({ params }: { params: Promise<{ slug
   const hidden = <input type="hidden" name="$slug" value={ctx.tenant.slug} />;
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <PageHeader title={t("clinic.pricing.title")} description={t("clinic.pricing.subtitle")} />
 
       <Card>

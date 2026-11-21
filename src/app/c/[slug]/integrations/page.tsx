@@ -22,7 +22,7 @@ export default async function IntegrationsPage({ params, searchParams }: { param
   const dt = (d: Date) => format.dateTime(d, { dateStyle: "short", timeStyle: "short", timeZone: ctx.tenant.timezone });
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <PageHeader title={t("clinic.integrations.title")} description={t("clinic.integrations.subtitle")} />
 
       <Card id="telegram">

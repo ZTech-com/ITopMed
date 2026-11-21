@@ -14,7 +14,7 @@ export default async function EditServicePage({ params }: { params: Promise<{ sl
   if (!service) notFound();
 
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl">
       <PageHeader
         eyebrow={t("clinic.services.title")}
         title={service.name}

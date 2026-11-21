@@ -30,7 +30,7 @@ export default async function NurseStationPage({ params }: { params: Promise<{ s
   for (const a of waiting) if (!logs.has(a.patient.id)) logs.set(a.patient.id, await listNursingRecords(ctx, a.patient.id, meta, 10).catch(() => []));
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <PageHeader title={t("clinic.nurse.title")} description={t("clinic.nurse.subtitle")} />
 
       {ctx.permissions.has("lab.collect") ? (

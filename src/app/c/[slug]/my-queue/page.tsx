@@ -33,7 +33,7 @@ export default async function MyQueuePage({ params, searchParams }: { params: Pr
   );
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <PageHeader title={t("clinic.visit.myQueue")} description={t("clinic.visit.myQueueSubtitle")} />
       {sp.finished ? <Alert tone="success">{t("clinic.visit.finished")}</Alert> : null}
       {!profileId ? <Alert tone="neutral">{t("clinic.mySchedule.noProfile")}</Alert> : null}

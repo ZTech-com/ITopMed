@@ -12,7 +12,7 @@ export default async function MySchedulePage({ params }: { params: Promise<{ slu
   const detail = profileId ? await getDoctorDetail(ctx, profileId) : null;
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <PageHeader title={t("clinic.mySchedule.title")} description={t("clinic.mySchedule.subtitle")} />
       {!detail ? (
         <Alert tone="neutral">{t("clinic.mySchedule.noProfile")}</Alert>

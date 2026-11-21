@@ -18,7 +18,7 @@ export default async function ExpensesPage({ params, searchParams }: { params: P
   const [t, format, money, expenses, branches] = await Promise.all([getTranslations(), getFormatter(), moneyFormatter(), listExpenses(ctx, from, to), listOperationalBranches(ctx)]);
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <PageHeader title={t("clinic.expenses.title")} description={t("clinic.expenses.subtitle")} />
       <Card>
         <CardHeader title={t("clinic.expenses.add")} />

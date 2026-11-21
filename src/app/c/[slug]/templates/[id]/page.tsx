@@ -32,7 +32,7 @@ export default async function TemplateEditPage({ params, searchParams }: { param
   const back = `/c/${ctx.tenant.slug}/templates`;
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="mx-auto w-full max-w-3xl space-y-6">
       <PageHeader
         eyebrow={t("templates.title")}
         title={isNew ? t(kind === "NOTE" ? "templates.newNote" : kind === "DIAGNOSTIC" ? "templates.newStudy" : "templates.newDocument") : template!.name}

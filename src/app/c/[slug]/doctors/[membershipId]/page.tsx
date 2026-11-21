@@ -49,7 +49,7 @@ export default async function DoctorPage({ params, searchParams }: { params: Pro
   );
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <PageHeader eyebrow={t("clinic.doctors.title")} title={doctor.fullName} description={p ? t(`specialties.${p.specialty}` as never) : undefined} />
 
       <Card>

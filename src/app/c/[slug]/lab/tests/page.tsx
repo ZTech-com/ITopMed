@@ -13,7 +13,7 @@ export default async function LabTestsPage({ params }: { params: Promise<{ slug:
   const s = ctx.tenant.slug;
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <PageHeader title={t("clinic.labTests.title")} description={t("clinic.labTests.subtitle")} />
       {tests.length === 0 ? <Alert tone="neutral">{t("clinic.labTests.noTests")}</Alert> : null}
       {tests.map((test) => (

@@ -32,7 +32,7 @@ export default async function MemberPage({ params }: { params: Promise<{ slug: s
   const assignable = roles.filter((r) => r.key !== "clinic_owner" || callerIsOwner);
 
   return (
-    <div className="max-w-4xl">
+    <div className="mx-auto w-full max-w-4xl">
       <PageHeader eyebrow={t("clinic.staff.title")} title={member.user.fullName} description={member.user.username} action={<Badge tone={STATUS_TONE[member.status]}>{t(`status.${member.status}`)}</Badge>} />
 
       {isSelf ? <div className="mb-6"><Alert tone="neutral">{t("clinic.member.selfNote")}</Alert></div> : null}

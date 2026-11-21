@@ -43,7 +43,7 @@ export default async function TemplatesPage({ params }: { params: Promise<{ slug
   );
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <PageHeader title={t("templates.title")} description={t("templates.subtitle")} />
       {list.length === 0 && canManage ? (
         <Alert tone="neutral">

@@ -15,7 +15,7 @@ export default async function EditPatientPage({ params }: { params: Promise<{ sl
   const [t, p, benefits] = await Promise.all([getTranslations(), getPatient(ctx, id, await requestMeta()), listBenefitCategories(ctx)]);
   if (!p) notFound();
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl">
       <PageHeader eyebrow={`${t("clinic.patients.title")} · ${p.mrn}`} title={patientName(p)} />
       <Form action={updatePatientAction} className="space-y-6">
         <input type="hidden" name="$slug" value={ctx.tenant.slug} />

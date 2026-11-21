@@ -19,7 +19,7 @@ export default async function RoleEditPage({ params, searchParams }: { params: P
   const title = role.isSystem ? t(`roles.${role.key}` as never) : (role.name ?? role.key);
 
   return (
-    <div className="max-w-4xl">
+    <div className="mx-auto w-full max-w-4xl">
       <PageHeader eyebrow={t("clinic.roles.title")} title={title} description={t("clinic.roles.permissionsCount", { count: role.permissions.length })} />
       {sp.created ? <div className="mb-6"><Alert tone="success">{t("clinic.roles.created")}</Alert></div> : null}
       {locked ? <div className="mb-6"><Alert tone="neutral">{t("clinic.roles.locked")}</Alert></div> : null}

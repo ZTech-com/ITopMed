@@ -35,7 +35,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ slug: 
   );
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <PageHeader
         eyebrow={t("clinic.billing.title")}
         title={inv.number ?? t("clinic.billing.newInvoice")}

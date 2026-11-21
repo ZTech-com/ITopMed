@@ -18,7 +18,7 @@ export default async function CashPage({ params }: { params: Promise<{ slug: str
   const free = branches.filter((b) => !openBranches.has(b.id));
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <PageHeader title={t("clinic.cash.title")} description={t("clinic.cash.subtitle")} />
 
       {open.map((s) => (

@@ -7,7 +7,7 @@ export default async function AdminSecurityPage() {
   const p = await requirePlatform();
   const t = await getTranslations("security");
   return (
-    <div className="max-w-3xl">
+    <div className="mx-auto w-full max-w-3xl">
       <PageHeader title={t("title")} description={t("subtitle")} />
       <Card>
         <CardBody>

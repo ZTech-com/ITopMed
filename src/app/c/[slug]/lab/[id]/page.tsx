@@ -30,7 +30,7 @@ export default async function LabOrderPage({ params }: { params: Promise<{ slug:
   );
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <PageHeader
         eyebrow={t("clinic.lab.title")}
         title={order.number}

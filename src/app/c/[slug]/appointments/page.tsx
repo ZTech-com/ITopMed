@@ -41,7 +41,7 @@ export default async function BookingPage({ params, searchParams }: { params: Pr
   const keep = { doctor: doctorId, date, service: serviceId || undefined };
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <PageHeader title={t("clinic.booking.title")} description={t("clinic.booking.subtitle")} />
 
       <Card>
