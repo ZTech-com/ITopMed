@@ -68,7 +68,7 @@ Used for `itopmed.itoppos.uz` (Ubuntu 20.04, Nginx + certbot already serving oth
 What it creates (and nothing else): user `itopmed`; `/opt/itopmed` (own Node.js, releases, `current` symlink, last 3 kept); `/var/lib/itopmed/pg` (own PostgreSQL, `127.0.0.1:54329`); `/etc/itopmed/itopmed.env` (secrets, 0640 root:itopmed — back it up, without it backups cannot be decrypted); `/var/backups/itopmed` (daily 03:30, 14 kept); units `itopmed-db`, `itopmed-app` (`127.0.0.1:3100`, MemoryMax 1.2 G), `itopmed-worker`, `itopmed-backup.timer`; one Nginx site file for the domain (tested with `nginx -t`, then only reloaded) and a certbot certificate for that domain only. Nginx overwrites `X-Forwarded-For` with `$remote_addr` (the app trusts the first address).
 
 - First SuperAdmin: `sudo /opt/itopmed/bin/itopmed-admin LOGIN "Full Name"` (asks for the password).
-- There is no email: password reset goes through the clinic's Telegram bot (`TELEGRAM_TRANSPORT=api`).
+- There is no email and no self-service reset: a forgotten password is replaced by the clinic's Administrator (Staff page). Clinic bots (`TELEGRAM_TRANSPORT=api`) serve patients only.
 - Status/logs: `systemctl status itopmed-app` · `journalctl -u itopmed-app -n 100`.
 - Rollback: point `/opt/itopmed/current` at the previous folder in `/opt/itopmed/releases` and restart the three services (migrations are additive; restore a backup if a migration must be undone).
 
