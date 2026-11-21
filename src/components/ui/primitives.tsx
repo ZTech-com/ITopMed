@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import { CountUp } from "./count-up";
 
 /** Minimal className joiner (no runtime dependency). */
 export function cx(...parts: (string | false | null | undefined)[]) {
@@ -13,11 +14,11 @@ type Size = "sm" | "md" | "lg";
 const base =
   "inline-flex max-w-full items-center justify-center gap-2 text-center leading-tight rounded-full font-semibold transition-[background-color,border-color,box-shadow,color,transform] duration-[var(--dur-quick)] ease-[var(--ease-out)] active:scale-[0.97] active:duration-[var(--dur-press)] disabled:pointer-events-none disabled:opacity-50 select-none";
 const variants: Record<Variant, string> = {
-  primary: "bg-accent-solid text-on-accent hover:bg-accent-solid-hover",
+  primary: "bg-accent-solid text-on-accent shadow-ink hover:bg-accent-solid-hover",
   // A translucent grey pill: reads the same on a white card and on the grey frame.
   secondary: "bg-chip text-text hover:bg-chip-hover",
   ghost: "text-text-2 hover:bg-chip hover:text-text",
-  danger: "bg-danger-solid text-white hover:opacity-90",
+  danger: "bg-danger-solid text-white shadow-control hover:opacity-90",
 };
 const sizes: Record<Size, string> = {
   sm: "min-h-9 px-3.5 py-1 text-[13px]",
@@ -41,7 +42,7 @@ export function Card({ className, children, ...rest }: ComponentProps<"section">
   return (
     // min-w-0: as a grid/flex child a card must never grow to its content's width
     // (a wide table scrolls inside the card instead of widening the page).
-    <section className={cx("min-w-0 rounded-[var(--radius-card)] bg-surface", className)} {...rest}>
+    <section className={cx("min-w-0 rounded-[var(--radius-card)] bg-surface shadow-card", className)} {...rest}>
       {children}
     </section>
   );
@@ -164,7 +165,7 @@ export function EmptyState({ title, description, action, icon }: { title: ReactN
       {icon ? (
         // A white tile on a hatched disc: the same pattern as the charts, so empty reads as "nothing yet", not "broken".
         <div aria-hidden className="hatch-track mb-5 grid size-24 place-items-center rounded-full">
-          <div className="grid size-14 place-items-center rounded-[18px] bg-surface text-text-2 shadow-pop [&_svg]:size-6">{icon}</div>
+          <div className="grid size-14 place-items-center rounded-[18px] bg-surface text-text-2 shadow-raise [&_svg]:size-6">{icon}</div>
         </div>
       ) : null}
       <p className="text-balance text-[16px] font-semibold tracking-[-0.01em]">{title}</p>
@@ -206,7 +207,7 @@ export function Stat({
   variant?: "card" | "inset" | "hero";
   className?: string;
 }) {
-  const shell = variant === "hero" ? "bg-hero rounded-[var(--radius-tile)]" : variant === "inset" ? "bg-tile rounded-[var(--radius-tile)]" : "bg-surface rounded-[var(--radius-card)]";
+  const shell = variant === "hero" ? "bg-hero rounded-[var(--radius-tile)] shadow-hero" : variant === "inset" ? "bg-tile rounded-[var(--radius-tile)]" : "bg-surface rounded-[var(--radius-card)] shadow-card";
   const iconShell = variant === "hero" ? "bg-white/20 text-on-hero" : variant === "inset" ? "bg-surface text-text-2" : "bg-tile text-text-2";
   const meta = variant === "hero" ? "text-on-hero" : "text-text-3";
   return (
@@ -216,7 +217,7 @@ export function Stat({
         {icon ? <span className={cx("grid size-9 shrink-0 place-items-center rounded-full [&_svg]:size-4", iconShell)}>{icon}</span> : null}
       </div>
       {/* Size follows the tile width, so large sums never leave it; the currency may wrap below the digits. */}
-      <p className="mt-auto pt-4 text-[clamp(1.25rem,13cqi,2.25rem)] font-semibold leading-[1.1] tracking-[-0.035em] tabular-nums [overflow-wrap:anywhere]">{value}</p>
+      <p className="mt-auto pt-4 text-[clamp(1.25rem,13cqi,2.25rem)] font-semibold leading-[1.1] tracking-[-0.035em] tabular-nums [overflow-wrap:anywhere]">{typeof value === "string" || typeof value === "number" ? <CountUp value={String(value)} /> : value}</p>
       {delta || hint ? (
         <div className={cx("mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]", meta)}>
           {delta}

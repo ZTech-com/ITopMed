@@ -40,7 +40,7 @@ export function AccountMenu({ name, detail, signOut, securityHref, theme }: { na
     <details ref={ref} className="group/acc relative shrink-0">
       <summary
         aria-label={t("a11y.accountMenu")}
-        className="flex h-14 cursor-pointer list-none items-center gap-3 rounded-full bg-surface py-1.5 pl-1.5 pr-1.5 hover:bg-surface/80 xl:pr-4 [&::-webkit-details-marker]:hidden"
+        className="flex h-14 cursor-pointer list-none items-center gap-3 rounded-full bg-surface py-1.5 pl-1.5 pr-1.5 shadow-control transition-shadow hover:shadow-raise xl:pr-4 [&::-webkit-details-marker]:hidden"
       >
         <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-full bg-tile text-[14px] font-semibold text-text">
           {initials(name)}

@@ -18,7 +18,7 @@ export async function currentTheme(): Promise<"light" | "dark" | "system"> {
 
 function Mark({ className = "size-10" }: { className?: string }) {
   return (
-    <span aria-hidden className={`grid shrink-0 place-items-center rounded-full bg-hero ${className}`}>
+    <span aria-hidden className={`grid shrink-0 place-items-center rounded-full bg-hero shadow-hero ${className}`}>
       <svg viewBox="0 0 24 24" className="size-[55%]" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
         <path d="M12 5v14M5 12h14" />
       </svg>
@@ -89,7 +89,7 @@ export async function AppShell({
       <div data-frame className="mx-auto min-h-dvh max-w-[1680px] bg-frame lg:min-h-[calc(100dvh-1.5rem)] lg:rounded-[40px] lg:bg-frame lg:px-6 lg:pb-10 lg:pt-5 xl:min-h-[calc(100dvh-2rem)] xl:px-8">
         {/* Desktop top bar */}
         <header data-chrome className="hidden items-center gap-3 lg:flex">
-          <Link href={nav[0]?.href ?? "/"} className="flex h-14 min-w-0 shrink-0 items-center gap-3 rounded-full bg-surface py-2 pl-2 pr-2 xl:max-w-[260px] xl:pr-5">
+          <Link href={nav[0]?.href ?? "/"} className="flex h-14 min-w-0 shrink-0 items-center gap-3 rounded-full bg-surface py-2 pl-2 pr-2 shadow-control xl:max-w-[260px] xl:pr-5">
             <Mark />
             <span className="hidden min-w-0 leading-tight xl:block">
               <span className="block text-[16px] font-bold tracking-[-0.02em]">ITop Med</span>
@@ -107,7 +107,7 @@ export async function AppShell({
         <details data-chrome className="group sticky top-0 z-30 bg-frame lg:hidden">
           <summary className="flex h-16 cursor-pointer list-none items-center justify-between gap-3 px-4 [&::-webkit-details-marker]:hidden">
             <Brand context={context} />
-            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-surface text-text-2 group-open:bg-accent-solid group-open:text-on-accent">
+            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-surface text-text-2 shadow-control group-open:bg-accent-solid group-open:text-on-accent">
               <Menu aria-hidden className="size-5" />
               <span className="sr-only">{t("a11y.openMenu")}</span>
             </span>
@@ -140,14 +140,14 @@ export async function AppShell({
         <div className="lg:mt-6 lg:flex lg:gap-6 xl:gap-8">
           {/* Desktop rail */}
           <aside data-chrome className="sticky top-4 hidden h-[calc(100dvh-2rem)] w-14 shrink-0 flex-col items-center justify-between gap-3 self-start lg:flex">
-            <div className="flex flex-col gap-1 rounded-full bg-surface p-1.5">
+            <div className="flex flex-col gap-1 rounded-full bg-surface p-1.5 shadow-control">
               <RailForm action={setThemeAction} label={t("common.themeLight")} icon="sun" field={{ name: "theme", value: "light" }} pressed={theme === "light"} />
               <RailForm action={setThemeAction} label={t("common.themeDark")} icon="moon" field={{ name: "theme", value: "dark" }} pressed={theme === "dark"} />
             </div>
             <div className="flex min-h-0 flex-1 flex-col justify-center">
               {sections ? <SectionRail items={nav} groups={navGroups!} label={t("a11y.sectionsNav")} /> : <RailNav items={rail} label={t("a11y.sectionsNav")} />}
             </div>
-            <div className="flex flex-col gap-1 rounded-full bg-surface p-1.5">
+            <div className="flex flex-col gap-1 rounded-full bg-surface p-1.5 shadow-control">
               {securityHref ? <RailLink href={securityHref} label={t("common.accountSecurity")} icon="security" /> : null}
               <RailForm action={signOut} label={t("common.signOut")} icon="signOut" />
             </div>
@@ -155,7 +155,7 @@ export async function AppShell({
 
           <main id="main" className={primary && primary.length > 1 ? "min-w-0 flex-1 pb-[calc(56px+env(safe-area-inset-bottom))] lg:pb-0" : "min-w-0 flex-1"}>
             {banner}
-            <div className="animate-rise px-4 pb-8 pt-2 sm:px-6 lg:p-0">{children}</div>
+            <div className="page-enter px-4 pb-8 pt-2 sm:px-6 lg:p-0">{children}</div>
           </main>
         </div>
       </div>

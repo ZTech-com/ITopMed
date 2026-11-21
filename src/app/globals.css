@@ -44,12 +44,18 @@
   --danger: #ad1f36;
   --danger-soft: rgb(196 36 58 / 0.1);
   --focus: rgb(36 86 216 / 0.45);
-  --shadow-card: none;
-  --shadow-pop: 0 12px 40px rgb(17 18 20 / 0.14);
+  --shadow-card: 0 0 0 1px rgb(17 18 20 / 0.025), 0 1px 2px rgb(17 18 20 / 0.04), 0 4px 12px -2px rgb(17 18 20 / 0.045), 0 18px 36px -14px rgb(17 18 20 / 0.08);
+  --shadow-raise: 0 0 0 1px rgb(17 18 20 / 0.03), 0 2px 4px rgb(17 18 20 / 0.05), 0 12px 24px -8px rgb(17 18 20 / 0.1), 0 30px 52px -18px rgb(17 18 20 / 0.14);
+  --shadow-control: 0 0 0 1px rgb(17 18 20 / 0.02), 0 1px 2px rgb(17 18 20 / 0.04), 0 3px 10px -3px rgb(17 18 20 / 0.06);
+  --shadow-ink: 0 1px 2px rgb(17 18 20 / 0.18), 0 6px 14px -4px rgb(17 18 20 / 0.28);
+  --shadow-hero: 0 2px 4px rgb(28 69 198 / 0.18), 0 14px 30px -10px rgb(28 69 198 / 0.45);
+  --shadow-pop: 0 0 0 1px rgb(17 18 20 / 0.04), 0 8px 20px -4px rgb(17 18 20 / 0.12), 0 28px 60px -12px rgb(17 18 20 / 0.2);
   --sidebar: #f3f3f4;
   /* Motion: felt, not watched. Ease-out for anything entering or answering a touch. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  /* A gentle spring (slight settle, no wobble); browsers without linear() keep --ease-out. */
+  --ease-spring: var(--ease-out);
   --dur-press: 120ms;
   --dur-quick: 160ms;
   --dur-panel: 220ms;
@@ -91,8 +97,12 @@
     --danger: #ff5a6e;
     --danger-soft: rgb(255 90 110 / 0.14);
     --focus: rgb(132 170 255 / 0.55);
-    --shadow-card: none;
-    --shadow-pop: 0 12px 40px rgb(0 0 0 / 0.6);
+    --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 0 0 1px rgb(255 255 255 / 0.035), 0 2px 4px rgb(0 0 0 / 0.25), 0 16px 32px -14px rgb(0 0 0 / 0.6);
+    --shadow-raise: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 0 0 1px rgb(255 255 255 / 0.05), 0 4px 8px rgb(0 0 0 / 0.3), 0 28px 48px -16px rgb(0 0 0 / 0.7);
+    --shadow-control: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 0 0 1px rgb(255 255 255 / 0.035), 0 2px 8px -2px rgb(0 0 0 / 0.45);
+    --shadow-ink: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 14px -4px rgb(0 0 0 / 0.55);
+    --shadow-hero: 0 2px 4px rgb(0 0 0 / 0.3), 0 14px 30px -10px rgb(20 50 160 / 0.6);
+    --shadow-pop: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 0 0 1px rgb(255 255 255 / 0.06), 0 12px 40px rgb(0 0 0 / 0.6);
     --sidebar: #111215;
   }
 }
@@ -131,8 +141,12 @@
   --danger: #ff5a6e;
   --danger-soft: rgb(255 90 110 / 0.14);
   --focus: rgb(132 170 255 / 0.55);
-  --shadow-card: none;
-  --shadow-pop: 0 12px 40px rgb(0 0 0 / 0.6);
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 0 0 1px rgb(255 255 255 / 0.035), 0 2px 4px rgb(0 0 0 / 0.25), 0 16px 32px -14px rgb(0 0 0 / 0.6);
+  --shadow-raise: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 0 0 1px rgb(255 255 255 / 0.05), 0 4px 8px rgb(0 0 0 / 0.3), 0 28px 48px -16px rgb(0 0 0 / 0.7);
+  --shadow-control: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 0 0 1px rgb(255 255 255 / 0.035), 0 2px 8px -2px rgb(0 0 0 / 0.45);
+  --shadow-ink: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 14px -4px rgb(0 0 0 / 0.55);
+  --shadow-hero: 0 2px 4px rgb(0 0 0 / 0.3), 0 14px 30px -10px rgb(20 50 160 / 0.6);
+  --shadow-pop: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 0 0 1px rgb(255 255 255 / 0.06), 0 12px 40px rgb(0 0 0 / 0.6);
   --sidebar: #111215;
 }
 
@@ -166,6 +180,10 @@
   --color-chip-hover: var(--chip-hover);
   --color-on-hero: var(--on-hero);
   --shadow-card: var(--shadow-card);
+  --shadow-raise: var(--shadow-raise);
+  --shadow-control: var(--shadow-control);
+  --shadow-ink: var(--shadow-ink);
+  --shadow-hero: var(--shadow-hero);
   --shadow-pop: var(--shadow-pop);
   --font-sans: var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --radius-control: 12px;
@@ -287,6 +305,58 @@ label > input + span {
 }
 .animate-rise { animation: itm-rise var(--dur-panel) var(--ease-out) both; }
 
+/*
+ * Page entrance (soft, Apple-like): each top-level block of a page fades up out of
+ * a slight blur, one after another. Pure CSS — runs only when a block mounts
+ * (first load and each navigation), costs no JavaScript, and is skipped under
+ * reduced motion (global rule above) and in print.
+ */
+@keyframes itm-enter {
+  from { opacity: 0; transform: translateY(12px) scale(0.995); filter: blur(4px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.page-enter > * > * {
+  animation: itm-enter 560ms var(--ease-spring) backwards;
+}
+.page-enter > * > :nth-child(2) { animation-delay: 60ms; }
+.page-enter > * > :nth-child(3) { animation-delay: 120ms; }
+.page-enter > * > :nth-child(4) { animation-delay: 170ms; }
+.page-enter > * > :nth-child(5) { animation-delay: 210ms; }
+.page-enter > * > :nth-child(n + 6) { animation-delay: 240ms; }
+@media print {
+  .page-enter > *, .page-enter > * > * { animation: none !important; }
+}
+
+/* Chart bars rise from the baseline, left to right (transform only: no layout work). */
+@keyframes itm-grow {
+  from { transform: scaleY(0); }
+  to { transform: none; }
+}
+.bar-grow { transform-origin: bottom; animation: itm-grow 700ms var(--ease-spring) backwards; }
+
+/* Sliding nav pill (segmented-control feel): JS sets its box; CSS springs it. */
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    /* Critically-damped-ish spring: ~1.5% settle, no visible wobble. */
+    --ease-spring: linear(0, 0.0175, 0.0657, 0.1363, 0.2222 9.1%, 0.4207 14.6%, 0.6138 21.1%, 0.7764 28.6%, 0.8907 36.6%, 0.9632 45.6%, 1.0026 55.4%, 1.0154 63.6%, 1.0129 75.6%, 1.0031 91.4%, 1);
+  }
+}
+
+.nav-pill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 9999px;
+  background: var(--accent-solid);
+  box-shadow: var(--shadow-ink);
+  pointer-events: none;
+  transition: transform 420ms var(--ease-spring), width 420ms var(--ease-spring), height 420ms var(--ease-spring);
+}
+.nav-pill[data-instant] { transition: none; }
+.nav-pill:not([data-on]) { opacity: 0; }
+/* Once the pill is live, the current link drops its own fill (the pill shows through). */
+[data-pill="on"] [data-pill-item][aria-current] { background: transparent; }
+
 /* Collapsible menus (<details>): the panel eases in under its summary. */
 @keyframes itm-drop {
   from { opacity: 0; transform: translateY(-4px) scale(0.98); }
@@ -336,6 +406,7 @@ details[open] > .animate-drop { animation: itm-drop var(--dur-quick) var(--ease-
   body { background: #fff; color: #000; }
   main { padding: 0 !important; }
   main > div { max-width: none !important; padding: 0 !important; }
+  *, *::before, *::after { box-shadow: none !important; }
 }
 
 /* Rail tooltips: a quick fade from the rail's side. */

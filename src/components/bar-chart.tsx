@@ -8,13 +8,13 @@ export function BarChart({ label, bars }: { label: string; bars: { key: string; 
   return (
     <figure className="space-y-2">
       <div className="flex h-40 items-end gap-1.5 sm:gap-2" role="img" aria-label={label}>
-        {bars.map((b) => (
+        {bars.map((b, i) => (
           // Each day is a quiet track, so an empty week still reads as a week (not a blank box).
           <div key={b.key} className="flex h-full min-w-0 flex-1 flex-col justify-end overflow-hidden rounded-[10px] bg-tile" title={`${b.short}: ${b.display}`}>
             {/* Hatched blue for the days, solid ink for the highlighted one (today). */}
             <div
-              className={`w-full rounded-[10px] ${b.highlight ? "bg-[var(--chart-b)]" : "hatch"}`}
-              style={{ height: `${b.value > 0 ? Math.max(3, Math.round((b.value / max) * 100)) : 0}%` }}
+              className={`bar-grow w-full rounded-[10px] ${b.highlight ? "bg-[var(--chart-b)]" : "hatch"}`}
+              style={{ height: `${b.value > 0 ? Math.max(3, Math.round((b.value / max) * 100)) : 0}%`, animationDelay: `${120 + i * 28}ms` }}
             />
           </div>
         ))}

@@ -3,7 +3,7 @@
 import { LockKeyhole, LogOut, Moon, Sun } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { cx } from "../ui/primitives";
 import { Icon } from "./icon";
@@ -13,13 +13,58 @@ export function isActive(item: NavItem, pathname: string) {
   return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(item.href + "/");
 }
 
+
+/**
+ * The ink pill behind the current link that slides to the next one on navigation
+ * (a segmented control, spring-eased in CSS). Without JS or before hydration the
+ * current link keeps its own fill; once placed, the list gets data-pill="on" and
+ * the link turns transparent over the pill. The list must be `relative` and its
+ * links `relative` (so they paint above the pill) with `data-pill-item`.
+ */
+function NavPill({ dep }: { dep: string }) {
+  const pillRef = useRef<HTMLLIElement>(null);
+  const placed = useRef(false);
+  useLayoutEffect(() => {
+    // The list is the pill's parent (a parent's ref is not attached yet when a child's layout effect runs on mount).
+    const pill = pillRef.current;
+    const list = pill?.parentElement;
+    if (!list || !pill) return;
+    const place = (instant: boolean) => {
+      const a = list.querySelector<HTMLElement>("[data-pill-item][aria-current]");
+      if (!a) {
+        pill.removeAttribute("data-on");
+        list.removeAttribute("data-pill");
+        placed.current = false;
+        return;
+      }
+      if (instant) pill.setAttribute("data-instant", "");
+      pill.style.width = `${a.offsetWidth}px`;
+      pill.style.height = `${a.offsetHeight}px`;
+      pill.style.transform = `translate(${a.offsetLeft}px, ${a.offsetTop}px)`;
+      pill.setAttribute("data-on", "");
+      list.setAttribute("data-pill", "on");
+      if (instant) {
+        void pill.offsetWidth; // commit the jump before transitions come back
+        pill.removeAttribute("data-instant");
+      }
+      placed.current = true;
+    };
+    place(!placed.current);
+    const ro = new ResizeObserver(() => place(true));
+    ro.observe(list);
+    return () => ro.disconnect();
+  }, [dep]);
+  return <li ref={pillRef} aria-hidden className="nav-pill" />;
+}
+
 /** The capsule of primary screens in the top bar; the current one is the ink pill. */
 export function TopNav({ items, label }: { items: NavItem[]; label: string }) {
   const pathname = usePathname();
   return (
     <nav aria-label={label} className="min-w-0">
       {/* Scrolls sideways only if long labels ever outgrow the bar (never clips). */}
-      <ul className="scroll-quiet flex items-center gap-1 overflow-x-auto rounded-full bg-surface p-1.5">
+      <ul className="scroll-quiet relative flex items-center gap-1 overflow-x-auto rounded-full bg-surface p-1.5 shadow-control">
+        <NavPill dep={pathname} />
         {items.map((item) => {
           const active = isActive(item, pathname);
           return (
@@ -27,8 +72,9 @@ export function TopNav({ items, label }: { items: NavItem[]; label: string }) {
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
+                data-pill-item
                 className={cx(
-                  "flex h-11 items-center rounded-full px-5 text-[15px] whitespace-nowrap transition-[background-color,color] duration-[var(--dur-quick)] ease-[var(--ease-out)] active:scale-[0.97]",
+                  "relative flex h-11 items-center rounded-full px-5 text-[15px] whitespace-nowrap transition-[background-color,color] duration-[var(--dur-quick)] ease-[var(--ease-out)] active:scale-[0.97]",
                   active ? "bg-accent-solid font-semibold text-on-accent" : "font-medium text-text-2 hover:bg-chip hover:text-text",
                 )}
               >
@@ -118,7 +164,7 @@ export function SectionTopNav({ items, groups, label }: { items: NavItem[]; grou
   const own = items.filter((i) => i.group === gid);
   return (
     <nav aria-label={group ? `${label}: ${group.label}` : label} className="min-w-0 flex-1">
-      <div className="flex h-14 min-w-0 items-center gap-1 rounded-full bg-surface p-1.5">
+      <div className="flex h-14 min-w-0 items-center gap-1 rounded-full bg-surface p-1.5 shadow-control">
         {group ? (
           <span className="hidden shrink-0 items-center gap-2 pl-3 pr-3 text-[13px] font-semibold text-text-3 2xl:flex">
             {group.icon ? <Icon name={group.icon} className="size-4" /> : null}
@@ -126,7 +172,8 @@ export function SectionTopNav({ items, groups, label }: { items: NavItem[]; grou
             <span aria-hidden className="ml-2 h-5 w-px bg-border-strong" />
           </span>
         ) : null}
-        <ul className="scroll-quiet flex min-w-0 items-center gap-1 overflow-x-auto">
+        <ul className="scroll-quiet relative flex min-w-0 items-center gap-1 overflow-x-auto">
+          <NavPill dep={pathname} />
           {own.map((item) => {
             const active = isActive(item, pathname);
             return (
@@ -134,8 +181,9 @@ export function SectionTopNav({ items, groups, label }: { items: NavItem[]; grou
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
+                  data-pill-item
                   className={cx(
-                    "flex h-11 items-center gap-2 rounded-full pl-3.5 pr-4 text-[14.5px] whitespace-nowrap 2xl:gap-2.5 2xl:pl-4 2xl:pr-5 2xl:text-[15px] transition-[background-color,color] duration-[var(--dur-quick)] ease-[var(--ease-out)] active:scale-[0.97]",
+                    "relative flex h-11 items-center gap-2 rounded-full pl-3.5 pr-4 text-[14.5px] whitespace-nowrap 2xl:gap-2.5 2xl:pl-4 2xl:pr-5 2xl:text-[15px] transition-[background-color,color] duration-[var(--dur-quick)] ease-[var(--ease-out)] active:scale-[0.97]",
                     active ? "bg-accent-solid font-semibold text-on-accent" : "font-medium text-text-2 hover:bg-chip hover:text-text",
                   )}
                 >
@@ -158,7 +206,8 @@ export function SectionRail({ items, groups, label }: { items: NavItem[]; groups
   const shown = groups.filter((g) => items.some((i) => i.group === g.id));
   return (
     <nav aria-label={label}>
-      <ul className="flex flex-col items-center gap-1 rounded-full bg-surface p-1.5">
+      <ul className="relative flex flex-col items-center gap-1 rounded-full bg-surface p-1.5 shadow-control">
+        <NavPill dep={gid ?? ""} />
         {shown.map((g) => {
           const first = items.find((i) => i.group === g.id)!;
           const active = g.id === gid;
@@ -170,7 +219,8 @@ export function SectionRail({ items, groups, label }: { items: NavItem[]; groups
                     href={first.href}
                     aria-label={g.label}
                     aria-current={active ? "true" : undefined}
-                    className={railButton(active ? "on" : "idle")}
+                    data-pill-item
+                    className={cx("relative", railButton(active ? "on" : "idle"))}
                     {...on}
                   >
                     <Icon name={g.icon ?? first.icon} className="size-5" />
@@ -198,7 +248,7 @@ export function RailNav({ items, label }: { items: NavItem[]; label: string }) {
   if (!items.length) return null;
   return (
     <nav aria-label={label} className="flex min-h-0 flex-col">
-      <ul className="scroll-quiet flex min-h-0 flex-col items-center gap-1 overflow-y-auto rounded-full bg-surface p-1.5">
+      <ul className="scroll-quiet flex min-h-0 flex-col items-center gap-1 overflow-y-auto rounded-full bg-surface p-1.5 shadow-control">
         {items.map((item, i) => {
           const active = isActive(item, pathname);
           const newGroup = i > 0 && item.group !== items[i - 1]!.group;
