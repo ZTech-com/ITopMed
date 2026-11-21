@@ -52,8 +52,7 @@ export async function getNetwork(actor: PlatformPrincipal, id: string) {
     where: { id, archivedAt: null },
     include: {
       tenants: { orderBy: { name: "asc" }, select: { id: true, name: true, slug: true, status: true, practiceType: true, _count: { select: { memberships: true } } } },
-      admins: { orderBy: { fullName: "asc" }, select: { id: true, fullName: true, username: true, email: true, status: true, lastLoginAt: true } },
-      invitations: { where: { status: "PENDING" }, orderBy: { createdAt: "desc" }, select: { id: true, email: true, fullName: true, expiresAt: true } },
+      admins: { orderBy: { fullName: "asc" }, select: { id: true, fullName: true, username: true, status: true, lastLoginAt: true } },
     },
   });
   if (!network) return null;

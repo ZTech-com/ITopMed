@@ -8,7 +8,7 @@ Internet ─ TLS reverse proxy / load balancer (sets X-Forwarded-For, HTTPS only
             ├─ Next.js app (npm run build && npm run start) × N   — stateless; any number of instances
             └─ Worker (npm run worker)                  × 1–2   — notification outbox, rate-limit housekeeping
 Managed PostgreSQL 16+ (in-country) with point-in-time recovery
-SMTP relay (email); SMS provider: not contracted yet (SMS stays off: SMS_TRANSPORT=none)
+SMS provider: not contracted yet (SMS stays off: SMS_TRANSPORT=none)
 ```
 Rate limits live in PostgreSQL (`rate_limit_hit()`), so app instances need no shared cache. Health probe: `GET /api/health` (200 `{"status":"ok"}` / 503) — no versions or details.
 
@@ -19,7 +19,7 @@ For a practice without a hosted server: one Windows/macOS/Linux computer runs th
 1. Create the four roles and the database: `scripts/sql/create-roles.sql` (passwords from the secret manager; see the header of the file).
 2. Apply migrations as the owner: `MIGRATION_DATABASE_URL=… npx prisma migrate deploy`.
 3. Seed reference data (plans): `npm run db:seed`.
-4. Create the first platform administrator: `npm run admin:create -- --email … --name … --role SUPER_ADMIN` (they enrol TOTP at first sign-in and are asked to create recovery codes). Invite every further ITop Med employee from the console (Platform staff → Invite), not with the CLI.
+4. Create the first platform administrator: `npm run admin:create -- --login … --name … --role SUPER_ADMIN` (they enrol TOTP at first sign-in and are asked to create recovery codes). Invite every further ITop Med employee from the console (Platform staff → Invite), not with the CLI.
 5. Check: `tests/db-security.test.ts` expectations hold in production too — runtime roles must have `rolsuper = false`, `rolbypassrls = false`.
 
 ## 3. Environment (secrets from the secret manager — never in the repo or images)
@@ -33,7 +33,6 @@ For a practice without a hosted server: one Windows/macOS/Linux computer runs th
 | `MIGRATION_DATABASE_URL` | `itopmed_owner` — only for the migration job and backups, **not** given to the app containers |
 | `APP_ENCRYPTION_KEY`, `AUDIT_HMAC_KEY` | 32 bytes base64 each; rotating them needs a re-encryption plan (TOTP secrets) |
 | `BACKUP_ENCRYPTION_KEY` | 32 bytes base64; store separately from the backups |
-| `EMAIL_TRANSPORT=smtp`, `SMTP_URL`, `EMAIL_FROM` | `dev-mailbox` is refused in production |
 | `SMS_TRANSPORT=none` | `dev-outbox` is refused in production; no real provider yet |
 | `RATE_LIMIT_STORE=database` | default |
 | `DB_POOL_MAX` | per instance; keep `instances × pools(3) × DB_POOL_MAX` below the database connection limit |
@@ -68,8 +67,8 @@ Used for `itopmed.itoppos.uz` (Ubuntu 20.04, Nginx + certbot already serving oth
 
 What it creates (and nothing else): user `itopmed`; `/opt/itopmed` (own Node.js, releases, `current` symlink, last 3 kept); `/var/lib/itopmed/pg` (own PostgreSQL, `127.0.0.1:54329`); `/etc/itopmed/itopmed.env` (secrets, 0640 root:itopmed — back it up, without it backups cannot be decrypted); `/var/backups/itopmed` (daily 03:30, 14 kept); units `itopmed-db`, `itopmed-app` (`127.0.0.1:3100`, MemoryMax 1.2 G), `itopmed-worker`, `itopmed-backup.timer`; one Nginx site file for the domain (tested with `nginx -t`, then only reloaded) and a certbot certificate for that domain only. Nginx overwrites `X-Forwarded-For` with `$remote_addr` (the app trusts the first address).
 
-- First SuperAdmin: `sudo /opt/itopmed/bin/itopmed-admin EMAIL "Full Name"` (asks for the password).
-- Email is `EMAIL_TRANSPORT=disabled` until an SMTP account exists: set `EMAIL_TRANSPORT=smtp` and `SMTP_URL=…` in `/etc/itopmed/itopmed.env`, then `systemctl restart itopmed-app itopmed-worker`.
+- First SuperAdmin: `sudo /opt/itopmed/bin/itopmed-admin LOGIN "Full Name"` (asks for the password).
+- There is no email: password reset goes through the clinic's Telegram bot (`TELEGRAM_TRANSPORT=api`).
 - Status/logs: `systemctl status itopmed-app` · `journalctl -u itopmed-app -n 100`.
 - Rollback: point `/opt/itopmed/current` at the previous folder in `/opt/itopmed/releases` and restart the three services (migrations are additive; restore a backup if a migration must be undone).
 

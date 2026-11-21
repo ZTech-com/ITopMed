@@ -18,19 +18,17 @@ function clinicForm(extra: Record<string, string> = {}) {
     raw: {
       name: `Synthetic Cardio ${slug}`,
       slug,
-      contactEmail: `info@${slug}.test`,
       defaultLocale: "uz-Latn",
       timezone: "Asia/Tashkent",
       planCode: "enterprise",
       ownerFullName: "Synthetic Cardiologist",
-      ownerEmail: `${uniq("owner")}@clinic.test`,
+      ownerUsername: uniq("owner"),
       taxId: "",
       contactPhone: "",
       practiceType: "SOLO_PRACTICE",
       focusSpecialty: "cardiology",
       ownerIsDoctor: "on",
       ownerFrontDesk: "on",
-      ownerMode: "password",
       ownerPassword: PASSWORD,
       ...extra,
     },
@@ -40,9 +38,9 @@ function clinicForm(extra: Record<string, string> = {}) {
 /** A network admin as it looks after sign-in (synthetic). */
 async function networkAdmin(networkId: string): Promise<PlatformPrincipal> {
   const id = uuidv7();
-  const email = `${uniq("netadmin")}@itopmed.test`;
-  await platformDb().platformUser.create({ data: { id, username: email, email, fullName: "Synthetic Network Admin", role: "NETWORK_ADMIN", networkId, status: "ACTIVE" } });
-  return { sessionId: "test", user: { id, username: email, email, fullName: "Synthetic Network Admin", role: "NETWORK_ADMIN", locale: "en", telegramLinked: false, networkId } };
+  const username = uniq("netadmin");
+  await platformDb().platformUser.create({ data: { id, username, fullName: "Synthetic Network Admin", role: "NETWORK_ADMIN", networkId, status: "ACTIVE" } });
+  return { sessionId: "test", user: { id, username, fullName: "Synthetic Network Admin", role: "NETWORK_ADMIN", locale: "en", networkId } };
 }
 
 describe("clinic created ready for its field", () => {
@@ -50,7 +48,6 @@ describe("clinic created ready for its field", () => {
     const admin = await platformActor();
     const { slug, raw } = clinicForm();
     const r = await createClinicWithOwner(admin, raw, META);
-    expect(r.owner).toBe("password");
 
     const before = await platformDb().tenant.findUniqueOrThrow({ where: { id: r.tenantId }, include: { modules: true } });
     expect(before.practiceType).toBe("SOLO_PRACTICE");
@@ -58,25 +55,25 @@ describe("clinic created ready for its field", () => {
     expect(before.modules.find((m) => m.moduleKey === "laboratory")?.enabled).toBe(false);
 
     // The owner signs in with exactly the password the admin set.
-    const ctx = await clinicContext(raw.ownerEmail, slug);
+    const ctx = await clinicContext(raw.ownerUsername, slug);
     expect(await applyPendingSetup(ctx, META)).toBe(true);
     expect(await applyPendingSetup(ctx, META)).toBe(false); // once
 
-    const fresh = await clinicContext(raw.ownerEmail, slug);
+    const fresh = await clinicContext(raw.ownerUsername, slug);
     expect(fresh.roleKeys).toEqual(expect.arrayContaining(["clinic_owner", "doctor", "receptionist", "cashier"]));
     const codes = (await listServices(fresh)).map((s) => s.code);
     expect(codes).toEqual(expect.arrayContaining(["CARD-CONSULT", "ECG", "CARD-ECHO", "CARD-HOLTER"]));
     expect((await listTemplates(fresh)).length).toBe(6);
   });
 
-  it("an email that already has an account keeps its own password (invitation instead)", async () => {
+  it("a taken owner login is refused before anything is created; the existing account keeps its password", async () => {
     const admin = await platformActor();
     const first = clinicForm();
     await createClinicWithOwner(admin, first.raw, META);
-    const second = clinicForm({ ownerEmail: first.raw.ownerEmail, ownerPassword: "Other-Passw0rd-123" });
-    const r = await createClinicWithOwner(admin, second.raw, META);
-    expect(r.owner).toBe("existing_account");
-    await expect(clinicContext(first.raw.ownerEmail, first.slug)).resolves.toBeTruthy(); // old password still works
+    const second = clinicForm({ ownerUsername: first.raw.ownerUsername, ownerPassword: "Other-Passw0rd-123" });
+    await expect(createClinicWithOwner(admin, second.raw, META)).rejects.toThrow("errors.usernameTaken");
+    expect(await platformDb().tenant.findUnique({ where: { slug: second.slug } })).toBeNull();
+    await expect(clinicContext(first.raw.ownerUsername, first.slug)).resolves.toBeTruthy(); // old password still works
   });
 
   it("weak owner passwords are refused before anything is created", async () => {
@@ -87,7 +84,7 @@ describe("clinic created ready for its field", () => {
   });
 
   it("suggested passwords meet the policy", () => {
-    for (let i = 0; i < 20; i++) expect(suggestPassword()).toMatch(/^([a-zA-Z]{3}[2-9]-){3}[a-zA-Z]{3}[2-9]$/);
+    for (let i = 0; i < 20; i++) expect(suggestPassword()).toMatch(/^[a-z]{4}[2-9]{4}$/);
   });
 });
 
@@ -115,20 +112,22 @@ describe("networks and network admins", () => {
 
     // No network management, no staff management.
     await expect(listNetworks(na)).rejects.toThrow("errors.forbidden");
-    await expect(createPlatformAccount(na, { email: `${uniq("x")}@itopmed.test`, fullName: "X Y", role: "SUPPORT" }, META)).rejects.toThrow("errors.forbidden");
+    await expect(createPlatformAccount(na, { username: uniq("x"), fullName: "X Y", role: "SUPPORT", password: PASSWORD }, META)).rejects.toThrow("errors.forbidden");
   });
 
   it("the super admin appoints a network admin with a password; the role requires a network", async () => {
     const admin = await platformActor();
     const networkId = await createNetwork(admin, { name: `Synthetic Network ${uniq("n")}` }, META);
-    const email = `${uniq("netadmin")}@itopmed.test`;
-    const r = await createPlatformAccount(admin, { email, fullName: "Synthetic Franchise Owner", role: "NETWORK_ADMIN", networkId, ownerMode: "password", password: PASSWORD }, META);
-    expect(r.mode).toBe("password");
-    const u = await platformDb().platformUser.findUniqueOrThrow({ where: { email } });
+    const username = uniq("netadmin");
+    const r = await createPlatformAccount(admin, { username, fullName: "Synthetic Franchise Owner", role: "NETWORK_ADMIN", networkId, password: PASSWORD }, META);
+    expect(r.username).toBe(username);
+    const u = await platformDb().platformUser.findUniqueOrThrow({ where: { username } });
+    expect(u.email).toBeNull();
     expect(u.role).toBe("NETWORK_ADMIN");
     expect(u.networkId).toBe(networkId);
-    await expect(createPlatformAccount(admin, { email: `${uniq("n2")}@itopmed.test`, fullName: "No Network", role: "NETWORK_ADMIN", ownerMode: "password", password: PASSWORD }, META)).rejects.toThrow();
-    await expect(createPlatformAccount(admin, { email: `${uniq("n3")}@itopmed.test`, fullName: "Support With Network", role: "SUPPORT", networkId }, META)).rejects.toThrow();
+    await expect(createPlatformAccount(admin, { username: uniq("n2"), fullName: "No Network", role: "NETWORK_ADMIN", password: PASSWORD }, META)).rejects.toThrow();
+    await expect(createPlatformAccount(admin, { username: uniq("n3"), fullName: "Support With Network", role: "SUPPORT", networkId, password: PASSWORD }, META)).rejects.toThrow();
+    await expect(createPlatformAccount(admin, { username, fullName: "Same Login", role: "SUPPORT", password: PASSWORD }, META)).rejects.toThrow("errors.usernameTaken");
   });
 
   it("the Network table is closed to clinics", async () => {

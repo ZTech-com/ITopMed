@@ -5,7 +5,7 @@ import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { InstallApp } from "../install-app";
 import { MobileTabBar } from "./mobile-tab-bar";
-import { NavLinks, type NavItem } from "./nav-links";
+import { NavLinks, type NavGroup, type NavItem } from "./nav-links";
 import { Preferences } from "./preferences";
 
 export async function currentTheme(): Promise<"light" | "dark" | "system"> {
@@ -36,6 +36,7 @@ function Brand({ context }: { context: string }) {
 export async function AppShell({
   context,
   nav,
+  navGroups,
   user,
   signOut,
   securityHref,
@@ -45,6 +46,8 @@ export async function AppShell({
 }: {
   context: string;
   nav: NavItem[];
+  /** Titled sections of the navigation (items name theirs with `group`). */
+  navGroups?: NavGroup[];
   user: { name: string; detail: string };
   signOut: () => Promise<void>;
   /** Account security page (password, linked Telegram). */
@@ -58,7 +61,7 @@ export async function AppShell({
   const theme = await currentTheme();
 
   const footer = (
-    <div className="space-y-3 border-t border-border pt-4">
+    <div className="space-y-2.5 border-t border-border pt-3">
       <InstallApp />
       <Preferences theme={theme} />
       <div className="flex items-center justify-between gap-2 px-1">
@@ -93,8 +96,8 @@ export async function AppShell({
       <aside className="sticky top-0 hidden h-dvh w-[280px] shrink-0 p-3 lg:block">
         <div className="flex h-full flex-col rounded-[28px] bg-sidebar p-4">
           <Brand context={context} />
-          <div className="mt-6 flex-1 overflow-y-auto">
-            <NavLinks items={nav} label={t("a11y.mainNav")} />
+          <div className="scroll-quiet -mx-1 mt-6 flex-1 overflow-y-auto px-1">
+            <NavLinks items={nav} groups={navGroups} label={t("a11y.mainNav")} />
           </div>
           {footer}
         </div>
@@ -109,8 +112,8 @@ export async function AppShell({
             <span className="sr-only">{t("a11y.openMenu")}</span>
           </span>
         </summary>
-        <div className="space-y-4 border-t border-border px-4 pb-4 pt-3">
-          <NavLinks items={nav} label={t("a11y.mainNav")} />
+        <div className="animate-drop space-y-4 border-t border-border px-4 pb-4 pt-3">
+          <NavLinks items={nav} groups={navGroups} label={t("a11y.mainNav")} />
           {footer}
         </div>
       </details>

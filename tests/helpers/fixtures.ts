@@ -18,44 +18,42 @@ export const uniq = (prefix: string) => `${prefix}-${randomBytes(4).toString("he
 
 /** A platform principal as it looks after a completed sign-in. */
 export async function platformActor(role: PlatformRole = "SUPER_ADMIN"): Promise<PlatformPrincipal> {
-  const email = `${uniq("staff")}@itopmed.test`;
-  const id = await createPlatformUser({ email, fullName: "Synthetic Staff", password: PASSWORD, role });
+  const username = uniq("staff");
+  const id = await createPlatformUser({ username, fullName: "Synthetic Staff", password: PASSWORD, role });
   return {
     sessionId: "test",
-    user: { id, username: email, email, fullName: "Synthetic Staff", role, locale: "en", telegramLinked: false },
+    user: { id, username, fullName: "Synthetic Staff", role, locale: "en" },
   };
 }
 
-/** Provisions a clinic and activates its owner account. All data synthetic. */
+/** Provisions a clinic and activates its owner account (login + password, no email). All data synthetic. */
 export async function clinicWithOwner(actor: PlatformPrincipal) {
   const slug = uniq("clinic");
-  const ownerEmail = `${uniq("owner")}@clinic.test`;
+  const ownerLogin = uniq("owner");
   const p = await provisionClinic(
     actor,
     {
       name: `Synthetic Clinic ${slug}`,
       slug,
-      contactEmail: `info@${slug}.test`,
       defaultLocale: "uz-Latn",
       timezone: "Asia/Tashkent",
       // Enterprise includes every module; module limits are tested explicitly.
       planCode: "enterprise",
       ownerFullName: "Synthetic Owner",
-      ownerEmail,
       taxId: "",
       contactPhone: "",
     },
     META,
   );
-  await acceptInvitation(p.inviteToken, { fullName: "Synthetic Owner", password: PASSWORD, confirmPassword: PASSWORD }, META);
-  const ctx = await clinicContext(ownerEmail, slug);
-  return { ...p, ownerEmail, ctx };
+  await acceptInvitation(p.inviteToken, { fullName: "Synthetic Owner", username: ownerLogin, password: PASSWORD, confirmPassword: PASSWORD }, META);
+  const ctx = await clinicContext(ownerLogin, slug);
+  return { ...p, ownerLogin, ctx };
 }
 
-export async function clinicContext(email: string, slug: string) {
-  const login = await loginClinicUser(email, PASSWORD, META);
-  if (!login.ok) throw new Error(`login failed: ${login.reason}`);
-  const principal = await validateClinicSession(login.token);
+export async function clinicContext(login: string, slug: string) {
+  const r = await loginClinicUser(login, PASSWORD, META);
+  if (!r.ok) throw new Error(`login failed: ${r.reason}`);
+  const principal = await validateClinicSession(r.token);
   if (!principal) throw new Error("no session");
   const ctx = await resolveClinic(principal, slug);
   if (!ctx) throw new Error("no clinic context");

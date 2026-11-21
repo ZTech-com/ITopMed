@@ -1,12 +1,12 @@
 import { cookies } from "next/headers";
 import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
-import { setAdminSessionCookie, setClinicSessionCookie, setPatientSessionCookie } from "@/server/auth/cookies";
+import { setPatientSessionCookie } from "@/server/auth/cookies";
 import { resolveWebApp } from "@/server/auth/telegram-webapp";
 import { env } from "@/server/env";
 import { isSameOriginRequest, requestMeta } from "@/server/http";
 
 /**
- * Mini App sign-in (a clinic bot's menu button → /tg/<slug>, or the central bot → /tg → here).
+ * Patients' Mini App sign-in (a clinic bot's menu button → /tg/<slug> → here).
  * Public by nature: the credential is Telegram's signed initData, verified with
  * the bot token in resolveWebApp. Same-origin only, so another site cannot sign
  * a visitor into someone else's account (login CSRF).
@@ -29,9 +29,7 @@ export async function POST(request: Request) {
   const r = await resolveWebApp(initData, choice, await requestMeta(), slug);
   if (r.status !== "signed_in") return json(r);
 
-  if (r.target === "admin") await setAdminSessionCookie(r.token);
-  else if (r.target === "clinic") await setClinicSessionCookie(r.token);
-  else await setPatientSessionCookie(r.token);
+  await setPatientSessionCookie(r.token);
   if (isLocale(r.locale)) (await cookies()).set(LOCALE_COOKIE, r.locale, { path: "/", maxAge: 31536000, sameSite: "lax" });
   // The session token stays in the HttpOnly cookie; the page only learns where to go.
   return json({ status: "signed_in", go: r.go });

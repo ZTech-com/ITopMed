@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { Prisma, type ConsentPurpose } from "@/generated/prisma/client";
 import { LOCALES } from "@/i18n/config";
-import { emailSchema, phoneSchema } from "@/lib/validation";
+import { phoneSchema } from "@/lib/validation";
 import type { ClinicContext } from "../auth/clinic-auth";
 import type { RequestMeta } from "../auth/platform-auth";
 import { auditClinic, inClinic, requirePermission } from "../clinic/context";
@@ -21,7 +21,7 @@ const optionalText = (max: number) =>
     .optional();
 const nameField = z.string().trim().min(1, "validation.required").max(80, "validation.tooLong");
 
-export const CONSENT_PURPOSES = ["SMS_REMINDERS", "TELEGRAM_NOTIFICATIONS", "EMAIL_NOTIFICATIONS", "MARKETING", "HEALTH_DATA_EXCHANGE", "PATIENT_PORTAL"] as const;
+export const CONSENT_PURPOSES = ["SMS_REMINDERS", "TELEGRAM_NOTIFICATIONS", "MARKETING", "HEALTH_DATA_EXCHANGE", "PATIENT_PORTAL"] as const;
 export const CONSENT_METHODS = ["PAPER_SIGNED", "VERBAL_RECORDED", "PORTAL"] as const;
 
 /** Phone numbers are stored digits-only with a leading "+" for search and duplicate checks. */
@@ -52,7 +52,6 @@ export const patientSchema = z
     birthDate: z.string().refine((v) => parseBirthInput(v) !== null, "validation.date"),
     sex: z.enum(["MALE", "FEMALE", "UNKNOWN"]),
     phone: z.union([z.literal("").transform(() => undefined), phoneSchema]).optional(),
-    email: z.union([z.literal("").transform(() => undefined), emailSchema]).optional(),
     address: optionalText(300),
     preferredLocale: z.union([z.literal("").transform(() => undefined), z.enum(LOCALES)]).optional(),
     pinfl: z.union([z.literal("").transform(() => undefined), z.string().trim().regex(/^\d{14}$/, "validation.pinfl")]).optional(),
@@ -179,7 +178,6 @@ export async function registerPatient(
         birthYearOnly: input.birthYearOnly,
         sex: input.sex,
         phone: input.phone,
-        email: input.email,
         address: input.address,
         preferredLocale: input.preferredLocale,
         createdById: ctx.principal.user.id,
@@ -289,7 +287,6 @@ export async function updatePatient(ctx: ClinicContext, id: string, raw: unknown
         birthYearOnly: input.birthYearOnly,
         sex: input.sex,
         phone: input.phone ?? null,
-        email: input.email ?? null,
         address: input.address ?? null,
         preferredLocale: input.preferredLocale ?? null,
         ...(await extraFields(tx, input)),

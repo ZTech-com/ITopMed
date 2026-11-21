@@ -79,58 +79,9 @@ async function startSession(userId: string, action: string, meta: RequestMeta): 
   return token;
 }
 
-export type PlatformTelegramResult = { ok: true; token: string; locale: string } | { ok: false; reason: "not_linked" | "locked" | "rate_limited" };
-
-/** Signs in with a Telegram account linked earlier. `tgId` comes from a verified id_token or Mini App initData. */
-export async function loginPlatformWithTelegram(tgId: bigint, meta: RequestMeta): Promise<PlatformTelegramResult> {
-  const ipHash = hashIp(meta.ip);
-  if (!(await rateLimit(`ptg:${ipHash ?? "noip"}`, 20, 15 * 60_000))) return { ok: false, reason: "rate_limited" };
-  const user = await platformDb().platformUser.findUnique({ where: { telegramId: tgId }, select: { id: true, status: true, lockedUntil: true, locale: true } });
-  if (!user || user.status !== "ACTIVE") {
-    await withPlatform((tx) =>
-      recordAudit(tx, {
-        actorType: user ? "PLATFORM_USER" : "ANONYMOUS",
-        actorId: user?.id,
-        action: "platform.login.telegram",
-        outcome: "FAILURE",
-        ipHash,
-        userAgent: meta.userAgent,
-        metadata: { reason: user ? "inactive" : "not_linked" },
-      }),
-    );
-    return { ok: false, reason: "not_linked" };
-  }
-  if (user.lockedUntil && user.lockedUntil > new Date()) {
-    await withPlatform((tx) =>
-      recordAudit(tx, { actorType: "PLATFORM_USER", actorId: user.id, action: "platform.login.telegram", outcome: "DENIED", ipHash, userAgent: meta.userAgent, metadata: { reason: "locked" } }),
-    );
-    return { ok: false, reason: "locked" };
-  }
-  return { ok: true, token: await startSession(user.id, "platform.login.telegram", meta), locale: user.locale };
-}
-
-/** Links a Telegram account to the signed-in employee's own account; the starting session must still be valid. */
-export async function linkPlatformTelegram(userId: string, sessionId: string, tgId: bigint, meta: RequestMeta): Promise<void> {
-  await withPlatform(async (tx) => {
-    const s = await tx.platformSession.findUnique({ where: { id: sessionId }, select: { platformUserId: true, revokedAt: true, expiresAt: true } });
-    if (!s || s.platformUserId !== userId || s.revokedAt || s.expiresAt <= new Date()) throw new DomainError("errors.forbidden");
-    const taken = await tx.platformUser.findUnique({ where: { telegramId: tgId }, select: { id: true } });
-    if (taken && taken.id !== userId) throw new DomainError("errors.telegramTaken");
-    await tx.platformUser.update({ where: { id: userId }, data: { telegramId: tgId, telegramLinkedAt: new Date() } });
-    await recordAudit(tx, { actorType: "PLATFORM_USER", actorId: userId, action: "platform.telegram.linked", ipHash: hashIp(meta.ip), userAgent: meta.userAgent });
-  });
-}
-
-export async function unlinkPlatformTelegram(p: PlatformPrincipal, meta: RequestMeta): Promise<void> {
-  await withPlatform(async (tx) => {
-    await tx.platformUser.update({ where: { id: p.user.id }, data: { telegramId: null, telegramLinkedAt: null } });
-    await recordAudit(tx, { actorType: "PLATFORM_USER", actorId: p.user.id, action: "platform.telegram.unlinked", ipHash: hashIp(meta.ip), userAgent: meta.userAgent });
-  });
-}
-
 export interface PlatformPrincipal {
   sessionId: string;
-  user: { id: string; username: string; email: string; fullName: string; role: PlatformRole; locale: string; telegramLinked: boolean; networkId?: string | null };
+  user: { id: string; username: string; fullName: string; role: PlatformRole; locale: string; networkId?: string | null };
 }
 
 export async function validatePlatformSession(token: string | undefined | null): Promise<PlatformPrincipal | null> {
@@ -149,11 +100,9 @@ export async function validatePlatformSession(token: string | undefined | null):
     user: {
       id: s.user.id,
       username: s.user.username,
-      email: s.user.email,
       fullName: s.user.fullName,
       role: s.user.role,
       locale: s.user.locale,
-      telegramLinked: s.user.telegramId !== null,
       networkId: s.user.networkId,
     },
   };
@@ -170,15 +119,14 @@ export async function logoutPlatform(token: string | undefined | null) {
   });
 }
 
-/** Bootstrap / CLI / first run only: creates an ACTIVE platform user. Without a login name the email is the login. */
-export async function createPlatformUser(input: { email: string; username?: string; fullName: string; password: string; role: PlatformRole }) {
+/** Bootstrap / CLI / first run only: creates an ACTIVE platform user (login + password; no email). */
+export async function createPlatformUser(input: { username: string; fullName: string; password: string; role: PlatformRole }) {
   const id = uuidv7();
-  const email = input.email.trim().toLowerCase();
-  const username = (input.username ?? email).trim().toLowerCase();
+  const username = input.username.trim().toLowerCase();
   const passwordHash = await hashPassword(input.password);
   await withPlatform(async (tx) => {
     if (await tx.platformUser.findUnique({ where: { username }, select: { id: true } })) throw new DomainError("errors.usernameTaken");
-    await tx.platformUser.create({ data: { id, username, email, fullName: input.fullName.trim(), passwordHash, role: input.role, status: "ACTIVE" } });
+    await tx.platformUser.create({ data: { id, username, fullName: input.fullName.trim(), passwordHash, role: input.role, status: "ACTIVE" } });
     await recordAudit(tx, { actorType: "SYSTEM", action: "platform.staff.created", entityType: "PlatformUser", entityId: id, metadata: { role: input.role, via: "cli" } });
   });
   return id;

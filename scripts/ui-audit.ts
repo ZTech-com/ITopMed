@@ -9,7 +9,7 @@
  * ITM_AUDIT_LOGIN (ITM_AUDIT_EMAIL still accepted) / ITM_AUDIT_PASSWORD.
  * Uses the installed Microsoft Edge (or Chrome) — nothing is downloaded.
  *
- *   ITM_AUDIT_EMAIL=… ITM_AUDIT_PASSWORD=… npm run ui:audit -- --slug shifo-med [--base http://127.0.0.1:3000] [--only billing]
+ *   ITM_AUDIT_LOGIN=… ITM_AUDIT_PASSWORD=… npm run ui:audit -- --slug shifo-med [--base http://127.0.0.1:3000] [--only billing]
  */
 import "dotenv/config";
 import { chromium, type Browser, type Page } from "playwright-core";

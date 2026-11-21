@@ -1,10 +1,9 @@
 # Integrations
 
-**Status (2026-11-12):** patient notifications by email are real (SMTP); SMS is **simulated** (no provider contracted); FHIR R4 export is implemented; DMED transmission, Payme/Click/Uzum online payment, Telegram and fiscal receipts are **not implemented**. No endpoints, credentials or message formats are assumed for any provider; each integration starts only after official documentation and authorisation are obtained. The clinic sees the same honest status at **Integrations** (`/c/{slug}/integrations`).
+**Status (2026-11-21):** there is no email channel (removed); patient notifications go through the clinic's Telegram bot; SMS is **simulated** (no provider contracted); FHIR R4 export is implemented; DMED transmission, Payme/Click/Uzum online payment, Telegram and fiscal receipts are **not implemented**. No endpoints, credentials or message formats are assumed for any provider; each integration starts only after official documentation and authorisation are obtained. The clinic sees the same honest status at **Integrations** (`/c/{slug}/integrations`).
 
 | Integration | Status | Where |
 |---|---|---|
-| Email (SMTP) | ✅ real when `EMAIL_TRANSPORT=smtp`; `dev-mailbox` = SIMULATED (refused in production) | `src/server/email` |
 | SMS | 🟡 SIMULATED only (`SMS_TRANSPORT=dev-outbox` writes to `.dev-mailbox/sms`, refused in production; `none` = channel off) | `src/server/notifications/sms.ts` |
 | Patient notifications (outbox) | ✅ booking confirmation, reminder (configurable hours before), cancellation, "results ready in the portal" | `src/server/notifications` |
 | HL7 FHIR R4 export | ✅ per-patient Bundle download for the treating doctor / head doctor, audited | `src/server/emr/fhir.ts` |
@@ -15,7 +14,7 @@
 
 ## Notification pipeline (implemented)
 * **Transactional outbox.** Booking, cancellation and result release write `Notification` rows in the same transaction. A row stores *what* (kind, subject id), *whom* (patient id), *when* (dueAt) and *how* (channel) — **never the text, the address or clinical content.**
-* **Consent first.** A channel is queued only if the patient has an active consent for it (`SMS_REMINDERS`, `EMAIL_NOTIFICATIONS`) and an address on file; "results ready" also needs an active portal account. At send time consent, address and relevance (visit still booked, reminder still in the future) are checked again; otherwise the row is `SKIPPED` with a reason code.
+* **Consent first.** A channel is queued only if the patient has an active consent for it (`SMS_REMINDERS`, `TELEGRAM_NOTIFICATIONS`) and an address on file; "results ready" also needs an active portal account. At send time consent, address and relevance (visit still booked, reminder still in the future) are checked again; otherwise the row is `SKIPPED` with a reason code.
 * **Content.** Rendered at send time in the patient's language (or the clinic default) from the `notifications` message catalog: clinic, date/time, branch, branch phone, portal link. No diagnoses, results, doctor names or specialties.
 * **Delivery.** `processDueNotifications(tenantId)` claims rows with `FOR UPDATE SKIP LOCKED` (parallel workers never double-send), retries after 5/30/120 minutes, then `FAILED`. Runs as the clinic role in tenant context. `npm run worker` loops over active clinics (`--once` for cron); the Integrations page has "Send due messages now".
 * **Per-clinic switches:** each kind on/off, reminder 1–72 h before (`NotificationSettings`).

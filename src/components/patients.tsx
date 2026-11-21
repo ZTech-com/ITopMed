@@ -25,7 +25,6 @@ export async function PatientFields({
     birthDate: Date;
     sex: string;
     phone: string | null;
-    email: string | null;
     address: string | null;
     preferredLocale: string | null;
     pinfl?: string;
@@ -56,7 +55,6 @@ export async function PatientFields({
       <fieldset className="grid gap-5 sm:grid-cols-2">
         <legend className="mb-3 text-[13px] font-semibold uppercase tracking-[0.04em] text-text-3">{t("clinic.patients.contacts")}</legend>
         <TextField name="phone" type="tel" label={t("clinic.patients.phone")} inputMode="tel" placeholder="+998" defaultValue={initial?.phone} autoComplete="off" optionalLabel={opt} />
-        <TextField name="email" type="email" label={t("clinic.patients.email")} inputMode="email" defaultValue={initial?.email} autoComplete="off" optionalLabel={opt} />
         <TextField name="address" label={t("clinic.patients.address")} defaultValue={initial?.address} autoComplete="off" optionalLabel={opt} className="sm:col-span-2" />
       </fieldset>
     </div>

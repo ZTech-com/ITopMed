@@ -10,7 +10,7 @@ export function dataRoot(): string {
   return process.env.ITM_HOME ?? path.join(process.cwd(), ".data");
 }
 
-/** Simulated email / SMS / Telegram output ("dev-mailbox", "dev-outbox"). */
+/** Simulated SMS / Telegram output ("dev-outbox"). */
 export function mailboxRoot(): string {
   return process.env.ITM_HOME ? path.join(process.env.ITM_HOME, "mailbox") : path.join(process.cwd(), ".dev-mailbox");
 }

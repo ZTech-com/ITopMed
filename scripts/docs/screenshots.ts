@@ -1,6 +1,6 @@
 /**
  * Screenshots for the PDF documents (docs/pdf). Synthetic demo data only.
- *   ITM_AUDIT_EMAIL=… ITM_AUDIT_PASSWORD=… [ITM_DOCS_PORTAL_PHONE=…] npx tsx scripts/docs/screenshots.ts --slug shifo-med
+ *   ITM_AUDIT_LOGIN=… ITM_AUDIT_PASSWORD=… [ITM_DOCS_PORTAL_PHONE=…] npx tsx scripts/docs/screenshots.ts --slug shifo-med
  */
 import "dotenv/config";
 import fs from "node:fs";
@@ -28,6 +28,8 @@ async function ids() {
   return r;
 }
 
+const AUDIT_LOGIN = process.env.ITM_AUDIT_LOGIN ?? process.env.ITM_AUDIT_EMAIL ?? "";
+
 async function signIn(p: Page, url: string, field: string, user: string, password: string) {
   await p.goto(`${BASE}${url}`);
   await p.fill(`input[name="${field}"]`, user);
@@ -47,10 +49,10 @@ async function main() {
   };
 
   const desk = await (await b.newContext({ viewport: { width: 1366, height: 860 }, colorScheme: "light" })).newPage();
-  await signIn(desk, "/admin/login", "email", process.env.ITM_AUDIT_EMAIL!, process.env.ITM_AUDIT_PASSWORD!);
+  await signIn(desk, "/admin/login", "username", AUDIT_LOGIN, process.env.ITM_AUDIT_PASSWORD!);
   await shot(desk, "admin-dashboard", "/admin");
   await shot(desk, "admin-clinics", "/admin/clinics");
-  await signIn(desk, "/login", "email", process.env.ITM_AUDIT_EMAIL!, process.env.ITM_AUDIT_PASSWORD!);
+  await signIn(desk, "/login", "username", AUDIT_LOGIN, process.env.ITM_AUDIT_PASSWORD!);
   await shot(desk, "dashboard", c);
   await shot(desk, "control", `${c}/control`, true);
   await shot(desk, "queue", `${c}/queue`);
@@ -71,7 +73,7 @@ async function main() {
   await shot(desk, "lab", `${c}/lab`);
 
   const phone = await (await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: "light" })).newPage();
-  await signIn(phone, "/login", "email", process.env.ITM_AUDIT_EMAIL!, process.env.ITM_AUDIT_PASSWORD!);
+  await signIn(phone, "/login", "username", AUDIT_LOGIN, process.env.ITM_AUDIT_PASSWORD!);
   await shot(phone, "phone-control", `${c}/control`);
   await shot(phone, "phone-billing", `${c}/billing`);
   if (id.invoice) await shot(phone, "phone-invoice", `${c}/billing/${id.invoice}`);

@@ -7,9 +7,8 @@ import type { ClinicContext } from "../auth/clinic-auth";
 import type { RequestMeta } from "../auth/platform-auth";
 import { auditClinic, inClinic, requirePermission } from "../clinic/context";
 import { isLocalOnly } from "../clinic/data-mode";
-import { escapeHtml, sendEmail } from "../email";
-import { env } from "../env";
 import { withAppContext, type Tx } from "../db";
+import { env } from "../env";
 import { logger } from "../logger";
 import { uuidv7 } from "../security/crypto";
 import { sendTelegram, telegramChatFor, telegramReady } from "./telegram";
@@ -26,8 +25,9 @@ import { sendSms, smsEnabled } from "./sms";
  *    language and sends it.
  *  - Messages never contain clinical details: no diagnoses, no results, no
  *    doctor specialty — only clinic, date/time, branch and portal links.
- *  - Email uses the configured transport (SMTP, or the simulated dev mailbox);
- *    SMS is SIMULATED until a real provider is contracted (see ./sms.ts).
+ *  - Channels: Telegram (the clinic's own bot) and SMS (SIMULATED until a real
+ *    provider is contracted, see ./sms.ts). There is no email channel; old
+ *    EMAIL rows in the outbox are skipped.
  */
 
 export const NOTIFICATION_KINDS = ["APPOINTMENT_BOOKED", "APPOINTMENT_REMINDER", "APPOINTMENT_CANCELLED", "RESULTS_READY"] as const satisfies readonly NotificationKind[];
@@ -60,13 +60,12 @@ function enabled(s: Settings, kind: NotificationKind) {
 
 /** Channels this patient can be reached on right now (address present + consent active + transport available). */
 async function reachableChannels(tx: Tx, tenantId: string, patientId: string): Promise<{ channel: NotificationChannel; to: string }[]> {
-  const p = await tx.patient.findUnique({ where: { id: patientId }, select: { phone: true, email: true, status: true } });
+  const p = await tx.patient.findUnique({ where: { id: patientId }, select: { phone: true, status: true } });
   if (!p || p.status !== "ACTIVE") return [];
-  const consents = await tx.patientConsent.findMany({ where: { patientId, withdrawnAt: null, purpose: { in: ["SMS_REMINDERS", "EMAIL_NOTIFICATIONS", "TELEGRAM_NOTIFICATIONS"] } }, select: { purpose: true } });
+  const consents = await tx.patientConsent.findMany({ where: { patientId, withdrawnAt: null, purpose: { in: ["SMS_REMINDERS", "TELEGRAM_NOTIFICATIONS"] } }, select: { purpose: true } });
   const has = (c: ConsentPurpose) => consents.some((x) => x.purpose === c);
   const out: { channel: NotificationChannel; to: string }[] = [];
   if (p.phone && smsEnabled() && has("SMS_REMINDERS")) out.push({ channel: "SMS", to: p.phone });
-  if (p.email && has("EMAIL_NOTIFICATIONS")) out.push({ channel: "EMAIL", to: p.email });
   if (has("TELEGRAM_NOTIFICATIONS") && (await telegramReady(tx, tenantId))) {
     const chat = await telegramChatFor(tx, tenantId, patientId);
     if (chat !== null) out.push({ channel: "TELEGRAM", to: chat.toString() });
@@ -168,11 +167,6 @@ async function render(
   return { sms, subject: t(`${k}.subject` as never, values as never), text };
 }
 
-function emailHtml(locale: string, r: Rendered) {
-  const paragraphs = r.text.split("\n\n").map((p) => `<p>${escapeHtml(p)}</p>`).join("");
-  return `<!doctype html><html lang="${locale}"><body style="font-family:-apple-system,Segoe UI,Inter,sans-serif;color:#1d1d1f;max-width:560px;margin:auto;padding:24px"><p style="font-size:13px;color:#6e6e73">ITop Med</p>${paragraphs}</body></html>`;
-}
-
 // ───────────── Dispatcher ─────────────
 
 export interface DispatchResult {
@@ -208,17 +202,18 @@ async function dispatchOne(tx: Tx, tenantId: string, id: string, now: Date): Pro
     await tx.notification.update({ where: { id }, data: { status: "SKIPPED", lastError: code } });
     return "skipped" as const;
   };
+  if (n.channel === "EMAIL") return skip("email_removed");
 
   const tenant = await tx.tenant.findUnique({ where: { id: tenantId }, select: { name: true, slug: true, timezone: true, defaultLocale: true, status: true } });
   if (!tenant || (tenant.status !== "ACTIVE" && tenant.status !== "TRIAL")) return skip("clinic_inactive");
   // Local-only clinic: nothing leaves this computer.
   if (await isLocalOnly(tx, tenantId)) return skip("local_mode");
-  const patient = await tx.patient.findUnique({ where: { id: n.patientId }, select: { phone: true, email: true, preferredLocale: true, status: true } });
+  const patient = await tx.patient.findUnique({ where: { id: n.patientId }, select: { phone: true, preferredLocale: true, status: true } });
   if (!patient || patient.status !== "ACTIVE") return skip("patient_inactive");
   const consent = await tx.patientConsent.findFirst({ where: { patientId: n.patientId, purpose: CONSENT_FOR[n.channel], withdrawnAt: null }, select: { id: true } });
   if (!consent) return skip("no_consent");
   const chat = n.channel === "TELEGRAM" ? await telegramChatFor(tx, tenantId, n.patientId) : null;
-  const to = n.channel === "SMS" ? patient.phone : n.channel === "EMAIL" ? patient.email : chat?.toString();
+  const to = n.channel === "SMS" ? patient.phone : chat?.toString();
   if (!to) return skip("no_address");
   if (n.channel === "SMS" && !smsEnabled()) return skip("sms_off");
   if (n.channel === "TELEGRAM" && !(await telegramReady(tx, tenantId))) return skip("telegram_off");
@@ -246,14 +241,10 @@ async function dispatchOne(tx: Tx, tenantId: string, id: string, now: Date): Pro
     const r = await sendSms(to, msg.sms);
     delivered = r.delivered;
     transport = r.transport;
-  } else if (n.channel === "TELEGRAM") {
+  } else {
     const r = await sendTelegram(tx, tenantId, chat!, msg.sms);
     delivered = r.delivered;
     transport = r.transport;
-  } else {
-    const r = await sendEmail({ to, subject: msg.subject, text: msg.text, html: emailHtml(locale, msg) });
-    delivered = r.delivered;
-    transport = env().EMAIL_TRANSPORT;
   }
 
   const attempts = n.attempts + 1;

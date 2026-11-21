@@ -3,7 +3,7 @@
  *   node tasks.mjs db-init   create the database cluster and roles once (then stops it)
  *   node tasks.mjs migrate   apply migrations + plan catalog (idempotent)
  *   node tasks.mjs backup    encrypted backup into ITM_BACKUP_DIR, keep the latest 14
- *   node tasks.mjs create-clinic <spec.json> <owner-email> "<Owner Name>"
+ *   node tasks.mjs create-clinic <spec.json> <owner-login> "<Owner Name>"
  *                            open a clinic ready to work (asks for the owner's password)
  * Settings come from the service environment (/etc/itopmed/itopmed.env).
  */
@@ -90,23 +90,15 @@ async function main() {
     for (const old of all.slice(0, Math.max(0, all.length - 14))) fs.rmSync(path.join(dir, old), { force: true });
     console.log(`Backup saved: ${file} (${JSON.stringify(r).length} B manifest)`);
   } else if (task === "create-clinic") {
-    const [specFile, email, name, mode] = process.argv.slice(3);
-    const byLink = mode === "--link";
-    if (!specFile || !email || !name) throw new Error('Usage: tasks.mjs create-clinic <spec.json> <owner-email> "<Owner Name>"');
+    const [specFile, login, name] = process.argv.slice(3);
+    if (!specFile || !login || !name) throw new Error('Usage: tasks.mjs create-clinic <spec.json> <owner-login> "<Owner Name>"');
     // ITM_OWNER_PASSWORD only for automated runs (tests); people type it at the prompt.
-    let password: string | null = null;
-    if (!byLink) {
-      password = process.env.ITM_OWNER_PASSWORD ?? (await askHidden("Egasining paroli / owner password (min 12, harf + raqam): "));
-      const again = process.env.ITM_OWNER_PASSWORD ?? (await askHidden("Yana bir marta / again: "));
-      if (password !== again) throw new Error("Parollar bir xil emas / passwords differ");
-    }
-    const r = await createClinicFromSpec(specFile, email, name, password);
+    const password = process.env.ITM_OWNER_PASSWORD ?? (await askHidden("Egasining paroli / owner password (min 12, harf + raqam): "));
+    const again = process.env.ITM_OWNER_PASSWORD ?? (await askHidden("Yana bir marta / again: "));
+    if (password !== again) throw new Error("Parollar bir xil emas / passwords differ");
+    const r = await createClinicFromSpec(specFile, login, name, password);
     console.log(`Klinika tayyor: /c/${r.slug}  (narxlar: ${r.prices.created} yangi, ${r.prices.updated} yangilandi; narxsiz standart xizmatlar arxivlandi: ${r.archived})`);
-    if (r.activationLink) {
-      console.log("Egaga yuboring (bir martalik, 72 soat): parolni o'zi qo'yadi, keyin /login dan kiradi:");
-      console.log(r.activationLink);
-    }
-    console.log("Kirish: /login - egasi birinchi kirishda Google Authenticator'ni ulaydi.");
+    console.log(`Kirish: /login - login "${login}" va siz bergan parol; keyin egasi Telegram'ini ulaydi (parolni tiklash klinika boti orqali).`);
   } else if (task === "update-clinic") {
     const specFile = process.argv[3];
     if (!specFile) throw new Error("Usage: tasks.mjs update-clinic <spec.json>");

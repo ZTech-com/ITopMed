@@ -13,13 +13,13 @@ describe("server task: open a clinic ready to work", () => {
     const spec = JSON.parse(fs.readFileSync("scripts/deploy/clinics/farhod-medservis.json", "utf8"));
     const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "itm-spec-")), "spec.json");
     fs.writeFileSync(file, JSON.stringify({ ...spec, name: "Synthetic Farhod", slug }));
-    const email = `${uniq("owner")}@clinic.test`;
+    const login = uniq("owner");
 
-    const r = await createClinicFromSpec(file, email, "Synthetic Owner Doctor", PASSWORD);
+    const r = await createClinicFromSpec(file, login, "Synthetic Owner Doctor", PASSWORD);
     expect(r.slug).toBe(slug);
     expect(r.prices.created + r.prices.updated).toBe(spec.priceList.length);
 
-    const ctx = await clinicContext(email, slug);
+    const ctx = await clinicContext(login, slug);
     expect(ctx.roleKeys).toEqual(expect.arrayContaining(["clinic_owner", "doctor", "head_doctor", "receptionist", "cashier"]));
     const services = await listServices(ctx);
     expect(services).toHaveLength(spec.priceList.length);
@@ -27,23 +27,5 @@ describe("server task: open a clinic ready to work", () => {
     expect(services.find((s) => s.name === "EXO (yurak UZI)")?.priceMinor).toBe(12_000_000n);
     // The owner's session used by the task is signed out again; the owner still signs in normally.
     expect(ctx.tenant.status).toBe("ACTIVE");
-  });
-
-  it("with --link: no password is typed; the owner sets it through a one-time link", async () => {
-    await platformActor();
-    const slug = uniq("farhodlink").toLowerCase();
-    const spec = JSON.parse(fs.readFileSync("scripts/deploy/clinics/farhod-medservis.json", "utf8"));
-    const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "itm-spec-")), "spec.json");
-    fs.writeFileSync(file, JSON.stringify({ ...spec, name: "Synthetic Farhod Link", slug }));
-    const email = `${uniq("owner")}@clinic.test`;
-    const r = await createClinicFromSpec(file, email, "Synthetic Owner", null);
-    expect(r.activationLink).toMatch(/\/reset-password\/[a-z2-7]{20,64}$/);
-    const token = r.activationLink!.split("/").pop()!;
-    const { resetPassword, isResetTokenValid } = await import("@/server/auth/password-reset");
-    expect(await isResetTokenValid(token)).toBe(true);
-    await resetPassword(token, { password: PASSWORD, confirmPassword: PASSWORD }, { ip: "127.0.0.1" });
-    expect(await isResetTokenValid(token)).toBe(false); // single use
-    const ctx = await clinicContext(email, slug);
-    expect(ctx.roleKeys).toContain("head_doctor");
   });
 });

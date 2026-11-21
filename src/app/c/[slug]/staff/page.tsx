@@ -6,17 +6,16 @@ import { listRoles } from "@/server/clinic/roles";
 import Link from "next/link";
 import { requireClinic } from "@/server/auth/guards";
 import { listStaff } from "@/server/clinic/admin";
-import { inviteStaffAction } from "../../../clinic-actions";
+import { addStaffAction } from "../../../clinic-actions";
 import { suggestPassword } from "@/server/security/password";
 
 export default async function StaffPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const ctx = await requireClinic(slug, "staff.read");
-  const [t, format, { members, invitations }] = await Promise.all([getTranslations(), getFormatter(), listStaff(ctx)]);
+  const [t, format, { members }] = await Promise.all([getTranslations(), getFormatter(), listStaff(ctx)]);
   const isOwner = ctx.roleKeys.includes("clinic_owner");
   const roles = await listRoles(ctx);
   const assignable = roles.filter((r) => r.key !== "clinic_owner" || isOwner);
-  const customNames = new Map(roles.map((r) => [r.key, r.name]));
 
   return (
     <>
@@ -53,48 +52,17 @@ export default async function StaffPage({ params }: { params: Promise<{ slug: st
               </tbody>
             </Table>
           </Card>
-          {invitations.length > 0 ? (
-            <Card>
-              <CardHeader title={t("clinic.staff.pending")} />
-              <ul className="divide-y divide-border">
-                {invitations.map((i) => (
-                  <li key={i.id} className="flex items-center justify-between gap-3 px-6 py-3 text-[14px]">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{i.fullName}</p>
-                      <p className="truncate text-[13px] text-text-2">
-                        {i.email} · {i.roleKeys.map((r) => roleLabel(t as never, r, customNames.get(r))).join(", ")}
-                      </p>
-                    </div>
-                    <Badge tone="accent">{t("status.PENDING")}</Badge>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ) : null}
         </div>
         {ctx.permissions.has("staff.manage") ? (
           <Card className="xl:col-span-2">
             <CardHeader title={t("clinic.staff.invite")} description={t("clinic.staff.addHint")} />
             <CardBody>
-              <Form action={inviteStaffAction}>
+              <Form action={addStaffAction}>
                 <input type="hidden" name="$slug" value={ctx.tenant.slug} />
                 <TextField name="fullName" label={t("clinic.staff.fullName")} autoComplete="off" required />
-                <TextField name="email" type="email" label={t("clinic.staff.email")} inputMode="email" autoComplete="off" required />
                 <CheckboxGroup name="roleKeys" label={t("clinic.staff.roles")} hint={t("clinic.staff.rolesHint")} options={assignable.map((r) => ({ value: r.key, label: roleLabel(t as never, r.key, r.name) }))} />
-                <fieldset className="space-y-2">
-                  <legend className="mb-1 text-[14px] font-medium">{t("clinic.staff.access")}</legend>
-                  {(["password", "invite"] as const).map((m) => (
-                    <label key={m} className="flex items-start gap-3 text-[14px]">
-                      <input type="radio" name="access" value={m} defaultChecked={m === "password"} className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]" />
-                      <span className="min-w-0">
-                        <span className="block font-medium">{t(m === "password" ? "clinic.staff.accessPassword" : "clinic.staff.accessInvite")}</span>
-                        <span className="block text-[13px] text-text-2">{t(m === "password" ? "clinic.staff.accessPasswordHint" : "clinic.staff.accessInviteHint")}</span>
-                      </span>
-                    </label>
-                  ))}
-                </fieldset>
-                <TextField name="username" label={t("clinic.staff.username")} hint={t("clinic.staff.usernameHint")} autoComplete="off" />
-                <TextField name="password" label={t("clinic.staff.password")} hint={t("clinic.staff.passwordHint")} defaultValue={suggestPassword()} autoComplete="new-password" />
+                <TextField name="username" label={t("clinic.staff.username")} hint={t("clinic.staff.usernameHint")} autoComplete="off" required />
+                <TextField name="password" label={t("clinic.staff.password")} hint={t("clinic.staff.passwordHint")} defaultValue={suggestPassword()} autoComplete="new-password" required />
                 <SubmitButton full>{t("clinic.staff.add")}</SubmitButton>
               </Form>
             </CardBody>

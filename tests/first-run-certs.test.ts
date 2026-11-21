@@ -8,7 +8,7 @@ import { createEnvFile } from "../scripts/lib/env-file";
 import { completeFirstRun, needsFirstRun, slugFromName } from "@/server/local/first-run";
 import { platformActor } from "./helpers/fixtures";
 
-const form = { clinicName: "Synthetic Clinic", fullName: "Synthetic Owner", email: "first@clinic.test", password: "Synthetic-Passw0rd-2026", confirmPassword: "Synthetic-Passw0rd-2026" };
+const form = { clinicName: "Synthetic Clinic", fullName: "Synthetic Owner", password: "Synthetic-Passw0rd-2026", confirmPassword: "Synthetic-Passw0rd-2026" };
 
 describe("first start of a local installation", () => {
   it("is refused outside local mode, once accounts exist, and from other computers", async () => {

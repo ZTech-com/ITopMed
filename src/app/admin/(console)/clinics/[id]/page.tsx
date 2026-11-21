@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { roleLabel } from "@/lib/role-label";
 import { getFormatter, getLocale, getTranslations } from "next-intl/server";
 import { Form, SelectField, SubmitButton, TextField } from "@/components/ui/form";
 import { Alert, Badge, Card, CardBody, CardHeader, DescriptionList, PageHeader, STATUS_TONE, buttonClass } from "@/components/ui/primitives";
@@ -11,7 +10,7 @@ import { platformDb } from "@/server/db";
 import { env } from "@/server/env";
 import { MODULES } from "@/server/modules/catalog";
 import { getTenantDetail } from "@/server/tenancy/provisioning";
-import { clinicBotAction, recordPaymentAction, voidBillingEntryAction, invitationAction, moduleAction, planAction, supportRequestAction, tenantStatusAction } from "../../../actions";
+import { clinicBotAction, recordPaymentAction, voidBillingEntryAction, moduleAction, planAction, supportRequestAction, tenantStatusAction } from "../../../actions";
 import { clinicBotStatus } from "@/server/telegram/clinic-bot";
 import { clinicActivity, clinicBillingDetail } from "@/server/platform/billing";
 import { moneyFormatter } from "@/components/money";
@@ -63,9 +62,6 @@ export default async function ClinicDetailPage({ params, searchParams }: { param
         action={<Badge tone={STATUS_TONE[tenant.status]}>{t(`status.${tenant.status}`)}</Badge>}
       />
 
-      {sp.created === "1" ? <div className="mb-6"><Alert tone="success">{t("admin.clinicNew.created")}</Alert></div> : null}
-      {sp.created === "nomail" ? <div className="mb-6"><Alert tone="warning">{t("admin.clinicNew.createdNoEmail")}</Alert></div> : null}
-      {sp.created === "existing" ? <div className="mb-6"><Alert tone="warning">{t("admin.clinicNew.createdExisting")}</Alert></div> : null}
       {sp.created === "ready" ? (
         <div className="mb-6">
           <Alert tone="success" title={t("admin.clinicNew.createdReady")}>
@@ -86,7 +82,6 @@ export default async function ClinicDetailPage({ params, searchParams }: { param
                   ...(tenant.network ? [{ label: t("admin.networks.network"), value: tenant.network.name }] : []),
                   { label: t("admin.clinicNew.legalName"), value: tenant.legalName ?? "—" },
                   { label: t("admin.clinicNew.taxId"), value: tenant.taxId ?? "—" },
-                  { label: t("admin.clinicNew.contactEmail"), value: tenant.contactEmail ?? "—" },
                   { label: t("admin.clinicNew.contactPhone"), value: tenant.contactPhone ?? "—" },
                   { label: t("admin.clinicNew.defaultLocale"), value: tenant.defaultLocale },
                   { label: t("admin.clinicNew.timezone"), value: tenant.timezone },
@@ -223,7 +218,6 @@ export default async function ClinicDetailPage({ params, searchParams }: { param
                   <input type="hidden" name="tenantId" value={tenant.id} />
                   <ol className="list-decimal space-y-1 pl-5 text-text-2">
                     <li>{t("admin.clinicBot.step1")}</li>
-                    <li>{t("admin.clinicBot.step2", { domain: new URL(appBase).host })}</li>
                     <li>{t("admin.clinicBot.step3")}</li>
                   </ol>
                   <TextField name="token" type="password" label={t("admin.clinicBot.token")} hint={t("admin.clinicBot.tokenHint")} autoComplete="off" required />
@@ -273,53 +267,6 @@ export default async function ClinicDetailPage({ params, searchParams }: { param
             </ul>
           </Card>
 
-          <Card>
-            <CardHeader title={t("admin.clinicDetail.invitations")} />
-            {tenant.invitations.length === 0 ? (
-              <CardBody>
-                <p className="text-[14px] text-text-2">{t("admin.clinicDetail.noInvitations")}</p>
-              </CardBody>
-            ) : (
-              <ul className="divide-y divide-border">
-                {tenant.invitations.map((inv) => {
-                  const expired = inv.status === "PENDING" && inv.expiresAt <= new Date();
-                  const st = expired ? "EXPIRED" : inv.status;
-                  return (
-                    <li key={inv.id} className="space-y-3 px-6 py-4">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="truncate text-[14px] font-medium">{inv.fullName}</p>
-                          <p className="truncate text-[13px] text-text-2">
-                            {inv.email} · {inv.roleKeys.map((r) => roleLabel(t as never, r)).join(", ")}
-                          </p>
-                        </div>
-                        <Badge tone={STATUS_TONE[st]}>{t(`status.${st}`)}</Badge>
-                      </div>
-                      {inv.status === "PENDING" ? (
-                        <p className="text-[12.5px] text-text-3">
-                          {t("admin.clinicDetail.expires")}: {format.dateTime(inv.expiresAt, { dateStyle: "medium", timeStyle: "short" })}
-                        </p>
-                      ) : null}
-                      {inv.status === "PENDING" && platformCan(role, "tenants.manage") ? (
-                        <Form action={invitationAction} className="space-y-3">
-                          <input type="hidden" name="invitationId" value={inv.id} />
-                          <input type="hidden" name="tenantId" value={tenant.id} />
-                          <div className="flex gap-2">
-                            <button name="op" value="resend" className={buttonClass("secondary", "sm")}>
-                              {t("admin.clinicDetail.resend")}
-                            </button>
-                            <button name="op" value="revoke" className={buttonClass("ghost", "sm")}>
-                              {t("admin.clinicDetail.revoke")}
-                            </button>
-                          </div>
-                        </Form>
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </Card>
         </div>
 
         <div className="space-y-6">

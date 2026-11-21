@@ -1,22 +1,20 @@
 import pg from "pg";
 import { describe, expect, it } from "vitest";
 import { registerWalkIn } from "@/server/appointments/appointments";
-import { inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
+import { addStaffMember, listBranches, listStaff } from "@/server/clinic/admin";
 import { saveDoctorProfile } from "@/server/clinic/doctors";
 import { createService } from "@/server/clinic/resources";
 import { getEncounter, getMedicalRecord, startVisit } from "@/server/emr/record";
 import { addAnalyte, cancelLabOrder, collectSpecimen, createLabOrder, enterResults, getLabOrder, labWorklist, listLabTests, verifyResults } from "@/server/lab/lab";
 import { registerPatient } from "@/server/patients/patients";
 import { todayIn } from "@/server/scheduling/time";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 async function staff(owner: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: string[]) {
-  const email = `${uniq("s")}@clinic.test`;
-  const inv = await inviteStaff(owner.ctx, { fullName: `Synthetic ${roleKeys[0]}`, email, roleKeys }, META);
-  await acceptInvitation(inv.token, { fullName: `Synthetic ${roleKeys[0]}`, password: PASSWORD, confirmPassword: PASSWORD }, META);
-  const m = (await listStaff(owner.ctx)).members.find((x) => x.user.email === email)!;
-  return { email, membershipId: m.id, ctx: await clinicContext(email, owner.slug) };
+  const login = uniq("s");
+  await addStaffMember(owner.ctx, { fullName: `Synthetic ${roleKeys[0]}`, username: login, roleKeys, password: PASSWORD }, META);
+  const m = (await listStaff(owner.ctx)).members.find((x) => x.user.username === login)!;
+  return { login, membershipId: m.id, ctx: await clinicContext(login, owner.slug) };
 }
 
 let n = 0;
@@ -36,7 +34,7 @@ async function setup() {
   const p = await registerPatient(reception.ctx, { lastName: "Sintetik", firstName: `Lab${n}`, birthDate: "1985-02-02", sex: "MALE" }, { confirmNotDuplicate: true }, META);
   if (!p.ok) throw new Error("patient");
   const appt = await registerWalkIn(reception.ctx, { patientId: p.id, doctorProfileId: profileId, branchId: branch!.id }, META);
-  const doctorCtx = await clinicContext(doctor.email, a.slug);
+  const doctorCtx = await clinicContext(doctor.login, a.slug);
   const encounterId = await startVisit(doctorCtx, appt, META);
   return { a, branch: branch!, reception, doctorCtx, nurse, lab1, lab2, cbc, consult, hb, glu, patientId: p.id, encounterId };
 }

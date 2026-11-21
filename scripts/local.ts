@@ -366,8 +366,6 @@ async function main() {
     LOCAL_MODE: "1",
     LOCAL_PUBLIC_PORT: String(PUBLIC_PORT),
     APP_URL: process.env.LOCAL_APP_URL ?? appUrl,
-    // Email: a configured SMTP server is used as is; otherwise messages are saved in .dev-mailbox on this computer.
-    EMAIL_TRANSPORT: process.env.SMTP_URL ? "smtp" : "dev-mailbox",
     SMS_TRANSPORT: "none",
     NEXT_TELEMETRY_DISABLED: "1",
     // Next standalone server (packaged) listens where the proxy expects it.
@@ -486,7 +484,6 @@ ITop Med is running.
   On this computer:   http://127.0.0.1:${LOOPBACK_PORT}
 ${ips.map((ip) => `  Other devices:      https://${ip}:${PUBLIC_PORT}     (first time: http://${ip}:${PUBLIC_PORT}/connect)`).join("\n") || "  Other devices:      no network connection"}
 
-Emails: ${env.EMAIL_TRANSPORT === "smtp" ? "sent through your SMTP server" : "saved as files in the .dev-mailbox folder on this computer (no SMTP configured)"}.
 Stop: npm run app:stop (or Ctrl+C here).
 `);
 }

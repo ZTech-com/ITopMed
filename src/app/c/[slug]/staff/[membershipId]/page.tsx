@@ -33,7 +33,7 @@ export default async function MemberPage({ params }: { params: Promise<{ slug: s
 
   return (
     <div className="max-w-4xl">
-      <PageHeader eyebrow={t("clinic.staff.title")} title={member.user.fullName} description={member.user.email} action={<Badge tone={STATUS_TONE[member.status]}>{t(`status.${member.status}`)}</Badge>} />
+      <PageHeader eyebrow={t("clinic.staff.title")} title={member.user.fullName} description={member.user.username} action={<Badge tone={STATUS_TONE[member.status]}>{t(`status.${member.status}`)}</Badge>} />
 
       {isSelf ? <div className="mb-6"><Alert tone="neutral">{t("clinic.member.selfNote")}</Alert></div> : null}
       {!isSelf && targetIsOwner && !callerIsOwner ? <div className="mb-6"><Alert tone="neutral">{t("clinic.member.ownerNote")}</Alert></div> : null}
@@ -45,7 +45,6 @@ export default async function MemberPage({ params }: { params: Promise<{ slug: s
               { label: t("clinic.staff.colRoles"), value: member.roles.map((r) => roleName(r.role)).join(", ") },
               { label: t("clinic.staff.colLastLogin"), value: member.user.lastLoginAt ? format.relativeTime(member.user.lastLoginAt) : t("common.never") },
               { label: t("security.login"), value: <span className="break-all font-mono">{member.user.username}</span> },
-              { label: t("security.telegram"), value: <Badge tone={member.user.telegramLinkedAt ? "success" : "neutral"}>{member.user.telegramLinkedAt ? t("security.telegramOn") : t("security.telegramOff")}</Badge> },
             ]}
           />
         </CardBody>

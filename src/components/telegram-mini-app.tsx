@@ -13,7 +13,7 @@ import { Alert, buttonClass } from "./ui/primitives";
  * loaded: the two events needed are posted the way Telegram documents them.
  */
 
-type Choice = { key: string; kind: "staff" | "admin" | "patient"; clinic: string | null };
+type Choice = { key: string; kind: "patient"; clinic: string | null };
 type State =
   | { s: "loading" }
   | { s: "outside" }
@@ -121,13 +121,13 @@ export function TelegramMiniApp({ slug }: { slug?: string }) {
           <button
             key={c.key}
             type="button"
-            className={buttonClass(c.kind === "patient" ? "secondary" : "primary", "lg", "w-full")}
+            className={buttonClass("secondary", "lg", "w-full")}
             onClick={() => {
               setState({ s: "loading" });
               void resolve(c.key).then((next) => next && setState(next));
             }}
           >
-            {c.kind === "staff" ? t("asStaff") : c.kind === "admin" ? t("asAdmin") : t("asPatient", { clinic: c.clinic ?? "" })}
+            {t("asPatient", { clinic: c.clinic ?? "" })}
           </button>
         ))}
       </div>
@@ -152,7 +152,7 @@ export function TelegramMiniApp({ slug }: { slug?: string }) {
 
   return (
     <div className="space-y-4">
-      <Alert tone="warning">{t(state.reason === "disabled" ? "disabled" : state.reason === "locked" ? "locked" : state.reason === "not_platform" ? "notPlatform" : "error")}</Alert>
+      <Alert tone="warning">{t(state.reason === "disabled" ? "disabled" : state.reason === "locked" ? "locked" : "error")}</Alert>
       <button
         type="button"
         className={buttonClass("secondary", "md", "w-full")}

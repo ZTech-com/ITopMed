@@ -5,7 +5,7 @@
  * (starter services, document and note templates, owner's doctor profile and
  * front-desk roles) and the clinic's own price list.
  *
- * Used by `node tasks.mjs create-clinic <spec.json> <owner-email> "<Owner Name>"`
+ * Used by `node tasks.mjs create-clinic <spec.json> <owner-login> "<Owner Name>"`
  * on the server (see scripts/deploy/itopmed-clinic.sh).
  */
 import fs from "node:fs";
@@ -14,9 +14,6 @@ import { loginClinicUser, logoutClinic, resolveClinic, validateClinicSession } f
 import type { PlatformPrincipal, RequestMeta } from "../../src/server/auth/platform-auth";
 import { applyPendingSetup } from "../../src/server/clinic/practice";
 import { importPriceList } from "../../src/server/clinic/price-list";
-import { issuePasswordReset } from "../../src/server/auth/password-reset";
-import { env } from "../../src/server/env";
-import { suggestPassword } from "../../src/server/security/password";
 import { listServices, setServiceArchived } from "../../src/server/clinic/resources";
 import { recordAudit } from "../../src/server/audit";
 import { platformDb, withAppContext, withPlatform } from "../../src/server/db";
@@ -51,20 +48,16 @@ export type ClinicSpec = z.infer<typeof clinicSpecSchema>;
 
 const META: RequestMeta = { ip: "127.0.0.1", userAgent: "itopmed-clinic (server task)", requestId: null };
 
-/** How long the owner's "set your password" link (when no password is given) stays valid. */
-export const ACTIVATION_LINK_HOURS = 72;
-
 /**
- * With `password` null the owner gets a temporary random password nobody sees,
- * and the result carries a one-time link where the owner sets their own
- * password (valid ACTIVATION_LINK_HOURS; sent by the operator, e.g. in Telegram).
+ * The owner signs in with `ownerLogin` and the password typed by the operator
+ * (handed over in person); they then link Telegram for sign-in and password
+ * reset through the clinic's bot. No email anywhere.
  */
-export async function createClinicFromSpec(specFile: string, ownerEmail: string, ownerName: string, givenPassword: string | null) {
-  const password = givenPassword ?? `${suggestPassword()}-${suggestPassword()}`;
+export async function createClinicFromSpec(specFile: string, ownerLogin: string, ownerName: string, password: string) {
   const spec = clinicSpecSchema.parse(JSON.parse(fs.readFileSync(specFile, "utf8")));
   const admin = await platformDb().platformUser.findFirst({ where: { role: "SUPER_ADMIN", status: "ACTIVE" }, orderBy: { createdAt: "asc" } });
   if (!admin) throw new Error("No active SuperAdmin: create one first (itopmed-admin).");
-  const actor: PlatformPrincipal = { sessionId: "server-task", user: { id: admin.id, username: admin.username, email: admin.email, fullName: admin.fullName, role: "SUPER_ADMIN", locale: "uz-Latn", telegramLinked: false } };
+  const actor: PlatformPrincipal = { sessionId: "server-task", user: { id: admin.id, username: admin.username, fullName: admin.fullName, role: "SUPER_ADMIN", locale: "uz-Latn" } };
 
   const created = await createClinicWithOwner(
     actor,
@@ -75,7 +68,6 @@ export async function createClinicFromSpec(specFile: string, ownerEmail: string,
       focusSpecialty: spec.focusSpecialty ?? "",
       ownerIsDoctor: spec.ownerIsDoctor,
       ownerFrontDesk: spec.ownerFrontDesk,
-      contactEmail: ownerEmail,
       contactPhone: spec.contactPhone,
       address: spec.address,
       taxId: "",
@@ -83,19 +75,17 @@ export async function createClinicFromSpec(specFile: string, ownerEmail: string,
       timezone: "Asia/Tashkent",
       planCode: spec.planCode,
       ownerFullName: ownerName,
-      ownerEmail,
-      ownerMode: "password",
+      ownerUsername: ownerLogin,
       ownerPassword: password,
     },
     META,
   );
-  if (created.owner !== "password") throw new Error("This e-mail already has an ITop Med account; use another e-mail for the owner.");
   // Paid customer: active right away, no trial.
   await changeTenantStatus(actor, created.tenantId, "activate", undefined, META);
   await withPlatform((tx) => tx.subscription.updateMany({ where: { tenantId: created.tenantId }, data: { status: "ACTIVE", trialEndsAt: null } }));
 
   // Finish the setup in the owner's own context (their audit trail), then sign that session out.
-  const login = await loginClinicUser(ownerEmail, password, META);
+  const login = await loginClinicUser(ownerLogin, password, META);
   if (!login.ok) throw new Error(`Owner sign-in failed: ${login.reason}`);
   try {
     const principal = await validateClinicSession(login.token);
@@ -123,14 +113,8 @@ export async function createClinicFromSpec(specFile: string, ownerEmail: string,
         }
       }
     }
-    let activationLink: string | null = null;
-    if (givenPassword === null) {
-      const r = await issuePasswordReset(ownerEmail, META, { ttlMinutes: ACTIVATION_LINK_HOURS * 60 });
-      if (!r) throw new Error("Could not create the owner's activation link");
-      activationLink = `${env().APP_URL.replace(/\/$/, "")}/reset-password/${r.token}`;
-    }
     const extras = await applyClinicExtras(spec);
-    return { slug: created.slug, prices, archived, activationLink, extras };
+    return { slug: created.slug, prices, archived, extras };
   } finally {
     await logoutClinic(login.token);
   }

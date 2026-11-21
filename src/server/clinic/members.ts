@@ -48,7 +48,7 @@ export async function getMember(ctx: ClinicContext, membershipId: string) {
   if (!ctx.permissions.has("staff.read")) throw new DomainError("errors.forbidden");
   return inClinic(ctx, async (tx) => {
     const m = await loadTarget(tx, ctx, membershipId);
-    const user = await tx.user.findUniqueOrThrow({ where: { id: m.userId }, select: { id: true, fullName: true, username: true, email: true, lastLoginAt: true, telegramLinkedAt: true } });
+    const user = await tx.user.findUniqueOrThrow({ where: { id: m.userId }, select: { id: true, fullName: true, username: true, lastLoginAt: true } });
     return { ...m, user };
   });
 }

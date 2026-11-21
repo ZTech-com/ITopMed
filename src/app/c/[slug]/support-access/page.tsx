@@ -28,7 +28,7 @@ export default async function SupportAccessPage({ params }: { params: Promise<{ 
                     <div className="min-w-0">
                       <p className="font-medium">{t(`supportScope.${g.scope}`)}</p>
                       <p className="text-[13px] text-text-2">
-                        {t("clinic.supportAccess.requester")}: {g.requesterName} · {g.requesterEmail}
+                        {t("clinic.supportAccess.requester")}: {g.requesterName}
                       </p>
                     </div>
                     <Badge tone={STATUS_TONE[status] ?? (status === "APPROVED" ? "success" : "accent")}>{t(`status.${status}`)}</Badge>

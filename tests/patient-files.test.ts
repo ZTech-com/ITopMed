@@ -4,7 +4,7 @@ import path from "node:path";
 import { strFromU8, unzipSync } from "fflate";
 import { afterEach, describe, expect, it } from "vitest";
 import { colName, excelDate, writeXlsx } from "@/lib/xlsx";
-import { inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
+import { addStaffMember, listBranches, listStaff } from "@/server/clinic/admin";
 import { getDataSettings, isLocalOnly, saveDataMode, savePatientFiles, syncPatientFiles } from "@/server/clinic/data-mode";
 import { saveDoctorProfile } from "@/server/clinic/doctors";
 import { importPriceList } from "@/server/clinic/price-list";
@@ -13,15 +13,13 @@ import { withAppContext } from "@/server/db";
 import { exportAllPatients, exportPatientWorkbook, patientFileName } from "@/server/emr/patient-file";
 import { addDiagnosis, startVisit } from "@/server/emr/record";
 import { deskCheckIn } from "@/server/reception/desk";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 async function staff(o: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: string[]) {
-  const email = `${uniq("s")}@clinic.test`;
-  const inv = await inviteStaff(o.ctx, { fullName: `Synthetic ${roleKeys.join(" ")}`, email, roleKeys }, META);
-  await acceptInvitation(inv.token, { fullName: "Synthetic Head Doctor", password: PASSWORD, confirmPassword: PASSWORD }, META);
-  const m = (await listStaff(o.ctx)).members.find((x) => x.user.email === email)!;
-  return { email, membershipId: m.id, ctx: await clinicContext(email, o.slug) };
+  const login = uniq("s");
+  await addStaffMember(o.ctx, { fullName: `Synthetic ${roleKeys.join(" ")}`, username: login, roleKeys, password: PASSWORD }, META);
+  const m = (await listStaff(o.ctx)).members.find((x) => x.user.username === login)!;
+  return { login, membershipId: m.id, ctx: await clinicContext(login, o.slug) };
 }
 
 const sheetsOf = (bytes: Uint8Array) => {

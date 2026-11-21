@@ -18,12 +18,12 @@ Klinikani ishga tushirishning 2 yo'li bor, bittasini tanlang:
 ## 1-yo'l. Internet orqali (server) — eng oson
 
 ### Siz (SuperAdmin): yangi klinika ochish — 2 daqiqa
-1. https://itopmed.itoppos.uz/admin/login → login va parolingiz bilan (yoki ulangan bo'lsa, «Telegram orqali kirish») kiring.
+1. https://itopmed.itoppos.uz/admin/login → login va parolingiz bilan kiring.
 2. **Klinikalar → Yangi klinika** bo'limida:
    - klinika nomini yozing;
    - turini tanlang (kabinet / stomatologiya / diagnostika / ko'p tarmoqli);
    - yo'nalishini tanlang, masalan Kardiologiya;
-   - egasining ismi va emailini yozing;
+   - egasining ismi, logini va parolini yozing;
    - **parol**ni yozing yoki tayyorini qoldiring va yozib oling.
 3. **Klinikani yaratish** tugmasini bosing.
 4. Egaga 3 narsani bering:
@@ -33,19 +33,18 @@ Klinikani ishga tushirishning 2 yo'li bor, bittasini tanlang:
 
 ### Klinika egasi: birinchi kirish
 1. https://itopmed.itoppos.uz/login → login va parol bilan kiradi.
-2. Xohlasa, **Hisob xavfsizligi**da Telegramni ulaydi — keyin Telegram tugmasi bilan kiradi.
 3. **Xizmatlar va narxlar** bo'limida narxlarni qo'yadi.
 
 ### Shifokor va registratorni qo'shish (klinika egasi qiladi)
 **Xodimlar** bo'limida har bir xodim uchun:
-1. Xodimning ismi va emailini yozing.
+1. Xodimning ismi, logini va parolini yozing.
 2. Rolini belgilang:
    - Registrator → **Registrator** va **Kassir**;
    - Shifokor → **Shifokor**;
    - bosh shifokor bo'lsa, qo'shimcha ravishda **Bosh shifokor**.
 3. Kirish usulida **«Parolni hozir beraman»**ni tanlang. Parolni yozib oling.
 4. **Xodimni qo'shish** tugmasini bosing.
-5. Xodimga **manzil, email va parol**ni qog'ozda bering.
+5. Xodimga **manzil, login va parol**ni qog'ozda bering.
 
 Shifokor uchun yana bir qadam bor: **Shifokorlar** bo'limida mutaxassisligi va qabul jadvalini kiriting. Shundan keyin u navbatda ko'rinadi.
 
@@ -68,7 +67,7 @@ Odatda bu registratura kompyuteri bo'ladi, chunki u kun bo'yi yoniq turadi.
 1. Zip faylni oching: o'ng tugma → **Extract All**, masalan `C:\ITopMed` papkasiga.
 2. **ITop Med.exe** ni ikki marta bosing.
    - Agar "Windows protected your PC" chiqsa: **More info → Run anyway**.
-3. Bitta forma chiqadi. Klinika nomi, turi, ism, email va parolni yozib, **Klinikani yaratish** tugmasini bosing.
+3. Bitta forma chiqadi. Klinika nomi, turi, ism, login va parolni yozib, **Klinikani yaratish** tugmasini bosing.
    - Shu bilan klinika ochiladi, siz esa uning egasi bo'lasiz. Alohida "yangi klinika" ochish shart emas.
 4. Windows ruxsat so'rasa, **Ha** ni bosing. Busiz boshqa qurilmalar ulana olmaydi.
 5. **Sozlamalar → «Ma'lumotlar qayerda saqlanadi»** bo'limida **Lokal** belgilangan bo'ladi. Bu holatda internetga hech narsa ketmaydi.
@@ -100,7 +99,6 @@ Telefon va planshet ham shunday ulanadi: shu manzilni telefon brauzerida ochasiz
 | Lokal rejimda boshqa kompyuter ochmayapti | Asosiy kompyuter o'chiq, boshqa Wi-Fi'da, yoki Windows ruxsat berilmagan | Asosiy kompyuterni yoqing. Bitta tarmoqqa ulang. Kirish sahifasidagi **«Telefon yoki planshetni ulash»** sahifasini ochib, kerak bo'lsa ruxsatni qayta bering |
 | Kecha ishlagan, bugun ochilmayapti (lokal) | Router asosiy kompyuterga yangi IP manzil bergan | Ulanish sahifasidagi yangi manzilni oching. Doimiy hal qilish: routerda shu kompyuterga **doimiy IP** bering (DHCP reservation) |
 | Asosiy kompyuter o'chsa | Dastur faqat unda turadi | Ish vaqtida asosiy kompyuter yoniq tursin. Uyqu rejimini o'chiring |
-| "Email orqali taklif" ishlamaydi | Serverda email hali sozlanmagan | **«Parolni hozir beraman»** usulidan foydalaning |
 | Xodim parolini unutdi | — | Ega **Xodimlar** bo'limida uning hisobini o'chiradi va yangi parol bilan qayta qo'shadi |
 | Ma'lumot yo'qolishidan qo'rqasiz | — | Har kuni avtomatik shifrlangan zaxira olinadi. Lokalda `%LOCALAPPDATA%\ITopMed\backups` papkasini haftada bir fleshkaga ko'chiring |
 

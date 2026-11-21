@@ -11,7 +11,7 @@ type Size = "sm" | "md" | "lg";
 
 // Labels stay on one line when there is room and wrap (never overflow) on narrow screens.
 const base =
-  "inline-flex max-w-full items-center justify-center gap-2 text-center leading-tight rounded-full font-semibold transition-[background,box-shadow,color,transform] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 select-none";
+  "inline-flex max-w-full items-center justify-center gap-2 text-center leading-tight rounded-full font-semibold transition-[background-color,border-color,box-shadow,color,transform] duration-[var(--dur-quick)] ease-[var(--ease-out)] active:scale-[0.97] active:duration-[var(--dur-press)] disabled:pointer-events-none disabled:opacity-50 select-none";
 const variants: Record<Variant, string> = {
   primary: "bg-accent-solid text-on-accent hover:bg-accent-solid-hover",
   secondary: "bg-surface text-text border border-border hover:bg-surface-2 hover:border-border-strong",
@@ -169,6 +169,11 @@ export function Stat({ label, value, hint, icon }: { label: ReactNode; value: Re
       {hint ? <p className="mt-2 text-[12px] text-text-3">{hint}</p> : null}
     </Card>
   );
+}
+
+/** Loading placeholder block (sized by the caller); calm pulse, still under reduced motion. */
+export function Skeleton({ className }: { className?: string }) {
+  return <span aria-hidden className={cx("skeleton block", className)} />;
 }
 
 /** Responsive table: scrolls horizontally inside its card on narrow screens. */

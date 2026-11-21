@@ -4,14 +4,14 @@ Multi-tenant healthcare SaaS (Uzbekistan first). ONE codebase, strict tenant iso
 Read `docs/ARCHITECTURE.md` and `docs/SECURITY-AND-PRIVACY.md` before changing anything security-relevant.
 
 ## Stack
-Next.js 16 App Router · React 19 · TypeScript strict · Tailwind v4 · PostgreSQL + Prisma 7 (driver adapter `@prisma/adapter-pg`) · next-intl 4 · Zod 4 · argon2id (`@node-rs/argon2`) · Log In with Telegram (Login Widget, `src/server/auth/telegram-auth.ts`) · Vitest.
+Next.js 16 App Router · React 19 · TypeScript strict · Tailwind v4 · PostgreSQL + Prisma 7 (driver adapter `@prisma/adapter-pg`) · next-intl 4 · Zod 4 · argon2id (`@node-rs/argon2`) · Vitest.
 
 ## Commands
 | Task | Command |
 |---|---|
 | Start local PostgreSQL (embedded, no Docker) | `npm run db:start` (keep running) |
 | Apply migrations / seed plans | `npm run db:migrate` · `npm run db:seed` |
-| Create a platform admin | `npm run admin:create -- --email x@y --login admin --name "Name" --role SUPER_ADMIN` |
+| Create a platform admin | `npm run admin:create -- --login admin --name "Name" --role SUPER_ADMIN` |
 | Dev server | `npm run dev` → http://localhost:3000/admin/login and /login |
 | Local installation (one PC serves the clinic network; self-healing supervisor in `scripts/local.ts`) | `npm run app` / `app:stop` / `app:status` / `app:doctor` (checks + phone address) / `app:firewall` / `app:autostart`; devices join via `http://<pc-ip>/connect` |
 | Packaged Windows app for clinics (one zip: own Node runtime + PostgreSQL + prebuilt app; data in `%LOCALAPPDATA%\ITopMed`; first start = /welcome form) | `npm run package:win` → `dist/ITopMed-Windows.zip` (see `scripts/package/build-win.ts`) |
@@ -41,11 +41,13 @@ Tests boot their own throw-away PostgreSQL on port 54339 and apply the real migr
 12. **One transaction = one connection.** Never `Promise.all` queries on the same `tx`; use `sequential([...])` from `src/server/db.ts` (Prisma queries are lazy, so they run in order).
 13. **Modules.** A permission that belongs to an optional module must be listed in `MODULE_PERMISSIONS` (`src/server/modules/catalog.ts`); features without their own permission (e.g. the dental chart) check `ctx.modules.has(...)` in the service.
 14. **Nothing may leave its box, on any screen.** Money only through `moneyFormatter()` (it lets the currency, never the digits, wrap); lists of records use `<Table>` (phone = cards; give ambiguous numeric cells a `label`); no fixed widths on text; grid/flex children that hold tables must be able to shrink (`min-w-0`, already global for `.grid > *`). Verify with `npm run ui:audit` and real large sums (tens of millions of so'm).
-15. **Be honest about status.** Mark simulated/prototype functionality as such (e.g. `dev-mailbox` email and `dev-outbox` SMS transports, the Integrations status page, modules with `status: "planned"`). Don't call a feature done without tests.
+15. **Be honest about status.** Mark simulated/prototype functionality as such (e.g. the `dev-outbox` SMS and Telegram transports, the Integrations status page, modules with `status: "planned"`). Don't call a feature done without tests.
+
+16. **Sign-in = login + password only.** No email anywhere and no Telegram sign-in for staff or the console. Accounts get a login + first password from their administrator (at least 8 characters, no other rule); a forgotten password is replaced by the clinic's Administrator (Staff page). Telegram serves patients only (clinic bots: notifications, Mini App). Never add email fields, email sending, or Telegram sign-in.
 
 ## Layout
 - `prisma/schema.prisma`, `prisma/migrations/*` (RLS/grants/audit SQL lives in migrations)
 - `src/server/` — domain services (no React): `auth/`, `authz/`, `tenancy/`, `clinic/`, `security/`, `audit.ts`, `db.ts`
-- `src/app/admin/` platform console · `src/app/c/[slug]/` clinic workspace · `src/app/p/[slug]/` patient portal · `src/app/(public)/` login, invitations · `src/app/auth/telegram/` Telegram sign-in
+- `src/app/admin/` platform console · `src/app/c/[slug]/` clinic workspace · `src/app/p/[slug]/` patient portal · `src/app/(public)/` login, password reset · `src/app/auth/telegram/webapp` patients' Mini App sign-in
 - `src/components/ui` design system · `src/components/shell` app chrome
 - `docs/` product, architecture, security, roadmap

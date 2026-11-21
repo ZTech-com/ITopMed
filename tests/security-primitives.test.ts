@@ -14,9 +14,11 @@ describe("security primitives", () => {
   });
 
   it("enforces the password policy", () => {
-    expect(passwordSchema.safeParse("short1").success).toBe(false);
-    expect(passwordSchema.safeParse("onlylettersnodigits").success).toBe(false);
-    expect(passwordSchema.safeParse("Long-enough-passw0rd").success).toBe(true);
+    // At least 8 characters, nothing else required (lockout + rate limits hold back guessing).
+    expect(passwordSchema.safeParse("short12").success).toBe(false);
+    expect(passwordSchema.safeParse("12345678").success).toBe(true);
+    expect(passwordSchema.safeParse("onlyletters").success).toBe(true);
+    expect(passwordSchema.safeParse("x".repeat(129)).success).toBe(false);
   });
 
   it("encrypts fields with context binding", () => {

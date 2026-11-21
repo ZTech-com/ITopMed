@@ -169,7 +169,7 @@ async function main() {
       "1. \"ITop Med.exe\" ni ikki marta bosing.",
       "   Windows \"Windows protected your PC\" desa: \"More info\" -> \"Run anyway\" (\"Подробнее\" -> \"Выполнить в любом случае\").",
       "2. Birinchi marta 1-2 daqiqa kuting: brauzerda ITop Med oynasi ochiladi.",
-      "3. Klinika nomi, ismingiz, email va parolingizni kiriting -> \"Klinikani yaratish\".",
+      "3. Klinika nomi, ismingiz, login va parolingizni kiriting -> \"Klinikani yaratish\".",
       "4. Windows tarmoq ruxsatini so'rasa -> \"Ha\" (telefonlar ulana olishi uchun).",
       "5. Telefonlar: kirish sahifasidagi \"Telefon yoki planshetni ulash\" -> u yerdagi manzilni telefon brauzerida oching.",
       "",

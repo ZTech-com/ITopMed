@@ -38,7 +38,6 @@ export default async function ClinicSettingsPage({ params }: { params: Promise<{
             <CardBody className="grid gap-5 sm:grid-cols-2">
               <TextField name="name" label={t("admin.clinicNew.name")} defaultValue={s.name} required className="sm:col-span-2" />
               <TextField name="legalName" label={t("admin.clinicNew.legalName")} defaultValue={s.legalName} optionalLabel={optional} className="sm:col-span-2" />
-              <TextField name="contactEmail" type="email" label={t("admin.clinicNew.contactEmail")} defaultValue={s.contactEmail} optionalLabel={optional} />
               <TextField name="contactPhone" type="tel" label={t("admin.clinicNew.contactPhone")} defaultValue={s.contactPhone} optionalLabel={optional} />
               <TextField name="address" label={t("admin.clinicNew.address")} defaultValue={s.address} optionalLabel={optional} className="sm:col-span-2" />
             </CardBody>

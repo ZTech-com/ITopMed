@@ -6,19 +6,19 @@
 3. Ishni tugatganda: **"ITop Med - to'xtatish"** (shart emas, yoniq tursa ham bo'ladi).
 
 ## B. Siz — SuperAdmin: klinika ochish (2 daqiqa)
-1. **"ITop Med Boshqaruv"** yorlig'i → email + parolingiz bilan kiring.
+1. **"ITop Med Boshqaruv"** yorlig'i → login + parolingiz bilan kiring.
 2. **Klinikalar → Yangi klinika**:
    - Klinika turi: Xususiy kabinet / Stomatologiya / Diagnostika / Ko'p tarmoqli.
    - Asosiy yo'nalish: masalan **Kardiologiya**.
    - Egasi shifokor bo'lsa — belgini qoldiring.
-   - Egasining ismi, emaili, **parol** (tayyor parol beriladi — yozib oling).
+   - Egasining ismi, **logini** va **parol** (tayyor parol beriladi — yozib oling).
 3. **Klinikani yaratish** → "Klinika tayyor".
-4. Egaga 3 narsani bering: **manzil** (`/login`), **email**, **parol**.
+4. Egaga 3 narsani bering: **manzil** (`/login`), **login**, **parol**.
 
 Franshiza (bir egada ko'p klinika): **Tarmoqlar → Yangi tarmoq** → klinikalarni qo'shing → **Tarmoq admini tayinlash**. U faqat o'z klinikalarini boshqaradi.
 
 ## C. Klinika egasi (Admin) — birinchi kun
-1. **"ITop Med"** → email + parol bilan kiring.
+1. **"ITop Med"** → login + parol bilan kiring.
 2. Telefonga **Google Authenticator** o'rnating → ekrandagi QR'ni skanerlang → 6 xonali kodni yozing → **tiklash kodlarini** saqlang.
 3. Klinika o'zi sozlanadi (xizmatlar, shablonlar, jadval).
 4. **Xizmatlar va narxlar** → har xizmatga narx qo'ying (narxsiz hisob chiqmaydi).
@@ -113,9 +113,9 @@ DMED, Payme/Click onlayn to'lov, fiskal chek (OFD), SMS, milliy elektron retsept
 2. Papkadagi **"ITop Med.exe"** ni ikki marta bosadi.
    - Windows "**Windows protected your PC**" desa: **More info → Run anyway** (dastur imzolanmagani uchun bir marta chiqadi).
 3. 1–2 daqiqa kutadi → ITop Med oynasi ochiladi va **bitta forma** chiqadi:
-   klinika nomi, turi (kabinet / stomatologiya / diagnostika / katta klinika), yo'nalish, ism, email, parol → **"Klinikani yaratish"**.
+   klinika nomi, turi (kabinet / stomatologiya / diagnostika / katta klinika), yo'nalish, ism, login, parol → **"Klinikani yaratish"**.
 4. Windows tarmoq ruxsatini so'rasa → **Ha** (telefonlar ulana olishi uchun).
-5. Email va parol bilan kiradi — klinika sohasiga moslab tayyor. Xizmatlarga narx qo'yadi va ishlaydi.
+5. Login va parol bilan kiradi — klinika sohasiga moslab tayyor. Xizmatlarga narx qo'yadi va ishlaydi.
 
 Ish stolida o'zi paydo bo'ladi: **ITop Med**, **ITop Med Boshqaruv**, **ITop Med - to'xtatish**.
 Ma'lumotlar `%LOCALAPPDATA%\ITopMed` da saqlanadi, **har kuni o'zi shifrlangan zaxira** oladi (`backups` papkasi) — vaqti-vaqti bilan fleshkaga ko'chirib qo'ying.

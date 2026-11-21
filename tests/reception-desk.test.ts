@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
+import { addStaffMember, listBranches, listStaff } from "@/server/clinic/admin";
 import { saveDoctorProfile } from "@/server/clinic/doctors";
 import { importPriceList, parsePriceLine } from "@/server/clinic/price-list";
 import { listServices } from "@/server/clinic/resources";
@@ -7,15 +7,13 @@ import { getInvoice } from "@/server/billing/billing";
 import { getPatient } from "@/server/patients/patients";
 import { addExtraServices, deskCheckIn, payPatientDebt, todayMoney, todayVitals } from "@/server/reception/desk";
 import { parseBirthInput } from "@/server/patients/patients";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 async function staff(o: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: string[]) {
-  const email = `${uniq("s")}@clinic.test`;
-  const inv = await inviteStaff(o.ctx, { fullName: `Synthetic ${roleKeys.join(" ")}`, email, roleKeys }, META);
-  await acceptInvitation(inv.token, { fullName: `Synthetic ${roleKeys[0]}`, password: PASSWORD, confirmPassword: PASSWORD }, META);
-  const m = (await listStaff(o.ctx)).members.find((x) => x.user.email === email)!;
-  return { email, membershipId: m.id, ctx: await clinicContext(email, o.slug) };
+  const login = uniq("s");
+  await addStaffMember(o.ctx, { fullName: `Synthetic ${roleKeys.join(" ")}`, username: login, roleKeys, password: PASSWORD }, META);
+  const m = (await listStaff(o.ctx)).members.find((x) => x.user.username === login)!;
+  return { login, membershipId: m.id, ctx: await clinicContext(login, o.slug) };
 }
 
 const PRICE_LIST = ["Kardiolog ko'ruvi — 100 ming so'm", "Umumiy ayollar 100 000", "EXO 120 ming som", "Buyraklar: 70000", "EKG 30 ming"].join("\n");

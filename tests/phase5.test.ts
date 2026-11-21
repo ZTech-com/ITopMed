@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createBranch, inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
+import { createBranch, addStaffMember, listBranches, listStaff } from "@/server/clinic/admin";
 import { updateMemberAccess } from "@/server/clinic/members";
 import {
   addScheduleBlock,
@@ -15,15 +15,13 @@ import {
 } from "@/server/clinic/doctors";
 import { archiveRoom, createDepartment, createRoom, createService, listRooms, listServices, updateService } from "@/server/clinic/resources";
 import { listRoles } from "@/server/clinic/roles";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 async function staff(owner: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: string[]) {
-  const email = `${uniq("s")}@clinic.test`;
-  const inv = await inviteStaff(owner.ctx, { fullName: "Synthetic Person", email, roleKeys }, META);
-  await acceptInvitation(inv.token, { fullName: "Synthetic Person", password: PASSWORD, confirmPassword: PASSWORD }, META);
+  const login = uniq("s");
+  await addStaffMember(owner.ctx, { fullName: "Synthetic Person", username: login, roleKeys, password: PASSWORD }, META);
   const members = await listStaff(owner.ctx);
-  return { email, membershipId: members.members.find((m) => m.user.email === email)!.id, ctx: await clinicContext(email, owner.slug) };
+  return { login, membershipId: members.members.find((m) => m.user.username === login)!.id, ctx: await clinicContext(login, owner.slug) };
 }
 
 // 2030-01-07 is a Monday.
@@ -130,7 +128,7 @@ describe("branch scope (ABAC)", () => {
     const mgr = await staff(a, ["branch_manager"]);
     const roles = await listRoles(a.ctx);
     await updateMemberAccess(a.ctx, mgr.membershipId, { roleIds: [roles.find((r) => r.key === "branch_manager")!.id], allBranches: false, branchIds: [second] }, META);
-    const scoped = await clinicContext(mgr.email, a.slug);
+    const scoped = await clinicContext(mgr.login, a.slug);
     expect(scoped.branchIds).toEqual([second]);
 
     expect((await listRooms(scoped)).map((r) => r.name)).toEqual(["S-1"]);

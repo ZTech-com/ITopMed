@@ -14,17 +14,13 @@ const schema = z.object({
   PORTAL_DATABASE_URL: z.string().startsWith("postgres"),
   APP_ENCRYPTION_KEY: base64Key,
   AUDIT_HMAC_KEY: base64Key,
-  EMAIL_TRANSPORT: z.enum(["dev-mailbox", "smtp", "disabled"]).default("dev-mailbox"),
-  SMTP_URL: z.string().optional(),
-  EMAIL_FROM: z.string().default("ITop Med <no-reply@itopmed.example>"),
   /** "none" = SMS channel off. "dev-outbox" = SIMULATED (writes files locally). No real SMS provider is connected yet. */
   SMS_TRANSPORT: z.enum(["none", "dev-outbox"]).default("none"),
   /** "database" (default): shared across instances. "memory": per process. */
   RATE_LIMIT_STORE: z.enum(["database", "memory"]).default("database"),
   /**
    * "1" = single-computer installation on a clinic's own network (`npm run local`).
-   * Allows the local mailbox (emails saved as files on that computer) when no SMTP
-   * server is configured. Never set this on an internet-facing deployment.
+   * Never set this on an internet-facing deployment.
    */
   LOCAL_MODE: z.enum(["0", "1"]).default("0"),
   /**
@@ -39,22 +35,12 @@ const schema = z.object({
    */
   TELEGRAM_TRANSPORT: z.enum(["api", "dev-outbox", "none"]).optional(),
   /**
-   * Token of the CENTRAL ITop Med bot (@ITopMedBot): "Log in with Telegram" on /login
-   * for the staff of every clinic (Login Widget; @BotFather > /setdomain = APP_URL's
-   * host), its Mini App (/tg) and /start; also the console's, unless
-   * TELEGRAM_ADMIN_BOT_TOKEN is set. Not the clinics' own bots (those are created by
-   * the SuperAdmin and stored encrypted per clinic). Unset = central bot off.
+   * Token of the CENTRAL ITop Med bot (@ITopMedBot): its /start and patients
+   * sharing their phone. Not used for anyone's sign-in (staff and the console use
+   * login + password). The clinics' own bots are stored encrypted per clinic.
+   * Unset = central bot off.
    */
   TELEGRAM_BOT_TOKEN: z
-    .string()
-    .regex(/^\d{5,15}:[A-Za-z0-9_-]{30,64}$/, "must be a Telegram bot token")
-    .optional(),
-  /**
-   * Token of the CONSOLE's own bot: "Log in with Telegram" on the console's address
-   * (@BotFather > /setdomain = ADMIN_URL's host). A bot has one domain, so when the
-   * console has its own address it needs its own bot. Unset = the central bot.
-   */
-  TELEGRAM_ADMIN_BOT_TOKEN: z
     .string()
     .regex(/^\d{5,15}:[A-Za-z0-9_-]{30,64}$/, "must be a Telegram bot token")
     .optional(),
@@ -72,9 +58,6 @@ export function env(): Env {
   if (!parsed.success) {
     const fields = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`Invalid environment configuration — ${fields}`);
-  }
-  if (parsed.data.NODE_ENV === "production" && parsed.data.EMAIL_TRANSPORT === "dev-mailbox" && parsed.data.LOCAL_MODE !== "1") {
-    throw new Error("EMAIL_TRANSPORT=dev-mailbox is not allowed in production");
   }
   if (parsed.data.NODE_ENV === "production" && parsed.data.SMS_TRANSPORT === "dev-outbox") {
     throw new Error("SMS_TRANSPORT=dev-outbox is not allowed in production");

@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * session and permissions on the server itself (defence in depth).
  */
 /** Paths the console's own host (ADMIN_URL) serves besides /admin. */
-const ADMIN_HOST_PATHS = /^\/(admin|auth\/telegram|api\/health|tg(\/|$)|_next|icons|favicon|apple-icon|icon|manifest|admin\.webmanifest|sw\.js)/;
+const ADMIN_HOST_PATHS = /^\/(admin|api\/health|_next|icons|favicon|apple-icon|icon|manifest|admin\.webmanifest|sw\.js)/;
 
 /**
  * Console on its own address (ADMIN_URL, e.g. admin.itoppos.uz): there only the
@@ -49,8 +49,6 @@ export function proxy(request: NextRequest) {
     "img-src 'self' blob: data:",
     "font-src 'self'",
     "connect-src 'self'",
-    // Telegram's "Log in with Telegram" button is an iframe from oauth.telegram.org (src/components/telegram-widget.tsx).
-    "frame-src https://oauth.telegram.org",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

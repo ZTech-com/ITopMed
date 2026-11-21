@@ -13,8 +13,8 @@ import { assertTenantInScope } from "../tenancy/provisioning";
 /**
  * Each clinic has its OWN Telegram bot (created by ITop Med with @BotFather and
  * connected by the SuperAdmin in the console). That one bot does everything for
- * the clinic: patient notifications, the Mini App (/tg/<slug>) and website
- * sign-in (/login/<slug>, Login Widget: only @BotFather > /setdomain is needed).
+ * the clinic's patients: notifications and the Mini App (/tg/<slug>). Staff do
+ * not sign in with Telegram (login + password only).
  * The platform role never
  * reads the token back: it hands it over encrypted (platform_set_clinic_bot).
  */

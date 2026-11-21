@@ -11,8 +11,6 @@ export const RESERVED_SLUGS = new Set([
   "status", "itopmed", "platform", "account", "settings", "portal", "mail", "docs", "c", "p",
 ]);
 
-export const emailSchema = z.string().trim().toLowerCase().max(254).pipe(z.email("validation.email"));
-
 export const slugSchema = z
   .string()
   .trim()
@@ -43,21 +41,18 @@ export const createClinicSchema = z.object({
   legalName: optionalText(200),
   // Uzbekistan STIR (INN) is 9 digits for legal entities.
   taxId: z.union([z.literal("").transform(() => undefined), z.string().trim().regex(/^\d{9}$/, "validation.taxId")]).optional(),
-  contactEmail: emailSchema,
   contactPhone: z.union([z.literal("").transform(() => undefined), phoneSchema]).optional(),
   address: optionalText(300),
   defaultLocale: z.enum(LOCALES),
   timezone: z.enum(TIMEZONES),
   planCode: z.string().trim().min(1, "validation.required"),
   ownerFullName: personNameSchema,
-  ownerEmail: emailSchema,
 });
 export type CreateClinicInput = z.infer<typeof createClinicSchema>;
 
 export const clinicSettingsSchema = z.object({
   name: z.string().trim().min(2, "validation.required").max(120, "validation.tooLong"),
   legalName: optionalText(200),
-  contactEmail: z.union([z.literal("").transform(() => undefined), emailSchema]).optional(),
   contactPhone: z.union([z.literal("").transform(() => undefined), phoneSchema]).optional(),
   address: optionalText(300),
   defaultLocale: z.enum(LOCALES),

@@ -16,7 +16,7 @@ import { auditClinic, inClinic, requirePermission } from "./context";
 /**
  * Where a clinic works.
  *  - LOCAL: the local app on the clinic's own computer, and nothing leaves it:
- *    patient messages (SMS, Telegram, email) are not sent and the Telegram bot
+ *    patient messages (SMS, Telegram) are not sent and the Telegram bot
  *    is not contacted. Only possible on a local installation (LOCAL_MODE=1).
  *  - CONNECTED: messages may go out over the internet. Always the case on the
  *    internet server, where the data lives on the server by definition.
@@ -235,7 +235,7 @@ export async function syncPatientFiles(tenantId: string, opts: { full?: boolean 
       const list = await withAppContext({ tenantId }, async (tx) => {
         const patients = await tx.patient.findMany({
           where: { status: { not: "MERGED" } },
-          select: { id: true, mrn: true, lastName: true, firstName: true, middleName: true, birthDate: true, birthYearOnly: true, sex: true, phone: true, email: true, address: true, status: true, createdAt: true },
+          select: { id: true, mrn: true, lastName: true, firstName: true, middleName: true, birthDate: true, birthYearOnly: true, sex: true, phone: true, address: true, status: true, createdAt: true },
         });
         const visits = await tx.encounter.groupBy({ by: ["patientId"], _max: { startedAt: true } });
         return { patients, last: new Map(visits.filter((v) => v._max.startedAt).map((v) => [v.patientId, v._max.startedAt!])) };

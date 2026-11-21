@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { registerWalkIn } from "@/server/appointments/appointments";
 import { addInvoiceLine, createInvoice, issueInvoice } from "@/server/billing/billing";
-import { inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
+import { addStaffMember, listBranches, listStaff } from "@/server/clinic/admin";
 import { saveDoctorProfile } from "@/server/clinic/doctors";
 import { createService } from "@/server/clinic/resources";
 import { startVisit } from "@/server/emr/record";
@@ -13,18 +13,16 @@ import { activatePortalAccount, changePatientPassword, loginPatient, portalTenan
 import { cancelMyAppointment, getMyResult, grantMyConsent, listMyAppointments, listMyConsents, listMyInvoices, listMyResults, withdrawMyConsent } from "@/server/portal/data";
 import { disablePortalAccount, getPortalAccount, issuePortalCode } from "@/server/portal/staff";
 import { sha256Hex } from "@/server/security/crypto";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 const PATIENT_PW = "Bemor-Parol-2026x";
 const owner = () => new pg.Client({ connectionString: process.env.MIGRATION_DATABASE_URL });
 
 async function staff(o: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: string[]) {
-  const email = `${uniq("s")}@clinic.test`;
-  const inv = await inviteStaff(o.ctx, { fullName: `Synthetic ${roleKeys[0]}`, email, roleKeys }, META);
-  await acceptInvitation(inv.token, { fullName: `Synthetic ${roleKeys[0]}`, password: PASSWORD, confirmPassword: PASSWORD }, META);
-  const m = (await listStaff(o.ctx)).members.find((x) => x.user.email === email)!;
-  return { email, membershipId: m.id, ctx: await clinicContext(email, o.slug) };
+  const login = uniq("s");
+  await addStaffMember(o.ctx, { fullName: `Synthetic ${roleKeys[0]}`, username: login, roleKeys, password: PASSWORD }, META);
+  const m = (await listStaff(o.ctx)).members.find((x) => x.user.username === login)!;
+  return { login, membershipId: m.id, ctx: await clinicContext(login, o.slug) };
 }
 
 let n = 0;
@@ -40,7 +38,7 @@ async function setup() {
   const profileId = await saveDoctorProfile(a.ctx, doctor.membershipId, { specialty: "therapy", defaultSlotMinutes: 20, acceptsOnlineBooking: false }, META);
   const cbc = await createService(a.ctx, { code: `PL${++n}`, name: "Synthetic blood test", kind: "LAB_TEST", durationMinutes: 10, price: "50000", currency: "UZS" }, META);
   const hb = await addAnalyte(lab1.ctx, cbc, { name: "Hemoglobin", unit: "g/L", refLow: "120", refHigh: "160" }, META);
-  const doctorCtx = await clinicContext(doctor.email, a.slug);
+  const doctorCtx = await clinicContext(doctor.login, a.slug);
   const tenant = (await portalTenant(a.slug))!;
 
   const patient = async (first: string, birthDate: string) => {

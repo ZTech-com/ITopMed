@@ -9,7 +9,7 @@ import { env, telegramTransport } from "../env";
 export type IntegrationStatus = "connected" | "simulated" | "off" | "partial" | "planned";
 
 export interface IntegrationInfo {
-  key: "email" | "sms" | "telegram" | "payme" | "click" | "uzum" | "dmed" | "fiscal";
+  key: "sms" | "telegram" | "payme" | "click" | "uzum" | "dmed" | "fiscal";
   status: IntegrationStatus;
 }
 
@@ -18,7 +18,6 @@ export function integrationStatuses(opts: { telegramBot?: boolean } = {}): Integ
   const e = env();
   const tg = telegramTransport();
   return [
-    { key: "email", status: e.EMAIL_TRANSPORT === "smtp" ? "connected" : "simulated" },
     { key: "sms", status: e.SMS_TRANSPORT === "dev-outbox" ? "simulated" : "off" },
     { key: "telegram", status: tg === "none" ? "off" : tg === "dev-outbox" ? "simulated" : opts.telegramBot ? "connected" : "off" },
     { key: "payme", status: "planned" },

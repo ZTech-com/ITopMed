@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Open a clinic ready to work from a spec (asks for the owner's password; it is never put on the command line).
-#   sudo /opt/itopmed/bin/itopmed-clinic farhod-medservis owner@example.uz "Owner Full Name"          (asks the password)
-#   sudo /opt/itopmed/bin/itopmed-clinic farhod-medservis owner@example.uz "Owner Full Name" --link   (prints a one-time link; the owner sets it)
+#   sudo /opt/itopmed/bin/itopmed-clinic farhod-medservis owner.login "Owner Full Name"   (asks the password)
 #   sudo /opt/itopmed/bin/itopmed-clinic farhod-medservis --update     (existing clinic: add new templates, fill empty letterhead fields)
 set -euo pipefail
 SPEC="${1:?clinic spec name, e.g. farhod-medservis}"
@@ -13,5 +12,5 @@ cd /opt/itopmed/current/app
 if [ "${2:-}" = "--update" ]; then
   exec runuser -p -u itopmed -- /opt/itopmed/node/bin/node tasks.mjs update-clinic "$FILE"
 fi
-EMAIL="${2:?owner email}"; NAME="${3:?owner full name}"
-exec runuser -p -u itopmed -- /opt/itopmed/node/bin/node tasks.mjs create-clinic "$FILE" "$EMAIL" "$NAME" "${4:-}"
+LOGIN="${2:?owner login}"; NAME="${3:?owner full name}"
+exec runuser -p -u itopmed -- /opt/itopmed/node/bin/node tasks.mjs create-clinic "$FILE" "$LOGIN" "$NAME"

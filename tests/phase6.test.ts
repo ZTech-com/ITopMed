@@ -1,23 +1,21 @@
 import pg from "pg";
 import { describe, expect, it } from "vitest";
 import { bookAppointment, cancelAppointment, checkIn, listDay, markNoShow, registerWalkIn } from "@/server/appointments/appointments";
-import { inviteStaff, listBranches, listClinicAudit, listStaff } from "@/server/clinic/admin";
+import { addStaffMember, listBranches, listClinicAudit, listStaff } from "@/server/clinic/admin";
 import { listOperationalBranches } from "@/server/clinic/context";
 import { addScheduleBlock, addScheduleException, doctorSlots, saveDoctorProfile } from "@/server/clinic/doctors";
 import { addAllergy, addDiagnosis, amendNote, finishEncounter, getEncounter, getMedicalRecord, recordVitals, saveDraft, signNote, startVisit } from "@/server/emr/record";
 import { getPatient, registerPatient, searchPatients } from "@/server/patients/patients";
 import { addDays, isoWeekday, localToInstant, todayIn } from "@/server/scheduling/time";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 const TZ = "Asia/Tashkent";
 
 async function staff(owner: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: string[]) {
-  const email = `${uniq("s")}@clinic.test`;
-  const inv = await inviteStaff(owner.ctx, { fullName: `Synthetic ${roleKeys[0]}`, email, roleKeys }, META);
-  await acceptInvitation(inv.token, { fullName: `Synthetic ${roleKeys[0]}`, password: PASSWORD, confirmPassword: PASSWORD }, META);
-  const m = (await listStaff(owner.ctx)).members.find((x) => x.user.email === email)!;
-  return { email, membershipId: m.id, ctx: await clinicContext(email, owner.slug) };
+  const login = uniq("s");
+  await addStaffMember(owner.ctx, { fullName: `Synthetic ${roleKeys[0]}`, username: login, roleKeys, password: PASSWORD }, META);
+  const m = (await listStaff(owner.ctx)).members.find((x) => x.user.username === login)!;
+  return { login, membershipId: m.id, ctx: await clinicContext(login, owner.slug) };
 }
 
 /** A clinic with a receptionist and a doctor who works all day every day (synthetic). */
@@ -28,7 +26,7 @@ async function setup() {
   const doctor = await staff(a, ["doctor"]);
   const profileId = await saveDoctorProfile(a.ctx, doctor.membershipId, { specialty: "therapy", defaultSlotMinutes: 5, acceptsOnlineBooking: false }, META);
   for (let d = 1; d <= 7; d++) await addScheduleBlock(a.ctx, profileId, { weekday: d, start: "00:00", end: "24:00", branchId: branch!.id }, META);
-  return { a, branch: branch!, reception, doctor, profileId, doctorCtx: await clinicContext(doctor.email, a.slug) };
+  return { a, branch: branch!, reception, doctor, profileId, doctorCtx: await clinicContext(doctor.login, a.slug) };
 }
 
 let counter = 0;
@@ -39,7 +37,6 @@ const person = (over: Record<string, unknown> = {}) => ({
   birthDate: "1990-05-1" + (counter % 10),
   sex: "MALE",
   phone: "",
-  email: "",
   address: "",
   pinfl: "",
   passport: "",

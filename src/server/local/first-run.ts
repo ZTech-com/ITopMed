@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { RESERVED_SLUGS, emailSchema, personNameSchema, usernameSchema } from "@/lib/validation";
+import { RESERVED_SLUGS, personNameSchema, usernameSchema } from "@/lib/validation";
 import { createPlatformUser, type PlatformPrincipal, type RequestMeta } from "../auth/platform-auth";
 import { clinicPresetSchema } from "../clinic/practice";
 import { platformDb, withPlatform } from "../db";
@@ -28,7 +28,6 @@ export const firstRunSchema = z
   .object({
     clinicName: z.string().trim().min(2, "validation.required").max(120, "validation.tooLong"),
     fullName: personNameSchema,
-    email: emailSchema,
     username: usernameSchema,
     password: passwordSchema,
     confirmPassword: z.string(),
@@ -56,13 +55,13 @@ export async function completeFirstRun(raw: unknown, meta: RequestMeta): Promise
   const preset = clinicPresetSchema.parse(raw);
 
   // The installer becomes the SuperAdmin of this computer's installation and the owner (Admin) of the clinic.
-  const id = await createPlatformUser({ email: input.email, username: input.username, fullName: input.fullName, password: input.password, role: "SUPER_ADMIN" });
+  const id = await createPlatformUser({ username: input.username, fullName: input.fullName, password: input.password, role: "SUPER_ADMIN" });
   if ((await platformDb().platformUser.count()) > 1) {
     // Two forms submitted at once: the other one won.
     await platformDb().platformUser.update({ where: { id }, data: { status: "DISABLED" } });
     throw new DomainError("errors.forbidden");
   }
-  const actor: PlatformPrincipal = { sessionId: "first-run", user: { id, username: input.username, email: input.email, fullName: input.fullName, role: "SUPER_ADMIN", locale: "uz-Latn", telegramLinked: false } };
+  const actor: PlatformPrincipal = { sessionId: "first-run", user: { id, username: input.username, fullName: input.fullName, role: "SUPER_ADMIN", locale: "uz-Latn" } };
   const slug = slugFromName(input.clinicName);
   const created = await createClinicWithOwner(
     actor,
@@ -70,15 +69,12 @@ export async function completeFirstRun(raw: unknown, meta: RequestMeta): Promise
       ...preset,
       name: input.clinicName,
       slug,
-      contactEmail: input.email,
       defaultLocale: "uz-Latn",
       timezone: "Asia/Tashkent",
       planCode: "enterprise",
       ownerFullName: input.fullName,
-      ownerEmail: input.email,
       taxId: "",
       contactPhone: "",
-      ownerMode: "password",
       ownerUsername: input.username,
       ownerPassword: input.password,
     },

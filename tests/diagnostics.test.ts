@@ -1,21 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { parseDiagnosticData, sniffFileType } from "@/lib/diagnostics";
 import { registerWalkIn } from "@/server/appointments/appointments";
-import { inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
+import { addStaffMember, listBranches, listStaff } from "@/server/clinic/admin";
 import { saveDoctorProfile } from "@/server/clinic/doctors";
 import { addDiagnosticFile, addDiagnosticResult, diagnosticForPrint, getDiagnosticFile, listDiagnosticResults, markDiagnosticError } from "@/server/emr/diagnostics";
 import { addPrescription } from "@/server/emr/prescriptions";
 import { getEncounter, setNextVisit, startVisit } from "@/server/emr/record";
 import { registerPatient } from "@/server/patients/patients";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 async function staff(o: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: string[]) {
-  const email = `${uniq("s")}@clinic.test`;
-  const inv = await inviteStaff(o.ctx, { fullName: `Synthetic ${roleKeys.join(" ")}`, email, roleKeys }, META);
-  await acceptInvitation(inv.token, { fullName: "Synthetic Staff", password: PASSWORD, confirmPassword: PASSWORD }, META);
-  const m = (await listStaff(o.ctx)).members.find((x) => x.user.email === email)!;
-  return { membershipId: m.id, ctx: await clinicContext(email, o.slug) };
+  const login = uniq("s");
+  await addStaffMember(o.ctx, { fullName: `Synthetic ${roleKeys.join(" ")}`, username: login, roleKeys, password: PASSWORD }, META);
+  const m = (await listStaff(o.ctx)).members.find((x) => x.user.username === login)!;
+  return { membershipId: m.id, ctx: await clinicContext(login, o.slug) };
 }
 
 // Minimal valid file headers (synthetic content).

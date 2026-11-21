@@ -40,10 +40,10 @@ Kichik kabinetga keraksiz bo'limlar ko'rinmaydi. Kerak bo'lsa keyin yoqiladi.
 | **Kadrlar** | Xodim profili, litsenziyalar, ta'tillar (shifokor ta'tilda bo'lsa, unga yozib bo'lmaydi) |
 | **Stomatologiya** | Tish formulasi (FDI), har bir tish tarixi |
 | **Bemor portali** | Bemor o'zi kiradi: qabullar, natijalar, hisoblar |
-| **Bildirishnomalar** | Qabulni eslatish, natija tayyorligi (email; SMS hali simulyatsiya) |
+| **Bildirishnomalar** | Qabulni eslatish, natija tayyorligi (Telegram bot; SMS hali simulyatsiya) |
 | **Rollar** | Har bir xodimga o'z huquqlari; o'zingiz yangi rol yaratishingiz mumkin |
 | **Audit jurnali** | Kim, qachon, nima qildi — o'zgartirib bo'lmaydigan zanjir |
-| **Xavfsizlik** | Login va parol, ixtiyoriy Telegram orqali kirish, urinishlar chegarasi |
+| **Xavfsizlik** | Login va parol (kamida 8 belgi), urinishlar chegarasi |
 
 **Tayyor rollar:** Klinika egasi, Klinika administratori, Filial rahbari, Registrator, Shifokor, Bosh shifokor, Hamshira, Laboratoriya xodimi, Kassir, Buxgalter, Farmatsevt/ombor, Kadrlar mutaxassisi.
 
@@ -83,7 +83,7 @@ npm run db:seed
 ```
 Birinchi platforma administratori (o'zingiz):
 ```bash
-npm run admin:create -- --email siz@pochta.uz --name "Ismingiz" --role SUPER_ADMIN
+npm run admin:create -- --login admin --name "Ismingiz" --role SUPER_ADMIN
 ```
 Parolni so'raydi: kamida 12 belgi, harf va raqam bo'lishi kerak.
 
@@ -141,10 +141,6 @@ Qo'lda o'rnatish (agar kerak bo'lsa):
 
 Ilova alohida oynada, belgisi bilan ochiladi. Server bilan aloqa bo'lmasa, oflayn sahifani ko'rsatadi.
 
-### 4.3. Email
-SMTP sozlanmagan bo'lsa, xatlar (taklif havolalari, parol tiklash) server kompyuterdagi **`.dev-mailbox`** papkasiga fayl bo'lib tushadi. Faylni brauzerda ochib, havolani kerakli odamga yuborasiz.
-Haqiqiy email uchun `.env` ga `SMTP_URL=smtps://login:parol@smtp.server.uz:465` qo'shing va `npm run app:stop`, `npm run app` qiling.
-
 ### 4.4. IP manzil o'zgarsa yoki Wi-Fi uzilsa
 Server buni o'zi sezadi (10–20 soniyada) va yangi IP uchun sertifikatni ishlayotgan holda yangilaydi. Sertifikat markazi o'zgarmaydi, shuning uchun qurilmalarga qayta o'rnatish shart emas — faqat yangi manzilni oching (ulanish sahifasi yangisini ko'rsatadi). Manzil o'zgarmasligi uchun routerda server kompyuterga **doimiy IP** (DHCP reservation) bering.
 
@@ -168,21 +164,20 @@ Server buni o'zi sezadi (10–20 soniyada) va yangi IP uchun sertifikatni ishlay
 Hech qaysi boshqaruv darajasi (SuperAdmin ham) bemorlarning tibbiy ma'lumotlarini ko'rmaydi — bu klinika ichida qoladi. Har bir sahifaning chap yuqorisida kim ekaningiz yozilgan: "SuperAdmin · bosh boshqaruv", "Tarmoq: …" yoki klinika nomi va "Klinika egasi (Admin)".
 
 ### 5.1. Siz (SuperAdmin): klinika yaratish — bir bosishda tayyor
-1. Ish stolidagi **ITop Med Boshqaruv** yorlig'ini oching (yoki `/admin/login`) va email + parol bilan kiring.
+1. Ish stolidagi **ITop Med Boshqaruv** yorlig'ini oching (yoki `/admin/login`) va login + parol bilan kiring.
 2. **Klinikalar → Yangi klinika:**
    - **Klinika turi:** Xususiy kabinet, Stomatologiya, Diagnostika, Ko'p tarmoqli klinika yoki Boshqa. Bo'limlar shu turga qarab yoqiladi (masalan, stomatologiyaga tish formulasi, kichik kabinet esa sodda qoladi).
    - **Asosiy yo'nalish:** masalan Kardiologiya — EKG, exokardiografiya, Xolter va boshqa xizmatlar o'zi qo'shiladi.
    - **Egasi o'zi ham shifokor** va/yoki **registratura va kassani ham o'zi qiladi** — kichik kabinet uchun belgilang.
-   - **Klinika egasi:** ism, email va **kirish usuli**: "Parolni hozir o'zim belgilayman" (kuchli parol tayyorlab qo'yiladi — yozib oling yoki o'zingiznikini kiriting) yoki "Emailga taklif yuborish".
+   - **Klinika egasi:** ism, **login** va **parol** (kuchli parol tayyorlab qo'yiladi — yozib oling yoki o'zingiznikini kiriting). Email kerak emas.
    - **Tarmoq** (bo'lsa) — klinika franshizaga tegishli bo'lsa.
-3. "Klinikani yaratish" → **"Klinika tayyor"** va kirish manzili chiqadi. Email va parolni egaga o'zingiz bering. Parol keyin hech qayerda ko'rsatilmaydi va saqlanmaydi (faqat shifrlangan xesh).
+3. "Klinikani yaratish" → **"Klinika tayyor"** va kirish manzili chiqadi. Login va parolni egaga o'zingiz bering. Parol keyin hech qayerda ko'rsatilmaydi va saqlanmaydi (faqat shifrlangan xesh).
 4. Ega birinchi marta kirganda klinika sohasiga moslab **o'zi to'liq sozlanadi**: xizmatlar, hujjat va yozuv shablonlari, egaga shifokor roli va Du–Ju 9:00–18:00 jadval. Egaga faqat xizmatlarga narx qo'yish qoladi.
-5. Agar bu email bilan hisob avvaldan bo'lsa, uning paroli o'zgartirilmaydi: egasi o'z paroli bilan kirib taklifni qabul qiladi.
 
 ### 5.1a. Tarmoqlar (franshiza) va tarmoq adminlari
 1. **Tarmoqlar → Yangi tarmoq:** nom, mas'ul shaxs, telefon.
 2. Tarmoq sahifasida: **mavjud klinikani qo'shish** yoki **"Tarmoqda yangi klinika"**.
-3. **Tarmoq admini tayinlash:** ism, email, parol (yoki emailga taklif). U `/admin` ga kiradi va faqat o'z tarmog'ini ko'radi: yangi klinika yaratadi (avtomatik o'z tarmog'ida), to'xtatadi, bo'limlarni yoqadi, egalarga taklifni qayta yuboradi.
+3. **Tarmoq admini tayinlash:** ism, login, parol. U `/admin` ga kiradi va faqat o'z tarmog'ini ko'radi: yangi klinika yaratadi (avtomatik o'z tarmog'ida), to'xtatadi, bo'limlarni yoqadi, egalarga taklifni qayta yuboradi.
 4. Klinikani tarmoqdan chiqarsangiz, tarmoq admini uni darhol ko'rmay qoladi.
 
 **Platforma xodimlari → Xodimni taklif qilish:** o'z jamoangiz (Qo'llab-quvvatlash, Hisob-kitob, Faqat ko'rish va h.k.). Tarmoq adminlari tarmoq sahifasidan tayinlanadi.
@@ -202,21 +197,10 @@ Boshqa yo'nalishlar uchun ham tayyor xizmatlar to'plami bor: pediatriya, ginekol
 
 ---
 
-### 5.3. Kirish: login va parol yoki Telegram
-Har bir xodim **login va parol** bilan kiradi (masalan, `dr.karimov`). Login hisob yaratilganda tanlanadi. 2026-11-19 gacha yaratilgan hisoblarda login — emailning o'zi. Ikki bosqichli tekshiruv (Google Authenticator) yo'q.
+### 5.3. Kirish: login va parol
+Har bir xodim **login va parol** bilan kiradi (masalan, `dr.karimov`). Login hisob yaratilganda tanlanadi. Ikki bosqichli tekshiruv (Google Authenticator) yo'q.
 
-**Telegram orqali kirish** (ixtiyoriy, faqat internetdagi serverda):
-1. Bot tokenidan boshqa hech narsa kerak emas. @BotFather → `/setdomain` → botni tanlang → domenni yozing. Bitta botga bitta domen beriladi:
-   - markaziy bot @ITopMedBot (`TELEGRAM_BOT_TOKEN`, `/login` sahifasi barcha klinikalar uchun) → `itopmed.itoppos.uz`;
-   - har bir klinikaning o'z boti (SuperAdmin yaratadi va konsolda ulaydi; `/login/<klinika>` va bot ichidagi ilova) → `itopmed.itoppos.uz`;
-   - konsol boti (`TELEGRAM_ADMIN_BOT_TOKEN`, `admin.itoppos.uz`) → `admin.itoppos.uz`.
-   `/login` sahifasida klinika manzili so'ralmaydi: tizim xodimning klinikasini hisobidan o'zi topadi.
-2. Xodim avval login va parol bilan kiradi, **Hisob xavfsizligi** sahifasida **«Telegramni ulash»** ni bosadi.
-3. Keyin kirish sahifasidagi **«Telegram orqali kirish»** tugmasi bilan parolsiz kiradi.
-
-**Parolni unutsa:** kirish sahifasida «Parolni unutdingizmi?» → faqat loginini yozadi (klinika manzili kerak emas) → klinika boti Telegram'iga yangi parol o'rnatish havolasini yuboradi (30 daqiqa amal qiladi). Email kerak emas. Telegram ulanmagan bo'lsa, klinika administratori «Xodimlar» sahifasida yangi parol o'rnatib beradi.
-
-Klinika ichidagi mahalliy o'rnatishda (`192.168.x.x`) Telegram ishlamaydi — Telegram faqat internetdagi domenni qabul qiladi. U yerda faqat login va parol.
+**Kirish faqat login va parol bilan.** Telegram orqali kirish yo'q. Xodim parolni unutsa, klinika administratori **Xodimlar** sahifasida yangi parol beradi (kamida 8 belgi).
 
 ## 6. Kundalik ish (rollar bo'yicha)
 
@@ -327,7 +311,6 @@ Migratsiyalar `npm run local` ichida avtomatik qo'llanadi. Yangilashdan oldin `n
 | "Too many attempts" | 5–15 daqiqa kuting (xavfsizlik chegarasi) |
 | Hisob bloklangan | 5 marta noto'g'ri parol: 15 daqiqa kuting yoki "Parolni unutdingizmi" (klinika xodimlari). Platforma xodimlari parolini Super administrator yoki `admin:create` buyrug'i bilan tiklaydi |
 | Parol esdan chiqqan | Klinika egasi yoki administrator xodim sahifasida yangi parol beradi (Telegram bog'lanishi ham uziladi) |
-| Taklif xati kelmadi | SMTP yo'q: `.dev-mailbox` papkasini oching (4.3) |
 | Xizmatga hisob chiqmaydi | Xizmatga narx qo'yilmagan |
 | Shifokorga qabul yozib bo'lmaydi | Jadval yo'q, ta'tilda yoki vaqt band |
 | `npm run local` "OpenSSL was not found" | Git for Windows'ni o'rnating |

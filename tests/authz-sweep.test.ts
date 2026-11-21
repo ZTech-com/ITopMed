@@ -17,7 +17,7 @@ function walk(dir: string): string[] {
 const rel = (f: string) => path.relative(ROOT, f).split(path.sep).join("/");
 const files = walk(ROOT);
 
-/** Pages anyone may open: sign-in, invitations, password reset, the landing page. */
+/** Pages anyone may open: sign-in, "ask your Administrator", the landing page. */
 const PUBLIC_PAGES = new Set([
   "page.tsx",
   "(public)/forgot-password/page.tsx",
@@ -25,13 +25,9 @@ const PUBLIC_PAGES = new Set([
   "(public)/connect/page.tsx",
   // Fresh local installation only, while no account exists (see completeFirstRun).
   "(public)/welcome/page.tsx",
-  "(public)/reset-password/[token]/page.tsx",
   // Waiting-room TV: no user on a screen; the secret link (hash stored, revocable) is the credential.
   "(public)/tv/[token]/page.tsx",
-  // Invited ITop Med employee has no account yet; the single-use token is the credential.
-  "admin/(auth)/invite/[token]/page.tsx",
   // Telegram Mini App entry: identity comes from Telegram's signed launch data, verified by /auth/telegram/webapp.
-  "(public)/tg/page.tsx",
   "(public)/tg/[slug]/page.tsx",
   // A clinic's own sign-in page (its bot's Telegram button + login form).
   "(public)/login/[slug]/page.tsx",
@@ -40,14 +36,10 @@ const PUBLIC_PAGES = new Set([
 /** Actions that run before anyone is signed in (they authenticate instead). */
 const PUBLIC_ACTIONS = new Set([
   "admin/actions.ts:adminLoginAction",
-  "admin/actions.ts:acceptStaffInvitationAction", // token-authenticated account creation
   "admin/actions.ts:adminLogoutAction",
   "first-run-actions.ts:firstRunAction", // no account yet: allowed only with zero accounts, LOCAL_MODE, from this computer
   "clinic-actions.ts:clinicLoginAction",
   "clinic-actions.ts:clinicLogoutAction",
-  "clinic-actions.ts:acceptInvitationAction",
-  "clinic-actions.ts:forgotPasswordAction",
-  "clinic-actions.ts:resetPasswordAction",
   "portal-actions.ts:portalLogoutAction",
   "actions/preferences.ts:setThemeAction",
 ]);

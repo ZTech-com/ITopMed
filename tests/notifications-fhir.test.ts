@@ -3,7 +3,7 @@ import path from "node:path";
 import pg from "pg";
 import { describe, expect, it } from "vitest";
 import { bookAppointment, cancelAppointment, registerWalkIn } from "@/server/appointments/appointments";
-import { inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
+import { addStaffMember, listBranches, listStaff } from "@/server/clinic/admin";
 import { addScheduleBlock, saveDoctorProfile } from "@/server/clinic/doctors";
 import { createService } from "@/server/clinic/resources";
 import { exportPatientFhir } from "@/server/emr/fhir";
@@ -14,18 +14,16 @@ import { recordConsent, registerPatient, withdrawConsent } from "@/server/patien
 import { activatePortalAccount, portalTenant } from "@/server/portal/auth";
 import { issuePortalCode } from "@/server/portal/staff";
 import { addDays, localToInstant, todayIn } from "@/server/scheduling/time";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 const TZ = "Asia/Tashkent";
 const PW = "Bemor-Parol-2026x";
 
 async function staff(o: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: string[]) {
-  const email = `${uniq("s")}@clinic.test`;
-  const inv = await inviteStaff(o.ctx, { fullName: `Synthetic ${roleKeys[0]}`, email, roleKeys }, META);
-  await acceptInvitation(inv.token, { fullName: `Synthetic ${roleKeys[0]}`, password: PASSWORD, confirmPassword: PASSWORD }, META);
-  const m = (await listStaff(o.ctx)).members.find((x) => x.user.email === email)!;
-  return { email, membershipId: m.id, ctx: await clinicContext(email, o.slug) };
+  const login = uniq("s");
+  await addStaffMember(o.ctx, { fullName: `Synthetic ${roleKeys[0]}`, username: login, roleKeys, password: PASSWORD }, META);
+  const m = (await listStaff(o.ctx)).members.find((x) => x.user.username === login)!;
+  return { login, membershipId: m.id, ctx: await clinicContext(login, o.slug) };
 }
 
 let n = 0;
@@ -36,11 +34,11 @@ async function setup() {
   const doctor = await staff(a, ["doctor"]);
   const profileId = await saveDoctorProfile(a.ctx, doctor.membershipId, { specialty: "therapy", defaultSlotMinutes: 20, acceptsOnlineBooking: false }, META);
   for (let d = 1; d <= 7; d++) await addScheduleBlock(a.ctx, profileId, { weekday: d, start: "00:00", end: "24:00", branchId: branch!.id }, META);
-  const doctorCtx = await clinicContext(doctor.email, a.slug);
+  const doctorCtx = await clinicContext(doctor.login, a.slug);
   const phone = `+99890${String(1000000 + ++n * 7919).slice(-7)}`;
   const p = await registerPatient(
     reception.ctx,
-    { lastName: "Sintetik", firstName: `Xabar${n}`, birthDate: "1990-02-03", sex: "FEMALE", phone, email: `bemor${n}-${uniq("x")}@patient.test` },
+    { lastName: "Sintetik", firstName: `Xabar${n}`, birthDate: "1990-02-03", sex: "FEMALE", phone },
     { confirmNotDuplicate: true },
     META,
   );
@@ -69,23 +67,19 @@ describe("notifications: outbox, consent and delivery", () => {
     expect(await s.log()).toEqual([]);
 
     await s.consent("SMS_REMINDERS");
-    await s.consent("EMAIL_NOTIFICATIONS");
+    // There is no email channel any more: an email consent cannot even be recorded.
+    await expect(s.consent("EMAIL_NOTIFICATIONS")).rejects.toThrow();
     const startsAt = s.at(3, "10:00");
     const appt = await s.book(startsAt);
     let rows = await s.log();
-    expect(rows.map((r) => `${r.kind}:${r.channel}:${r.status}`).sort()).toEqual([
-      "APPOINTMENT_BOOKED:EMAIL:PENDING",
-      "APPOINTMENT_BOOKED:SMS:PENDING",
-      "APPOINTMENT_REMINDER:EMAIL:PENDING",
-      "APPOINTMENT_REMINDER:SMS:PENDING",
-    ]);
+    expect(rows.map((r) => `${r.kind}:${r.channel}:${r.status}`).sort()).toEqual(["APPOINTMENT_BOOKED:SMS:PENDING", "APPOINTMENT_REMINDER:SMS:PENDING"]);
     const reminder = rows.find((r) => r.kind === "APPOINTMENT_REMINDER")!;
     expect(reminder.dueAt.getTime()).toBe(startsAt.getTime() - 24 * 3_600_000);
     expect(rows.every((r) => r.subjectId === appt)).toBe(true);
 
-    expect(await processDueNotifications(s.a.tenantId)).toEqual({ sent: 2, failed: 0, skipped: 0, retried: 0 });
+    expect(await processDueNotifications(s.a.tenantId)).toEqual({ sent: 1, failed: 0, skipped: 0, retried: 0 });
     rows = await s.log();
-    expect(rows.filter((r) => r.status === "SENT").map((r) => r.transport).sort()).toEqual(["dev-mailbox", "sms-dev-outbox"]);
+    expect(rows.filter((r) => r.status === "SENT").map((r) => r.transport)).toEqual(["sms-dev-outbox"]);
     const sms = smsFilesFor(s.phone).join("\n");
     expect(sms).toContain("SIMULATED SMS");
     expect(sms).toContain(s.a.ctx.tenant.name);
@@ -94,8 +88,8 @@ describe("notifications: outbox, consent and delivery", () => {
     // Reminders go out when due — and never twice, even with parallel workers.
     const later = new Date(reminder.dueAt.getTime() + 60_000);
     const [r1, r2] = await Promise.all([processDueNotifications(s.a.tenantId, { now: later }), processDueNotifications(s.a.tenantId, { now: later })]);
-    expect(r1.sent + r2.sent).toBe(2);
-    expect((await s.log()).filter((r) => r.status === "SENT")).toHaveLength(4);
+    expect(r1.sent + r2.sent).toBe(1);
+    expect((await s.log()).filter((r) => r.status === "SENT")).toHaveLength(2);
   });
 
   it("re-checks relevance and consent at send time; cancellations notify; settings switch kinds off", async () => {

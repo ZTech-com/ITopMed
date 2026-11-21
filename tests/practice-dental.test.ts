@@ -2,7 +2,7 @@ import pg from "pg";
 import { describe, expect, it } from "vitest";
 import { registerWalkIn } from "@/server/appointments/appointments";
 import { addInvoiceLine, createInvoice } from "@/server/billing/billing";
-import { inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
+import { addStaffMember, listBranches, listStaff } from "@/server/clinic/admin";
 import { doctorSlots, saveDoctorProfile } from "@/server/clinic/doctors";
 import { completeSetup, listClinicModules, setClinicModule } from "@/server/clinic/practice";
 import { listServices } from "@/server/clinic/resources";
@@ -14,21 +14,19 @@ import { registerPatient } from "@/server/patients/patients";
 import { portalTenant } from "@/server/portal/auth";
 import { addDays, isoWeekday, todayIn } from "@/server/scheduling/time";
 import { changeSubscriptionPlan } from "@/server/tenancy/provisioning";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 const TZ = "Asia/Tashkent";
 
 async function staff(o: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: string[]) {
-  const email = `${uniq("s")}@clinic.test`;
-  const inv = await inviteStaff(o.ctx, { fullName: `Synthetic ${roleKeys[0]}`, email, roleKeys }, META);
-  await acceptInvitation(inv.token, { fullName: `Synthetic ${roleKeys[0]}`, password: PASSWORD, confirmPassword: PASSWORD }, META);
-  const m = (await listStaff(o.ctx)).members.find((x) => x.user.email === email)!;
-  return { email, membershipId: m.id, ctx: await clinicContext(email, o.slug) };
+  const login = uniq("s");
+  await addStaffMember(o.ctx, { fullName: `Synthetic ${roleKeys[0]}`, username: login, roleKeys, password: PASSWORD }, META);
+  const m = (await listStaff(o.ctx)).members.find((x) => x.user.username === login)!;
+  return { login, membershipId: m.id, ctx: await clinicContext(login, o.slug) };
 }
 
 /** Fresh contexts reflect module changes (permissions are resolved per request). */
-const fresh = (email: string, slug: string) => clinicContext(email, slug);
+const fresh = (login: string, slug: string) => clinicContext(login, slug);
 const SETUP = { applyModules: true, addStarterServices: true, ownerIsDoctor: false, specialty: "", weekdaySchedule: false };
 
 describe("modules are enforced", () => {
@@ -41,12 +39,12 @@ describe("modules are enforced", () => {
     expect(lab.ctx.permissions.has("lab.read")).toBe(true);
 
     await setClinicModule(a.ctx, "laboratory", false, META);
-    const labOff = await fresh(lab.email, a.slug);
+    const labOff = await fresh(lab.login, a.slug);
     expect([...labOff.permissions].filter((p) => p.startsWith("lab."))).toEqual([]);
     await expect(labWorklist(labOff, ["ORDERED"])).rejects.toThrow("errors.forbidden");
     expect(labOff.permissions.has("patients.read")).toBe(true); // unrelated permissions stay
     await setClinicModule(a.ctx, "laboratory", true, META);
-    expect((await fresh(lab.email, a.slug)).permissions.has("lab.read")).toBe(true);
+    expect((await fresh(lab.login, a.slug)).permissions.has("lab.read")).toBe(true);
 
     // Core modules cannot be switched; only owners/admins switch modules.
     await expect(setClinicModule(a.ctx, "emr", false, META)).rejects.toThrow("errors.invalidInput");
@@ -55,7 +53,7 @@ describe("modules are enforced", () => {
     // Plan limits: on the starter plan, HR can be switched off but not back on.
     await changeSubscriptionPlan(actor, a.tenantId, "starter", META);
     await setClinicModule(a.ctx, "hr", false, META);
-    await expect(listStaffHr(await fresh(hr.email, a.slug))).rejects.toThrow("errors.forbidden");
+    await expect(listStaffHr(await fresh(hr.login, a.slug))).rejects.toThrow("errors.forbidden");
     await expect(setClinicModule(a.ctx, "hr", true, META)).rejects.toThrow("errors.moduleNotInPlan");
     const modules = await listClinicModules(a.ctx);
     expect(modules.find((m) => m.key === "hr")).toEqual({ key: "hr", enabled: false, inPlan: false });
@@ -80,7 +78,7 @@ describe("setup assistant", () => {
     expect(r.servicesAdded).toBe(2);
     expect(r.ownerDoctorProfileId).toBeTruthy();
 
-    const owner = await fresh(a.ownerEmail, a.slug);
+    const owner = await fresh(a.ownerLogin, a.slug);
     expect(owner.roleKeys.sort()).toEqual(["cashier", "clinic_owner", "doctor", "receptionist"]);
     for (const p of ["patients.create", "appointments.manage", "billing.payment", "cash.shift"]) expect(owner.permissions.has(p as never)).toBe(true);
     expect(owner.permissions.has("emr.write")).toBe(true);
@@ -116,7 +114,7 @@ describe("dental chart", () => {
     const r = await completeSetup(a.ctx, { ...SETUP, practiceType: "DENTAL" }, META);
     expect(r.modulesOn).toContain("dental");
     expect(r.modulesOn).not.toContain("laboratory");
-    expect((await listServices(await fresh(a.ownerEmail, a.slug))).map((s) => s.code).filter((c) => c.startsWith("DENT-")).sort()).toEqual(["DENT-CLEAN", "DENT-EXAM", "DENT-EXT", "DENT-FILL", "DENT-RCT", "DENT-XRAY"]);
+    expect((await listServices(await fresh(a.ownerLogin, a.slug))).map((s) => s.code).filter((c) => c.startsWith("DENT-")).sort()).toEqual(["DENT-CLEAN", "DENT-EXAM", "DENT-EXT", "DENT-FILL", "DENT-RCT", "DENT-XRAY"]);
 
     const [branch] = await listBranches(a.ctx);
     const reception = await staff(a, ["receptionist"]);
@@ -125,7 +123,7 @@ describe("dental chart", () => {
     const p = await registerPatient(reception.ctx, { lastName: "Sintetik", firstName: "Tish", birthDate: "1995-05-05", sex: "FEMALE" }, { confirmNotDuplicate: true }, META);
     if (!p.ok) throw new Error("patient");
     const appt = await registerWalkIn(reception.ctx, { patientId: p.id, doctorProfileId: profileId, branchId: branch!.id }, META);
-    const doc = await fresh(dentist.email, a.slug);
+    const doc = await fresh(dentist.login, a.slug);
     const enc = await startVisit(doc, appt, META);
 
     await recordTooth(doc, enc, { tooth: "36", condition: "CARIES", surfaces: ["O", "D", "O"] }, META);
@@ -145,10 +143,10 @@ describe("dental chart", () => {
     // Another doctor, the front desk and a switched-off module cannot record.
     const other = await staff(a, ["doctor"]);
     await saveDoctorProfile(a.ctx, other.membershipId, { specialty: "dentistry", defaultSlotMinutes: 30, acceptsOnlineBooking: false }, META);
-    await expect(recordTooth(await fresh(other.email, a.slug), enc, { tooth: "11", condition: "CARIES" }, META)).rejects.toThrow(/errors\.(notYourPatient|noCareRelationship)/);
+    await expect(recordTooth(await fresh(other.login, a.slug), enc, { tooth: "11", condition: "CARIES" }, META)).rejects.toThrow(/errors\.(notYourPatient|noCareRelationship)/);
     await expect(recordTooth(reception.ctx, enc, { tooth: "11", condition: "CARIES" }, META)).rejects.toThrow();
     await setClinicModule(a.ctx, "dental", false, META);
-    const docOff = await fresh(dentist.email, a.slug);
+    const docOff = await fresh(dentist.login, a.slug);
     await expect(recordTooth(docOff, enc, { tooth: "11", condition: "CARIES" }, META)).rejects.toThrow("errors.moduleDisabled");
     expect((await getEncounter(docOff, enc, META)).dental).toBeNull();
 
@@ -174,7 +172,7 @@ describe("specialty presets (e.g. a one-room cardiology office)", () => {
     const actor = await platformActor();
     const a = await clinicWithOwner(actor);
     const r = await completeSetup(a.ctx, { ...SETUP, practiceType: "SOLO_PRACTICE", focusSpecialty: "cardiology" }, META);
-    const owner = await fresh(a.ownerEmail, a.slug);
+    const owner = await fresh(a.ownerLogin, a.slug);
     const codes = (await listServices(owner)).map((s) => s.code);
     for (const c of ["CONSULT", "CARD-CONSULT", "ECG", "CARD-ECHO", "CARD-HOLTER", "CARD-ABPM", "CARD-STRESS"]) expect(codes).toContain(c);
     expect(r.servicesAdded).toBe(8);

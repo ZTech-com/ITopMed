@@ -9,7 +9,7 @@ import { PATIENT_SESSION_ABSOLUTE_MS } from "../portal/auth";
  * Session cookies: HttpOnly, Secure (production), SameSite, host-only.
  * In production the `__Host-` prefix forbids Domain and enforces Secure + Path=/.
  * The platform console uses SameSite=Strict; clinic workspaces use Lax so
- * that links opened from email/messengers keep the user signed in.
+ * that links opened from messengers (Telegram) keep the user signed in.
  */
 export const adminCookieName = () => (isProduction() ? "__Host-itm_admin" : "itm_admin");
 export const clinicCookieName = () => (isProduction() ? "__Host-itm_session" : "itm_session");
@@ -68,21 +68,4 @@ export async function clearAdminCookie() {
 
 export async function clearClinicCookie() {
   (await cookies()).delete(clinicCookieName());
-}
-
-/**
- * Telegram LINK flow state (encrypted, 10 minutes): who is linking, set by
- * /auth/telegram/start and taken by /auth/telegram/callback.
- */
-export const telegramFlowCookieName = () => (isProduction() ? "__Host-itm_tg" : "itm_tg");
-
-export async function setTelegramFlowCookie(sealed: string, maxAgeS: number) {
-  (await cookies()).set(telegramFlowCookieName(), sealed, { httpOnly: true, secure: isProduction(), sameSite: "lax", path: "/", maxAge: maxAgeS });
-}
-
-export async function takeTelegramFlowCookie() {
-  const store = await cookies();
-  const value = store.get(telegramFlowCookieName())?.value;
-  store.delete(telegramFlowCookieName());
-  return value;
 }

@@ -7,19 +7,16 @@ import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
 import type { FormState } from "@/lib/form-state";
 import { loginSchema } from "@/lib/validation";
 import { toFormState } from "@/server/actions-util";
-import { loginClinicUser, logoutClinic, resolveClinic, unlinkClinicTelegram, validateClinicSession } from "@/server/auth/clinic-auth";
+import { loginClinicUser, logoutClinic, resolveClinic, validateClinicSession } from "@/server/auth/clinic-auth";
 import { homeForRoles } from "@/server/auth/landing";
 import { clearClinicCookie, readClinicToken, setClinicSessionCookie } from "@/server/auth/cookies";
 import { requireClinic } from "@/server/auth/guards";
-import { createBranch, createStaffWithPassword, inviteStaff, updateClinicSettings } from "@/server/clinic/admin";
+import { addStaffMember, createBranch, updateClinicSettings } from "@/server/clinic/admin";
 import { requestMeta } from "@/server/http";
-import { acceptInvitation, acceptInvitationAsExistingUser } from "@/server/tenancy/invitations";
 import { safeNext } from "@/lib/safe-next";
-import { requestTelegramPasswordReset, resetPassword } from "@/server/auth/password-reset";
 import { createRole, deleteRole, updateRole } from "@/server/clinic/roles";
 import { setMemberPassword, setMemberStatus, updateMemberAccess, type MemberStatusAction } from "@/server/clinic/members";
 import { decideGrant, type GrantDecision } from "@/server/support/access";
-import { getClinicPrincipal, requireClinicUser } from "@/server/auth/guards";
 
 async function applyLocale(token: string) {
   // Priority: saved account preference → language chosen in this browser → clinic default.
@@ -44,32 +41,10 @@ export async function clinicLoginAction(_: FormState, fd: FormData): Promise<For
   redirect(ctx ? homeForRoles(ctx.tenant.slug, ctx.roleKeys) : (safeNext(fd.get("next")) ?? "/clinics"));
 }
 
-/** Removes the Telegram sign-in from the person's own account. */
-export async function unlinkTelegramAction(): Promise<FormState> {
-  const p = await requireClinicUser();
-  await unlinkClinicTelegram(p, await requestMeta());
-  revalidatePath("/account/security");
-  return { ok: true, message: "security.telegramUnlinked", nonce: Date.now() };
-}
-
 export async function clinicLogoutAction() {
   await logoutClinic(await readClinicToken());
   await clearClinicCookie();
   redirect("/login");
-}
-
-export async function acceptInvitationAction(_: FormState, fd: FormData): Promise<FormState> {
-  const token = String(fd.get("token") ?? "");
-  try {
-    await acceptInvitation(
-      token,
-      { fullName: fd.get("fullName"), username: fd.get("username"), password: fd.get("password"), confirmPassword: fd.get("confirmPassword") },
-      await requestMeta(),
-    );
-  } catch (e) {
-    return toFormState(e, fd);
-  }
-  redirect("/login?activated=1");
 }
 
 // ───────────── Clinic administration ─────────────
@@ -98,62 +73,21 @@ export async function createBranchAction(_: FormState, fd: FormData): Promise<Fo
   return { ok: true, message: "clinic.branches.created", nonce: Date.now() };
 }
 
-export async function inviteStaffAction(_: FormState, fd: FormData): Promise<FormState> {
+export async function addStaffAction(_: FormState, fd: FormData): Promise<FormState> {
   const slug = String(fd.get("$slug"));
   const ctx = await requireClinic(slug, "staff.manage");
   try {
-    const input = { fullName: fd.get("fullName"), email: fd.get("email"), roleKeys: fd.getAll("roleKeys") };
-    if (fd.get("access") !== "invite") {
-      const username = await createStaffWithPassword(ctx, { ...input, username: fd.get("username"), password: fd.get("password") }, await requestMeta());
-      revalidatePath(`/c/${slug}/staff`);
-      // The password is not echoed back: the administrator has just typed or copied it.
-      return { ok: true, message: "clinic.staff.created", messageValues: { username }, nonce: Date.now() };
-    }
-    const r = await inviteStaff(ctx, input, await requestMeta());
+    const username = await addStaffMember(
+      ctx,
+      { fullName: fd.get("fullName"), username: fd.get("username"), password: fd.get("password"), roleKeys: fd.getAll("roleKeys") },
+      await requestMeta(),
+    );
     revalidatePath(`/c/${slug}/staff`);
-    // The invitation token is delivered only by email and never returned to the browser.
-    return { ok: true, message: r.delivered ? "clinic.staff.invited" : "clinic.staff.invitedNoEmail", nonce: Date.now() };
+    // The password is not echoed back: the administrator has just typed or copied it.
+    return { ok: true, message: "clinic.staff.created", messageValues: { username }, nonce: Date.now() };
   } catch (e) {
     return toFormState(e, fd);
   }
-}
-
-// ───────────── Password reset ─────────────
-
-export async function forgotPasswordAction(_: FormState, fd: FormData): Promise<FormState> {
-  // Same answer whether or not the account exists (no account enumeration).
-  await requestTelegramPasswordReset(String(fd.get("username") ?? ""), await requestMeta());
-  return { ok: true, message: "auth.resetTelegramSent", nonce: Date.now() };
-}
-
-export async function resetPasswordAction(_: FormState, fd: FormData): Promise<FormState> {
-  try {
-    await resetPassword(String(fd.get("token") ?? ""), { password: fd.get("password"), confirmPassword: fd.get("confirmPassword") }, await requestMeta());
-  } catch (e) {
-    return toFormState(e);
-  }
-  await clearClinicCookie();
-  redirect("/login?reset=1");
-}
-
-// ───────────── Invitations for existing accounts ─────────────
-
-export async function acceptExistingInvitationAction(_: FormState, fd: FormData): Promise<FormState> {
-  const p = await requireClinicUser();
-  let slug: string;
-  try {
-    ({ slug } = await acceptInvitationAsExistingUser(String(fd.get("token") ?? ""), p, await requestMeta()));
-  } catch (e) {
-    return toFormState(e);
-  }
-  redirect(`/c/${slug}`);
-}
-
-export async function switchAccountAction(fd: FormData) {
-  const next = safeNext(fd.get("next"));
-  if (await getClinicPrincipal()) await logoutClinic(await readClinicToken());
-  await clearClinicCookie();
-  redirect(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
 }
 
 // ───────────── Roles ─────────────

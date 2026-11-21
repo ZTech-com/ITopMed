@@ -1,15 +1,15 @@
 import "server-only";
 import { z } from "zod";
-import { branchSchema, clinicSettingsSchema, emailSchema, personNameSchema, usernameSchema } from "@/lib/validation";
+import { branchSchema, clinicSettingsSchema, personNameSchema, usernameSchema } from "@/lib/validation";
 import { recordAudit } from "../audit";
 import type { ClinicContext } from "../auth/clinic-auth";
 import type { RequestMeta } from "../auth/platform-auth";
 import type { Permission } from "../authz/permissions";
-import { sequential, withAppContext, type Tx } from "../db";
+import { withAppContext, type Tx } from "../db";
 import { hashIp, randomToken, sha256Hex, uuidv7 } from "../security/crypto";
 import { passwordSchema } from "../security/password";
 import { acceptInvitation } from "../tenancy/invitations";
-import { DomainError, INVITATION_TTL_HOURS, deliverInvitation } from "../tenancy/provisioning";
+import { DomainError } from "../tenancy/provisioning";
 
 export function can(ctx: ClinicContext, permission: Permission) {
   return ctx.permissions.has(permission);
@@ -42,7 +42,6 @@ export async function updateClinicSettings(ctx: ClinicContext, raw: unknown, met
       data: {
         name: input.name,
         legalName: input.legalName ?? null,
-        contactEmail: input.contactEmail ?? null,
         contactPhone: input.contactPhone ?? null,
         address: input.address ?? null,
         defaultLocale: input.defaultLocale,
@@ -76,80 +75,54 @@ export async function listStaff(ctx: ClinicContext) {
   return inClinic(ctx, async (tx) => {
     const members = await tx.membership.findMany({
       where: { tenantId: ctx.tenant.id },
-      include: { user: { select: { id: true, fullName: true, username: true, email: true, status: true, lastLoginAt: true } }, roles: { include: { role: { select: { key: true, name: true } } } } },
+      include: { user: { select: { id: true, fullName: true, username: true, status: true, lastLoginAt: true } }, roles: { include: { role: { select: { key: true, name: true } } } } },
       orderBy: { createdAt: "asc" },
     });
-    const invitations = await tx.invitation.findMany({ where: { tenantId: ctx.tenant.id, status: "PENDING" }, orderBy: { createdAt: "desc" } });
-    return { members, invitations };
+    return { members };
   });
 }
 
-export const inviteStaffSchema = z.object({
+export const addStaffSchema = z.object({
   fullName: personNameSchema,
-  email: emailSchema,
+  username: usernameSchema,
+  password: passwordSchema,
   roleKeys: z.array(z.string().regex(/^[a-z0-9_]{3,48}$/)).min(1, "validation.roleRequired").max(4),
 });
 
-/** Individual accounts only: each staff member gets a personal, expiring invitation. */
-export async function inviteStaff(ctx: ClinicContext, raw: unknown, meta: RequestMeta, opts: { deliver?: boolean } = {}) {
+/**
+ * Creates a staff account right away: the administrator sets the person's
+ * login and first password and hands them over in person; the person then
+ * links Telegram (sign-in and password reset through the clinic's bot). No
+ * email anywhere. Internally an invitation accepted at once on the server, so
+ * RLS and audit are the same as before. The password is never stored in clear
+ * and never shown again.
+ */
+export async function addStaffMember(ctx: ClinicContext, raw: unknown, meta: RequestMeta) {
   require(ctx, "staff.manage");
-  const input = inviteStaffSchema.parse(raw);
+  const input = addStaffSchema.parse(raw);
   if (input.roleKeys.includes("clinic_owner") && !ctx.roleKeys.includes("clinic_owner")) throw new DomainError("errors.forbidden");
+  const taken = await inClinic(ctx, (tx) => tx.$queryRaw<{ taken: boolean }[]>`SELECT app_username_taken(${input.username}) AS taken`);
+  if (taken[0]?.taken) throw new DomainError("errors.usernameTaken");
   const token = randomToken();
   const id = uuidv7();
   await inClinic(ctx, async (tx) => {
-    const pending = await tx.invitation.findFirst({ where: { email: input.email, status: "PENDING" } });
-    if (pending) throw new DomainError("errors.invitationAlreadyPending");
-    const member = await tx.membership.findFirst({ where: { tenantId: ctx.tenant.id, status: "ACTIVE", user: { email: input.email } } });
-    if (member) throw new DomainError("errors.alreadyMember");
     const roles = await tx.role.count({ where: { key: { in: input.roleKeys } } });
     if (roles !== new Set(input.roleKeys).size) throw new DomainError("errors.invalidInput");
     await tx.invitation.create({
       data: {
         id,
         tenantId: ctx.tenant.id,
-        email: input.email,
         fullName: input.fullName,
         roleKeys: input.roleKeys,
         tokenHash: sha256Hex(token),
-        expiresAt: new Date(Date.now() + INVITATION_TTL_HOURS * 3_600_000),
+        expiresAt: new Date(Date.now() + 10 * 60_000),
         invitedByUserId: ctx.principal.user.id,
       },
     });
     await audit(tx, ctx, meta, { action: "invitation.created", entityType: "Invitation", entityId: id, metadata: { roles: input.roleKeys } });
   });
-  const { delivered } = opts.deliver === false ? { delivered: false } : await deliverInvitation({ to: input.email, name: input.fullName, clinicName: ctx.tenant.name, locale: ctx.tenant.defaultLocale, token });
-  // `token` is returned for automated tests only; server actions must never send it to the browser.
-  return { invitationId: id, delivered, token };
-}
-
-export const staffPasswordSchema = z.object({
-  password: passwordSchema,
-  /** The login the administrator chose; without one the email is the login. */
-  username: z.preprocess((v) => (v === "" || v === null ? undefined : v), usernameSchema.optional()),
-});
-
-/**
- * Creates a staff account right away with a password the administrator gives
- * to the person (no email needed: the clinic's own computer, or a server without
- * SMTP). Same checks as an invitation; the password is never stored in clear
- * and never shown again. Only for e-mail addresses without an ITop Med account.
- */
-export async function createStaffWithPassword(ctx: ClinicContext, raw: unknown, meta: RequestMeta) {
-  require(ctx, "staff.manage");
-  const input = inviteStaffSchema.parse(raw);
-  const { password, username = input.email } = staffPasswordSchema.parse(raw);
-  const [exists, taken] = await inClinic(ctx, (tx) =>
-    sequential([
-      tx.$queryRaw<{ id: string }[]>`SELECT id FROM app_auth_lookup_user(${input.email})`,
-      tx.$queryRaw<{ taken: boolean }[]>`SELECT app_username_taken(${username}) AS taken`,
-    ]),
-  );
-  if (exists.length > 0) throw new DomainError("errors.accountExistsUseInvite");
-  if (taken[0]?.taken) throw new DomainError("errors.usernameTaken");
-  const r = await inviteStaff(ctx, input, meta, { deliver: false });
-  await acceptInvitation(r.token, { fullName: input.fullName, username, password, confirmPassword: password }, meta);
-  return username;
+  await acceptInvitation(token, { fullName: input.fullName, username: input.username, password: input.password, confirmPassword: input.password }, meta);
+  return input.username;
 }
 
 export async function listClinicAudit(ctx: ClinicContext, take = 100) {

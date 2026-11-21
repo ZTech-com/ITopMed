@@ -44,7 +44,6 @@ export default async function WelcomePage() {
 
         <p className="pt-2 text-[14px] font-semibold">{t("welcome.accountSection")}</p>
         <TextField name="fullName" label={t("welcome.fullName")} autoComplete="name" required />
-        <TextField name="email" type="email" label={t("auth.email")} hint={t("welcome.emailHint")} autoComplete="email" inputMode="email" required />
         <TextField name="username" label={t("auth.username")} hint={t("welcome.usernameHint")} autoComplete="username" required />
         <TextField name="password" type="password" label={t("auth.password")} hint={t("welcome.passwordHint")} autoComplete="new-password" required />
         <TextField name="confirmPassword" type="password" label={t("welcome.confirmPassword")} autoComplete="new-password" required />

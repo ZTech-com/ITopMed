@@ -98,7 +98,7 @@ export default async function NetworkPage({ params, searchParams }: { params: Pr
 
           <Card>
             <CardHeader title={t("admin.networks.admins")} description={t("admin.networks.adminsHint")} />
-            {network.admins.length === 0 && network.invitations.length === 0 ? (
+            {network.admins.length === 0 ? (
               <EmptyState title={t("admin.networks.noAdmins")} />
             ) : (
               <ul className="divide-y divide-border">
@@ -109,15 +109,6 @@ export default async function NetworkPage({ params, searchParams }: { params: Pr
                       <p className="break-all text-[13px] text-text-2">{a.username}</p>
                     </div>
                     <Badge tone={a.status === "ACTIVE" ? "success" : "neutral"}>{t(`status.${a.status}`)}</Badge>
-                  </li>
-                ))}
-                {network.invitations.map((inv) => (
-                  <li key={inv.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-6">
-                    <div className="min-w-0">
-                      <p className="font-medium">{inv.fullName}</p>
-                      <p className="break-all text-[13px] text-text-2">{inv.email}</p>
-                    </div>
-                    <Badge tone="accent">{t("admin.networks.invited")}</Badge>
                   </li>
                 ))}
               </ul>
@@ -132,18 +123,8 @@ export default async function NetworkPage({ params, searchParams }: { params: Pr
               <Form action={networkAdminAction}>
                 <input type="hidden" name="networkId" value={network.id} />
                 <TextField name="fullName" label={t("admin.staff.colName")} autoComplete="off" required />
-                <TextField name="email" type="email" label={t("auth.email")} autoComplete="off" required />
-                <fieldset className="space-y-2">
-                  <legend className="mb-1 text-[14px] font-medium">{t("admin.clinicNew.ownerAccess")}</legend>
-                  {(["password", "invite"] as const).map((m) => (
-                    <label key={m} className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-control)] border border-border bg-surface-2 p-3 text-[14px] has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
-                      <input type="radio" name="ownerMode" value={m} defaultChecked={m === "password"} className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]" />
-                      <span className="min-w-0 font-medium">{t(m === "password" ? "admin.clinicNew.ownerModePassword" : "admin.clinicNew.ownerModeInvite")}</span>
-                    </label>
-                  ))}
-                </fieldset>
-                <TextField name="username" label={t("admin.clinicNew.ownerUsername")} hint={t("admin.clinicNew.ownerUsernameHint")} autoComplete="off" />
-                <TextField name="password" label={t("admin.clinicNew.ownerPassword")} hint={t("admin.clinicNew.ownerPasswordHint")} defaultValue={suggestPassword()} autoComplete="new-password" />
+                <TextField name="username" label={t("admin.clinicNew.ownerUsername")} hint={t("admin.clinicNew.ownerUsernameHint")} autoComplete="off" required />
+                <TextField name="password" label={t("admin.clinicNew.ownerPassword")} hint={t("admin.clinicNew.ownerPasswordHint")} defaultValue={suggestPassword()} autoComplete="new-password" required />
                 <SubmitButton full>{t("admin.networks.appointSubmit")}</SubmitButton>
               </Form>
             </CardBody>

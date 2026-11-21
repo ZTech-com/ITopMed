@@ -1,21 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { registerWalkIn } from "@/server/appointments/appointments";
-import { inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
+import { addStaffMember, listBranches, listStaff } from "@/server/clinic/admin";
 import { saveDoctorProfile } from "@/server/clinic/doctors";
 import { addStandardTemplates, archiveTemplate, listTemplates, parseNoteContent, renderDocument, saveTemplate } from "@/server/clinic/templates";
 import { platformDb } from "@/server/db";
 import { applyNoteTemplate, documentForVisit } from "@/server/emr/documents";
 import { addDiagnosis, getEncounter, saveDraft, startVisit } from "@/server/emr/record";
 import { registerPatient } from "@/server/patients/patients";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 async function staff(o: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: string[]) {
-  const email = `${uniq("s")}@clinic.test`;
-  const inv = await inviteStaff(o.ctx, { fullName: `Synthetic ${roleKeys[0]}`, email, roleKeys }, META);
-  await acceptInvitation(inv.token, { fullName: `Synthetic ${roleKeys[0]}`, password: PASSWORD, confirmPassword: PASSWORD }, META);
-  const m = (await listStaff(o.ctx)).members.find((x) => x.user.email === email)!;
-  return { email, membershipId: m.id, ctx: await clinicContext(email, o.slug) };
+  const login = uniq("s");
+  await addStaffMember(o.ctx, { fullName: `Synthetic ${roleKeys[0]}`, username: login, roleKeys, password: PASSWORD }, META);
+  const m = (await listStaff(o.ctx)).members.find((x) => x.user.username === login)!;
+  return { login, membershipId: m.id, ctx: await clinicContext(login, o.slug) };
 }
 
 describe("clinic templates", () => {
@@ -59,7 +57,7 @@ describe("clinic templates", () => {
     const noteT = await saveTemplate(a.ctx, null, { kind: "NOTE", name: "Synthetic note", note: { complaints: "From template", history: "", examination: "Exam from template", assessment: "", plan: "" } }, META);
     const docT = await saveTemplate(a.ctx, null, { kind: "DOCUMENT", name: "Synthetic summary", body: "{{patient.fullName}}\n{{diagnoses}}\n{{note.examination}}" }, META);
 
-    const doctorCtx = await clinicContext(doctor.email, a.slug);
+    const doctorCtx = await clinicContext(doctor.login, a.slug);
     const appt = await registerWalkIn(reception.ctx, { patientId: p.id, doctorProfileId: profileId, branchId: branch!.id }, META);
     const enc = await startVisit(doctorCtx, appt, META);
     const noteId = (await getEncounter(doctorCtx, enc, META)).encounter.notes[0]!.id;
@@ -77,6 +75,6 @@ describe("clinic templates", () => {
 
     const other = await staff(a, ["doctor"]);
     await saveDoctorProfile(a.ctx, other.membershipId, { specialty: "therapy", defaultSlotMinutes: 20, acceptsOnlineBooking: false }, META);
-    await expect(documentForVisit(await clinicContext(other.email, a.slug), enc, docT, META)).rejects.toThrow(); // no care relationship
+    await expect(documentForVisit(await clinicContext(other.login, a.slug), enc, docT, META)).rejects.toThrow(); // no care relationship
   });
 });

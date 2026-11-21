@@ -76,7 +76,7 @@ export async function exportPatientFhir(ctx: ClinicContext, patientId: string, m
       name: [{ use: "official", family: patient.lastName, given: [patient.firstName, ...(patient.middleName ? [patient.middleName] : [])] }],
       gender: patient.sex === "MALE" ? "male" : patient.sex === "FEMALE" ? "female" : "unknown",
       birthDate: dateOnly(patient.birthDate),
-      telecom: [...(patient.phone ? [{ system: "phone", value: patient.phone }] : []), ...(patient.email ? [{ system: "email", value: patient.email }] : [])],
+      telecom: patient.phone ? [{ system: "phone", value: patient.phone }] : [],
     });
 
     for (const e of encounters) {

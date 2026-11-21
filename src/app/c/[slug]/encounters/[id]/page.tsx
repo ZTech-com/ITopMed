@@ -204,7 +204,7 @@ export default async function EncounterPage({ params, searchParams }: { params: 
             <DiagnosisList diagnoses={e.diagnoses} statusAction={clinicalStatusAction} slug={s} canEdit={canWrite} />
             {canWrite ? (
               <div className="space-y-3 border-t border-border pt-4">
-                <DiagnosisChips title={tv("suggested")} items={suggestions.map((x) => ({ code: x.code, text: tdx(x.code as never), hint: x.reason.key === "history" ? tdx("history") : tdx(x.reason.key, x.reason.values as never) }))} />
+                <DiagnosisChips title={tv("suggested")} items={suggestions.map((x) => ({ code: x.code, text: tdx(x.code.replace(".", "_") as never), hint: x.reason.key === "history" ? tdx("history") : tdx(x.reason.key, x.reason.values as never) }))} />
                 <DiagnosisChips title={tv("frequent")} items={frequent.map((f) => ({ code: f.icd10Code, text: f.description }))} />
               </div>
             ) : null}

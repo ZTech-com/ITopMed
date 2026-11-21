@@ -4,21 +4,19 @@ import { redirect } from "next/navigation";
 import { AuthLayout } from "@/components/shell/auth-layout";
 import { Form, SubmitButton, TextField } from "@/components/ui/form";
 import { Alert } from "@/components/ui/primitives";
-import { TelegramLoginButton, TelegramNotice, telegramLoginAvailable } from "@/components/telegram-login";
 import { safeNext } from "@/lib/safe-next";
 import { getClinicPrincipal } from "@/server/auth/guards";
 import { needsFirstRun } from "@/server/local/first-run";
 import { clinicLoginAction } from "../../clinic-actions";
 
-export default async function ClinicLoginPage({ searchParams }: { searchParams: Promise<{ activated?: string; reset?: string; next?: string; welcome?: string; tg?: string }> }) {
+export default async function ClinicLoginPage({ searchParams }: { searchParams: Promise<{ activated?: string; reset?: string; next?: string; welcome?: string }> }) {
   const sp = await searchParams;
   const next = safeNext(sp.next);
   if (await needsFirstRun()) redirect("/welcome");
   const p = await getClinicPrincipal();
   if (p) redirect(next ?? "/clinics");
-  // "Log in with Telegram" here is the central ITop Med bot: no clinic address to type,
-  // the clinic comes from the account (one clinic → straight in, several → the list).
-  const [t, telegram] = await Promise.all([getTranslations(), telegramLoginAvailable("clinic")]);
+  // Login + password only; the clinic comes from the account (one clinic → straight in, several → the list).
+  const t = await getTranslations();
   return (
     <AuthLayout title={t("auth.clinicTitle")} subtitle={t("auth.clinicSubtitle")}>
       {sp.welcome ? (
@@ -31,13 +29,11 @@ export default async function ClinicLoginPage({ searchParams }: { searchParams: 
           <Alert tone="success">{sp.reset ? t("auth.resetDone") : t("invite.success")}</Alert>
         </div>
       ) : null}
-      <TelegramNotice code={sp.tg} />
-      <TelegramLoginButton kind="clinic" next={next} />
       <Form action={clinicLoginAction}>
         {next ? <input type="hidden" name="next" value={next} /> : null}
-        <TextField name="username" label={t("auth.username")} autoComplete="username" required autoFocus={!telegram} />
+        <TextField name="username" label={t("auth.username")} autoComplete="username" required autoFocus />
         <TextField name="password" type="password" label={t("auth.password")} autoComplete="current-password" required />
-        <SubmitButton full variant={telegram ? "secondary" : "primary"}>{t("auth.submit")}</SubmitButton>
+        <SubmitButton full>{t("auth.submit")}</SubmitButton>
         <p className="text-center text-[13px]">
           <Link href="/forgot-password" className="text-accent hover:underline">
             {t("auth.forgot")}

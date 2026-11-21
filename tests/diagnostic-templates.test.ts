@@ -4,14 +4,13 @@ import { bodySurfaceArea } from "@/lib/calculators";
 import { fieldLines, flagOf, parseFieldLines, parseTemplateContent, renderReport, unknownPlaceholders } from "@/lib/diagnostic-template";
 import { applyClinicExtras, clinicSpecSchema } from "../scripts/lib/create-clinic";
 import { registerWalkIn } from "@/server/appointments/appointments";
-import { inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
+import { addStaffMember, listBranches, listStaff } from "@/server/clinic/admin";
 import { saveDoctorProfile } from "@/server/clinic/doctors";
 import { listTemplates, saveTemplate } from "@/server/clinic/templates";
 import { withAppContext } from "@/server/db";
 import { addDiagnosticResult, diagnosticForPrint } from "@/server/emr/diagnostics";
 import { startVisit } from "@/server/emr/record";
 import { registerPatient } from "@/server/patients/patients";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 const SPEC = JSON.parse(fs.readFileSync("scripts/deploy/clinics/farhod-medservis.json", "utf8"));
@@ -64,16 +63,14 @@ describe("clinic templates in use", () => {
     // Editing: a broken field list is refused.
     await expect(saveTemplate(o.ctx, tpl.id, { kind: "DIAGNOSTIC", name: tpl.name, study: "ULTRASOUND", fieldsText: "bad key | x", body: "{{x}}" }, META)).rejects.toThrow();
 
-    const email = `${uniq("doc")}@clinic.test`;
-    const inv = await inviteStaff(o.ctx, { fullName: "Synthetic Doctor", email, roleKeys: ["doctor"] }, META);
-    await acceptInvitation(inv.token, { fullName: "Synthetic Doctor", password: PASSWORD, confirmPassword: PASSWORD }, META);
-    const m = (await listStaff(o.ctx)).members.find((x) => x.user.email === email)!;
-    const doctor = await clinicContext(email, o.slug);
+    const login = uniq("doc");
+    await addStaffMember(o.ctx, { fullName: "Synthetic Doctor", username: login, roleKeys: ["doctor"], password: PASSWORD }, META);
+    const m = (await listStaff(o.ctx)).members.find((x) => x.user.username === login)!;
+    const doctor = await clinicContext(login, o.slug);
     const profileId = await saveDoctorProfile(o.ctx, m.id, { specialty: "cardiology", defaultSlotMinutes: 20, acceptsOnlineBooking: false }, META);
     const [branch] = await listBranches(o.ctx);
-    const recEmail = `${uniq("rec")}@clinic.test`;
-    const recInv = await inviteStaff(o.ctx, { fullName: "Synthetic Reception", email: recEmail, roleKeys: ["receptionist"] }, META);
-    await acceptInvitation(recInv.token, { fullName: "Synthetic Reception", password: PASSWORD, confirmPassword: PASSWORD }, META);
+    const recEmail = uniq("rec");
+    await addStaffMember(o.ctx, { fullName: "Synthetic Reception", username: recEmail, roleKeys: ["receptionist"], password: PASSWORD }, META);
     const desk = await clinicContext(recEmail, o.slug);
     const reg = await registerPatient(desk, { lastName: "Sintetik", firstName: "Homilador", birthDate: "1995", sex: "FEMALE" }, { confirmNotDuplicate: true }, META);
     if (!reg.ok) throw new Error("duplicate");

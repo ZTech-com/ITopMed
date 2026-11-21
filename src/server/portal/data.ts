@@ -155,7 +155,7 @@ export async function portalOverview(p: PatientPrincipal) {
 // ───────────── Consents ─────────────
 
 /** Purposes a patient may grant or withdraw online. Portal access itself is managed by the clinic. */
-export const SELF_SERVICE_PURPOSES = ["SMS_REMINDERS", "TELEGRAM_NOTIFICATIONS", "EMAIL_NOTIFICATIONS", "MARKETING", "HEALTH_DATA_EXCHANGE"] as const satisfies readonly ConsentPurpose[];
+export const SELF_SERVICE_PURPOSES = ["SMS_REMINDERS", "TELEGRAM_NOTIFICATIONS", "MARKETING", "HEALTH_DATA_EXCHANGE"] as const satisfies readonly ConsentPurpose[];
 
 export async function listMyConsents(p: PatientPrincipal) {
   return inPortal(p, (tx) =>

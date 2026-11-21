@@ -2,27 +2,25 @@ import pg from "pg";
 import { describe, expect, it } from "vitest";
 import { loginPlatformUser, validatePlatformSession } from "@/server/auth/platform-auth";
 import { resolveClinic, validateClinicSession, loginClinicUser } from "@/server/auth/clinic-auth";
-import { createBranch, inviteStaff, listBranches, listClinicAudit, updateClinicSettings } from "@/server/clinic/admin";
-import { acceptInvitation, previewInvitation } from "@/server/tenancy/invitations";
-import { changeTenantStatus, provisionClinic, resendInvitation, setTenantModule } from "@/server/tenancy/provisioning";
+import { addStaffMember, createBranch, listBranches, listClinicAudit, updateClinicSettings } from "@/server/clinic/admin";
+import { acceptInvitation } from "@/server/tenancy/invitations";
+import { changeTenantStatus, createClinicWithOwner, provisionClinic, setTenantModule } from "@/server/tenancy/provisioning";
 import { platformDb } from "@/server/db";
 import { createPlatformUser } from "@/server/auth/platform-auth";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 describe("acceptance 1: super admin signs in with login name + password", () => {
   it("signs in by login name (case-insensitive) and locks after repeated failures", async () => {
-    const email = `${uniq("root")}@itopmed.test`;
     const username = uniq("root.admin");
-    await createPlatformUser({ email, username, fullName: "Synthetic Root", password: PASSWORD, role: "SUPER_ADMIN" });
+    await createPlatformUser({ username, fullName: "Synthetic Root", password: PASSWORD, role: "SUPER_ADMIN" });
 
-    // The email is no longer a login once a login name was chosen.
-    expect(await loginPlatformUser(email, PASSWORD, META)).toEqual({ ok: false, reason: "invalid" });
     const login = await loginPlatformUser(username.toUpperCase(), PASSWORD, META);
     expect(login.ok).toBe(true);
     if (!login.ok) return;
     const p = await validatePlatformSession(login.token);
     expect(p?.user.username).toBe(username);
-    expect(p?.user.telegramLinked).toBe(false);
+    // No email anywhere: the account carries none.
+    expect((await platformDb().platformUser.findUniqueOrThrow({ where: { username } })).email).toBeNull();
 
     for (let i = 0; i < 5; i++) expect((await loginPlatformUser(username, "wrong-password-123", META)).ok).toBe(false);
     const locked = await loginPlatformUser(username, PASSWORD, META);
@@ -31,26 +29,33 @@ describe("acceptance 1: super admin signs in with login name + password", () => 
 
   it("refuses a login name that is already taken", async () => {
     const username = uniq("taken");
-    await createPlatformUser({ email: `${uniq("a")}@itopmed.test`, username, fullName: "Synthetic A", password: PASSWORD, role: "SUPPORT" });
-    await expect(createPlatformUser({ email: `${uniq("b")}@itopmed.test`, username, fullName: "Synthetic B", password: PASSWORD, role: "SUPPORT" })).rejects.toThrow("errors.usernameTaken");
+    await createPlatformUser({ username, fullName: "Synthetic A", password: PASSWORD, role: "SUPPORT" });
+    await expect(createPlatformUser({ username, fullName: "Synthetic B", password: PASSWORD, role: "SUPPORT" })).rejects.toThrow("errors.usernameTaken");
   });
 
   it("rejects unknown accounts without revealing whether they exist", async () => {
-    expect(await loginPlatformUser("nobody@itopmed.test", PASSWORD, META)).toEqual({ ok: false, reason: "invalid" });
+    expect(await loginPlatformUser("nobody.here", PASSWORD, META)).toEqual({ ok: false, reason: "invalid" });
   });
 });
 
-describe("acceptance 2–5: clinic provisioning, invitation and owner activation", () => {
+const clinicInput = (slug: string, extra: Record<string, unknown> = {}) => ({
+  name: "Synthetic MedLife",
+  slug,
+  defaultLocale: "ru",
+  timezone: "Asia/Tashkent",
+  planCode: "starter",
+  ownerFullName: "Synthetic Owner",
+  taxId: "123456789",
+  ...extra,
+});
+
+describe("acceptance 2–5: clinic provisioning and owner account (login + password, no email)", () => {
   it("provisions an isolated workspace atomically", async () => {
     const actor = await platformActor();
-    const slug = uniq("medlife");
-    const r = await provisionClinic(
-      actor,
-      { name: "Synthetic MedLife", slug, contactEmail: "info@medlife.test", defaultLocale: "ru", timezone: "Asia/Tashkent", planCode: "starter", ownerFullName: "Synthetic Owner", ownerEmail: `${uniq("o")}@medlife.test`, taxId: "123456789" },
-      META,
-    );
+    const r = await provisionClinic(actor, clinicInput(uniq("medlife")), META);
     const t = await platformDb().tenant.findUniqueOrThrow({ where: { id: r.tenantId }, include: { branches: true, roles: true, modules: true, subscription: true, invitations: true } });
     expect(t.status).toBe("TRIAL");
+    expect(t.contactEmail).toBeNull();
     expect(t.branches).toHaveLength(1);
     expect(t.branches[0]!.isMain).toBe(true);
     expect(t.roles.map((x) => x.key).sort()).toContain("clinic_owner");
@@ -58,105 +63,102 @@ describe("acceptance 2–5: clinic provisioning, invitation and owner activation
     expect(t.subscription?.status).toBe("TRIALING");
     expect(t.modules.find((m) => m.moduleKey === "core")?.enabled).toBe(true);
     expect(t.modules.find((m) => m.moduleKey === "laboratory")?.enabled).toBe(false); // not in starter plan
+    expect(t.invitations[0]!.email).toBeNull();
     expect(t.invitations[0]!.tokenHash).not.toContain(r.inviteToken); // only the hash is stored
     expect(t.invitations[0]!.tokenHash).toHaveLength(64);
   });
 
   it("rejects duplicate and reserved slugs, and unauthorised platform roles", async () => {
     const actor = await platformActor();
-    const base = { name: "Dup", contactEmail: "a@b.test", defaultLocale: "en", timezone: "UTC", planCode: "starter", ownerFullName: "Synthetic Owner", ownerEmail: "o@b.test" };
     const slug = uniq("dup");
-    await provisionClinic(actor, { ...base, slug }, META);
-    await expect(provisionClinic(actor, { ...base, slug }, META)).rejects.toThrow("errors.slugTaken");
-    await expect(provisionClinic(actor, { ...base, slug: "admin" }, META)).rejects.toThrow();
+    await provisionClinic(actor, clinicInput(slug), META);
+    await expect(provisionClinic(actor, clinicInput(slug), META)).rejects.toThrow("errors.slugTaken");
+    await expect(provisionClinic(actor, clinicInput("admin"), META)).rejects.toThrow();
     const support = await platformActor("SUPPORT");
-    await expect(provisionClinic(support, { ...base, slug: uniq("x") }, META)).rejects.toThrow("errors.forbidden");
+    await expect(provisionClinic(support, clinicInput(uniq("x")), META)).rejects.toThrow("errors.forbidden");
   });
 
-  it("owner accepts the invitation once, then configures the clinic", async () => {
+  it("creates the clinic with the owner's login and password in one step, then the owner configures it", async () => {
     const actor = await platformActor();
     const slug = uniq("shifo");
-    const ownerEmail = `${uniq("owner")}@shifo.test`;
-    const r = await provisionClinic(actor, { name: "Synthetic Shifo", slug, contactEmail: "info@shifo.test", defaultLocale: "uz-Cyrl", timezone: "Asia/Tashkent", planCode: "professional", ownerFullName: "Synthetic Owner", ownerEmail }, META);
+    const ownerLogin = uniq("owner");
+    // Login and password are required; a weak password is refused before anything is created.
+    await expect(createClinicWithOwner(actor, clinicInput(slug, { ownerUsername: ownerLogin, ownerPassword: "short" }), META)).rejects.toThrow();
+    await expect(createClinicWithOwner(actor, clinicInput(slug, { ownerPassword: PASSWORD }), META)).rejects.toThrow();
+    expect(await platformDb().tenant.findUnique({ where: { slug } })).toBeNull();
 
-    const preview = await previewInvitation(r.inviteToken);
-    expect(preview).toMatchObject({ valid: true, email: ownerEmail, clinicName: "Synthetic Shifo", accountExists: false });
+    const r = await createClinicWithOwner(actor, clinicInput(slug, { name: "Synthetic Shifo", planCode: "professional", ownerUsername: ownerLogin, ownerPassword: PASSWORD }), META);
+    expect(r.slug).toBe(slug);
+    // A second clinic cannot reuse a taken login (checked before the clinic exists).
+    const slug2 = uniq("shifo2");
+    await expect(createClinicWithOwner(actor, clinicInput(slug2, { ownerUsername: ownerLogin, ownerPassword: PASSWORD }), META)).rejects.toThrow("errors.usernameTaken");
+    expect(await platformDb().tenant.findUnique({ where: { slug: slug2 } })).toBeNull();
 
-    await expect(acceptInvitation(r.inviteToken, { fullName: "Synthetic Owner", password: "short", confirmPassword: "short" }, META)).rejects.toThrow();
-    await acceptInvitation(r.inviteToken, { fullName: "Synthetic Owner", password: PASSWORD, confirmPassword: PASSWORD }, META);
-    await expect(acceptInvitation(r.inviteToken, { fullName: "X Y", password: PASSWORD, confirmPassword: PASSWORD }, META)).rejects.toThrow("errors.invitationInvalid");
-    expect(await previewInvitation(r.inviteToken)).toEqual({ valid: false, reason: "used" });
-
-    const ctx = await clinicContext(ownerEmail, slug);
+    const ctx = await clinicContext(ownerLogin, slug);
     expect(ctx.roleKeys).toEqual(["clinic_owner"]);
     expect(ctx.permissions.has("clinic.settings.manage")).toBe(true);
     expect(ctx.permissions.has("emr.read")).toBe(false); // admin authority ≠ medical access
 
-    await updateClinicSettings(ctx, { name: "Synthetic Shifo Plus", defaultLocale: "ru", timezone: "Asia/Tashkent", contactEmail: "", contactPhone: "+998 90 000 00 00", address: "" }, META);
+    await updateClinicSettings(ctx, { name: "Synthetic Shifo Plus", defaultLocale: "ru", timezone: "Asia/Tashkent", contactPhone: "+998 90 000 00 00", address: "" }, META);
     await createBranch(ctx, { name: "Chilonzor", address: "", phone: "" }, META);
     const branches = await listBranches(ctx);
     expect(branches.map((b) => b.name)).toEqual(["Synthetic Shifo", "Chilonzor"]);
 
     const events = await listClinicAudit(ctx);
     const actions = events.map((e) => e.action);
-    for (const a of ["tenant.created", "invitation.created", "invitation.accepted", "membership.created", "clinic.settings.updated", "branch.created"]) {
+    for (const a of ["tenant.created", "invitation.created", "invitation.accepted", "membership.created", "tenant.owner_account_created", "clinic.settings.updated", "branch.created"]) {
       expect(actions).toContain(a);
     }
   });
 
-  it("resending rotates the token so the old link stops working", async () => {
+  it("an internal invitation is single use and expires", async () => {
     const actor = await platformActor();
-    const r = await provisionClinic(actor, { name: "Synthetic Rotate", slug: uniq("rot"), contactEmail: "a@rot.test", defaultLocale: "en", timezone: "UTC", planCode: "starter", ownerFullName: "Synthetic Owner", ownerEmail: `${uniq("o")}@rot.test` }, META);
-    const inv = await platformDb().invitation.findFirstOrThrow({ where: { tenantId: r.tenantId } });
-    await resendInvitation(actor, inv.id, META);
-    expect(await previewInvitation(r.inviteToken)).toEqual({ valid: false, reason: "not_found" });
-  });
+    const r = await provisionClinic(actor, clinicInput(uniq("once")), META);
+    await acceptInvitation(r.inviteToken, { fullName: "Synthetic Owner", username: uniq("o"), password: PASSWORD, confirmPassword: PASSWORD }, META);
+    await expect(acceptInvitation(r.inviteToken, { fullName: "X Y", username: uniq("o"), password: PASSWORD, confirmPassword: PASSWORD }, META)).rejects.toThrow("errors.invitationInvalid");
 
-  it("expired invitations cannot be used", async () => {
-    const actor = await platformActor();
-    const r = await provisionClinic(actor, { name: "Synthetic Expired", slug: uniq("exp"), contactEmail: "a@exp.test", defaultLocale: "en", timezone: "UTC", planCode: "starter", ownerFullName: "Synthetic Owner", ownerEmail: `${uniq("o")}@exp.test` }, META);
+    const r2 = await provisionClinic(actor, clinicInput(uniq("exp")), META);
     const owner = new pg.Client({ connectionString: process.env.MIGRATION_DATABASE_URL });
     await owner.connect();
-    await owner.query(`UPDATE "Invitation" SET "expiresAt" = (now() AT TIME ZONE 'UTC') - interval '1 hour' WHERE "tenantId" = $1`, [r.tenantId]);
+    await owner.query(`UPDATE "Invitation" SET "expiresAt" = (now() AT TIME ZONE 'UTC') - interval '1 hour' WHERE "tenantId" = $1`, [r2.tenantId]);
     await owner.end();
-    expect(await previewInvitation(r.inviteToken)).toEqual({ valid: false, reason: "expired" });
-    await expect(acceptInvitation(r.inviteToken, { fullName: "Synthetic Owner", password: PASSWORD, confirmPassword: PASSWORD }, META)).rejects.toThrow("errors.invitationExpired");
+    await expect(acceptInvitation(r2.inviteToken, { fullName: "Synthetic Owner", username: uniq("o"), password: PASSWORD, confirmPassword: PASSWORD }, META)).rejects.toThrow("errors.invitationExpired");
   });
 });
 
 describe("acceptance 6: clinic creates individual staff accounts", () => {
-  it("owner invites a doctor who gets doctor permissions only", async () => {
+  it("owner adds a doctor (login + password) who gets doctor permissions only", async () => {
     const actor = await platformActor();
     const { ctx, slug } = await clinicWithOwner(actor);
-    const email = `${uniq("dr")}@clinic.test`;
-    const inv = await inviteStaff(ctx, { fullName: "Synthetic Doctor", email, roleKeys: ["doctor"] }, META);
-    await acceptInvitation(inv.token, { fullName: "Synthetic Doctor", password: PASSWORD, confirmPassword: PASSWORD }, META);
-    const dr = await clinicContext(email, slug);
+    const login = uniq("dr");
+    await expect(addStaffMember(ctx, { fullName: "Synthetic Doctor", username: login, password: "short", roleKeys: ["doctor"] }, META)).rejects.toThrow();
+    expect(await addStaffMember(ctx, { fullName: "Synthetic Doctor", username: login, password: PASSWORD, roleKeys: ["doctor"] }, META)).toBe(login);
+    await expect(addStaffMember(ctx, { fullName: "Synthetic Twin", username: login, password: PASSWORD, roleKeys: ["doctor"] }, META)).rejects.toThrow("errors.usernameTaken");
+    const dr = await clinicContext(login, slug);
     expect(dr.roleKeys).toEqual(["doctor"]);
     expect(dr.permissions.has("emr.read")).toBe(true);
     expect(dr.permissions.has("staff.manage")).toBe(false);
-    await expect(inviteStaff(dr, { fullName: "Someone Else", email: "x@clinic.test", roleKeys: ["receptionist"] }, META)).rejects.toThrow("errors.forbidden");
+    await expect(addStaffMember(dr, { fullName: "Someone Else", username: uniq("x"), password: PASSWORD, roleKeys: ["receptionist"] }, META)).rejects.toThrow("errors.forbidden");
   });
 
   it("a clinic admin cannot grant the owner role", async () => {
     const actor = await platformActor();
     const { ctx, slug } = await clinicWithOwner(actor);
-    const email = `${uniq("adm")}@clinic.test`;
-    const inv = await inviteStaff(ctx, { fullName: "Synthetic Admin", email, roleKeys: ["clinic_admin"] }, META);
-    await acceptInvitation(inv.token, { fullName: "Synthetic Admin", password: PASSWORD, confirmPassword: PASSWORD }, META);
-    const admin = await clinicContext(email, slug);
-    await expect(inviteStaff(admin, { fullName: "Would Be Owner", email: "w@clinic.test", roleKeys: ["clinic_owner"] }, META)).rejects.toThrow("errors.forbidden");
+    const login = uniq("adm");
+    await addStaffMember(ctx, { fullName: "Synthetic Admin", username: login, password: PASSWORD, roleKeys: ["clinic_admin"] }, META);
+    const admin = await clinicContext(login, slug);
+    await expect(addStaffMember(admin, { fullName: "Would Be Owner", username: uniq("w"), password: PASSWORD, roleKeys: ["clinic_owner"] }, META)).rejects.toThrow("errors.forbidden");
   });
 });
 
 describe("tenant lifecycle and feature flags", () => {
   it("suspension blocks clinic access immediately; reactivation restores it", async () => {
     const actor = await platformActor();
-    const { tenantId, ownerEmail, slug } = await clinicWithOwner(actor);
+    const { tenantId, ownerLogin, slug } = await clinicWithOwner(actor);
     await expect(changeTenantStatus(actor, tenantId, "suspend", "short", META)).rejects.toThrow();
     await changeTenantStatus(actor, tenantId, "suspend", "Unpaid invoice for synthetic test period", META);
 
-    const login = await loginClinicUser(ownerEmail, PASSWORD, META);
+    const login = await loginClinicUser(ownerLogin, PASSWORD, META);
     if (!login.ok) throw new Error("login");
     const principal = await validateClinicSession(login.token);
     expect(await resolveClinic(principal!, slug)).toBeNull();

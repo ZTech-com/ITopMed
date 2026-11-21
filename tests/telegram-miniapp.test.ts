@@ -1,11 +1,9 @@
 import { createHmac } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { linkClinicTelegram } from "@/server/auth/clinic-auth";
-import { createPlatformUser, linkPlatformTelegram, loginPlatformUser, validatePlatformSession } from "@/server/auth/platform-auth";
 import { connectClinicBot } from "@/server/telegram/clinic-bot";
 import { homeForRoles } from "@/server/auth/landing";
 import { resolveWebApp, verifyInitData } from "@/server/auth/telegram-webapp";
-import { createStaffWithPassword } from "@/server/clinic/admin";
+import { addStaffMember } from "@/server/clinic/admin";
 import { resetEnvCache } from "@/server/env";
 import { registerPatient } from "@/server/patients/patients";
 import { activatePortalAccount, portalTenant, saveTelegramContact, validatePatientSession } from "@/server/portal/auth";
@@ -63,7 +61,7 @@ describe("who opened a clinic bot's Mini App", () => {
     const botToken = `${Math.floor(Math.random() * 9e9) + 1e9}:${"B".repeat(35)}`;
     await connectClinicBot(await platformActor(), o.tenantId, { token: botToken }, META);
     const recLogin = uniq("reception");
-    await createStaffWithPassword(o.ctx, { fullName: "Synthetic Reception", email: `${uniq("r")}@clinic.test`, username: recLogin, roleKeys: ["receptionist"], password: PASSWORD }, META);
+    await addStaffMember(o.ctx, { fullName: "Synthetic Reception", username: recLogin, roleKeys: ["receptionist"], password: PASSWORD }, META);
     const reception = await clinicContext(recLogin, o.slug);
     const tenant = (await portalTenant(o.slug))!;
     /** A patient with an activated portal account whose login is `phone`. */
@@ -102,56 +100,18 @@ describe("who opened a clinic bot's Mini App", () => {
     expect(await resolveWebApp(other.launch(tg), null, META, other.slug)).toEqual({ status: "patient", phoneKnown: true });
   });
 
-  it("this clinic's linked staff land on the page for their role; other clinics' bots do not know them", async () => {
+  it("staff never sign in through the Mini App (login + password only); the landing page per role is unchanged", async () => {
     const c = await clinic();
-    const tg = newTgId();
-    await linkClinicTelegram(c.reception.principal.user.id, c.reception.principal.sessionId, BigInt(tg), META);
-    expect(await resolveWebApp(c.launch(tg), null, META, c.slug)).toMatchObject({ status: "signed_in", target: "clinic", go: `/c/${c.slug}/desk` });
-    const other = await clinic();
-    expect(await resolveWebApp(other.launch(tg), null, META, other.slug)).toEqual({ status: "patient", phoneKnown: false });
+    // Even the receptionist's own Telegram, opened in this clinic's bot, is just a stranger here.
+    expect(await resolveWebApp(c.launch(newTgId()), "staff", META, c.slug)).toEqual({ status: "patient", phoneKnown: false });
     expect(homeForRoles("x", ["clinic_owner", "doctor"])).toBe("/c/x");
     expect(homeForRoles("x", ["doctor"])).toBe("/c/x/my-queue");
     expect(homeForRoles("x", ["cashier"])).toBe("/c/x/billing");
   });
-
-  it("someone who is both staff and a patient here chooses; only offered choices are accepted", async () => {
-    const c = await clinic();
-    const tg = newTgId();
-    await linkClinicTelegram(c.reception.principal.user.id, c.reception.principal.sessionId, BigInt(tg), META);
-    const phone = newPhone();
-    await c.patient(phone);
-    await saveTelegramContact(BigInt(tg), phone);
-    const r = await resolveWebApp(c.launch(tg), null, META, c.slug);
-    expect(r.status).toBe("choose");
-    if (r.status !== "choose") return;
-    expect(r.choices.map((x) => x.kind).sort()).toEqual(["patient", "staff"]);
-    expect((await resolveWebApp(c.launch(tg), "patient:00000000-0000-7000-8000-000000000000", META, c.slug)).status).toBe("choose");
-    const asPatient = r.choices.find((x) => x.kind === "patient")!;
-    expect(await resolveWebApp(c.launch(tg), asPatient.key, META, c.slug)).toMatchObject({ status: "signed_in", target: "patient" });
-    expect(await resolveWebApp(c.launch(tg), "staff", META, c.slug)).toMatchObject({ status: "signed_in", target: "clinic" });
-  });
 });
 
 describe("the central ITop Med bot", () => {
-  it("knows the linked staff of every clinic: one clinic → straight in", async () => {
-    const o = await clinicWithOwner(await platformActor());
-    const recLogin = uniq("reception");
-    await createStaffWithPassword(o.ctx, { fullName: "Synthetic Reception", email: `${uniq("r")}@clinic.test`, username: recLogin, roleKeys: ["receptionist"], password: PASSWORD }, META);
-    const reception = await clinicContext(recLogin, o.slug);
-    const tg = newTgId();
-    await linkClinicTelegram(reception.principal.user.id, reception.principal.sessionId, BigInt(tg), META);
-    expect(await resolveWebApp(initData({ id: tg }), null, META)).toMatchObject({ status: "signed_in", target: "clinic", go: `/c/${o.slug}/desk` });
-  });
-
-  it("refuses people it does not know; the SuperAdmin lands in the console", async () => {
-    const tg = newTgId();
-    expect(await resolveWebApp(initData({ id: tg }), null, META)).toEqual({ status: "error", reason: "not_platform" });
-    const username = uniq("root");
-    const id = await createPlatformUser({ email: `${uniq("p")}@itopmed.test`, username, fullName: "Synthetic Root", password: PASSWORD, role: "SUPER_ADMIN" });
-    const login = await loginPlatformUser(username, PASSWORD, META);
-    if (!login.ok) throw new Error("login");
-    const p = (await validatePlatformSession(login.token))!;
-    await linkPlatformTelegram(id, p.sessionId, BigInt(tg), META);
-    expect(await resolveWebApp(initData({ id: tg }), null, META)).toMatchObject({ status: "signed_in", target: "admin", go: "/admin" });
+  it("signs nobody in: its Mini App is gone", async () => {
+    expect(await resolveWebApp(initData({ id: newTgId() }), null, META)).toEqual({ status: "error", reason: "disabled" });
   });
 });

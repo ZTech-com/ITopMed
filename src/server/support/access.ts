@@ -53,7 +53,6 @@ export async function requestSupportAccess(actor: PlatformPrincipal, tenantId: s
         tenantId,
         platformUserId: actor.user.id,
         requesterName: actor.user.fullName,
-        requesterEmail: actor.user.email,
         scope: input.scope,
         reason: input.reason,
         ticketRef: input.ticketRef,

@@ -25,7 +25,7 @@ export async function loadPatientFileData(tx: Tx, patientId: string) {
   const [patient, allergies, diagnoses, vitals, encounters, prescriptions, labOrders, invoices] = await sequential([
     tx.patient.findUniqueOrThrow({
       where: { id: patientId },
-      select: { id: true, mrn: true, lastName: true, firstName: true, middleName: true, birthDate: true, birthYearOnly: true, sex: true, phone: true, email: true, address: true, status: true, createdAt: true },
+      select: { id: true, mrn: true, lastName: true, firstName: true, middleName: true, birthDate: true, birthYearOnly: true, sex: true, phone: true, address: true, status: true, createdAt: true },
     }),
     tx.allergy.findMany({ where: { patientId, status: { not: "ENTERED_IN_ERROR" } }, orderBy: { recordedAt: "desc" } }),
     tx.diagnosis.findMany({ where: { patientId, status: { not: "ENTERED_IN_ERROR" } }, orderBy: { recordedAt: "desc" } }),
@@ -104,7 +104,6 @@ export async function patientWorkbook(d: PatientFileData, clinic: FileClinic): P
     },
     { cells: [{ v: L("sex"), s: "label" }, { v: t(`sex.${p.sex}` as never), s: "cell" }] },
     { cells: [{ v: L("phone"), s: "label" }, { v: p.phone ?? "—", s: "cell" }] },
-    { cells: [{ v: L("email"), s: "label" }, { v: p.email ?? "—", s: "cell" }] },
     { cells: [{ v: L("address"), s: "label" }, { v: p.address ?? "—", s: "wrap" }] },
     { cells: [{ v: L("registered"), s: "label" }, day(p.createdAt)] },
     { cells: [] },

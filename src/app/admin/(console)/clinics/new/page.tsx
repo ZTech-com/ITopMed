@@ -37,15 +37,6 @@ export default async function NewClinicPage({ searchParams }: { searchParams: Pr
       </span>
     </label>
   );
-  const radio = (name: string, value: string, label: string, hint: string, defaultChecked: boolean) => (
-    <label className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-control)] border border-border bg-surface-2 p-3 text-[14px] has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
-      <input type="radio" name={name} value={value} defaultChecked={defaultChecked} className="mt-0.5 size-4 shrink-0 accent-[var(--accent)]" />
-      <span className="min-w-0">
-        <span className="font-medium">{label}</span>
-        <span className="mt-0.5 block text-[13px] text-text-2">{hint}</span>
-      </span>
-    </label>
-  );
 
   return (
     <div className="max-w-3xl">
@@ -96,7 +87,6 @@ export default async function NewClinicPage({ searchParams }: { searchParams: Pr
             <TextField name="slug" label={t("slug")} hint={t("slugHint")} placeholder="shifo-kardio" required className="sm:col-span-2" />
             <TextField name="legalName" label={t("legalName")} optionalLabel={optional} />
             <TextField name="taxId" label={t("taxId")} hint={t("taxIdHint")} inputMode="numeric" optionalLabel={optional} />
-            <TextField name="contactEmail" type="email" label={t("contactEmail")} inputMode="email" required />
             <TextField name="contactPhone" type="tel" label={t("contactPhone")} inputMode="tel" placeholder="+998" optionalLabel={optional} />
             <TextField name="address" label={t("address")} optionalLabel={optional} className="sm:col-span-2" />
           </CardBody>
@@ -106,17 +96,9 @@ export default async function NewClinicPage({ searchParams }: { searchParams: Pr
           <CardHeader title={t("sectionOwner")} description={t("ownerHintNew")} />
           <CardBody className="space-y-5">
             <div className="grid gap-5 sm:grid-cols-2">
-              <TextField name="ownerFullName" label={t("ownerFullName")} autoComplete="off" required />
-              <TextField name="ownerEmail" type="email" label={t("ownerEmail")} hint={t("ownerEmailHint")} inputMode="email" autoComplete="off" required />
-            </div>
-            <fieldset className="space-y-3">
-              <legend className="mb-2 text-[14px] font-medium">{t("ownerAccess")}</legend>
-              {radio("ownerMode", "password", t("ownerModePassword"), t("ownerModePasswordHint"), true)}
-              {radio("ownerMode", "invite", t("ownerModeInvite"), t("ownerModeInviteHint"), false)}
-            </fieldset>
-            <div className="max-w-sm">
-              <TextField name="ownerUsername" label={t("ownerUsername")} hint={t("ownerUsernameHint")} autoComplete="off" />
-              <TextField name="ownerPassword" label={t("ownerPassword")} hint={t("ownerPasswordHint")} defaultValue={suggestPassword()} autoComplete="new-password" />
+              <TextField name="ownerFullName" label={t("ownerFullName")} autoComplete="off" required className="sm:col-span-2" />
+              <TextField name="ownerUsername" label={t("ownerUsername")} hint={t("ownerUsernameHint")} autoComplete="off" required />
+              <TextField name="ownerPassword" label={t("ownerPassword")} hint={t("ownerPasswordHint")} defaultValue={suggestPassword()} autoComplete="new-password" required />
             </div>
           </CardBody>
         </Card>

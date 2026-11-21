@@ -40,7 +40,7 @@ model PlatformUser {
   id               String        @id @db.Uuid
   /// Sign-in name (lowercase). Existing accounts were given their email as login.
   username         String        @unique
-  email            String        @unique
+  email            String?       @unique /// legacy, no longer written or shown
   fullName         String
   passwordHash     String?
   role             PlatformRole
@@ -84,7 +84,7 @@ model PlatformSession {
 
 model PlatformInvitation {
   id          String           @id @db.Uuid
-  email       String
+  email       String?
   fullName    String
   role        PlatformRole
   networkId   String?          @db.Uuid
@@ -347,7 +347,7 @@ model User {
   id               String        @id @db.Uuid
   /// Sign-in name (lowercase). Existing accounts were given their email as login.
   username         String        @unique
-  email            String        @unique
+  email            String?       @unique /// legacy, no longer written or shown
   phone            String?
   fullName         String
   passwordHash     String?
@@ -368,7 +368,7 @@ model User {
   passwordResets PasswordReset[]
 }
 
-/// Single-use password reset. Only the SHA-256 of the emailed token is stored.
+/// Single-use password reset (link sent by the clinic's Telegram bot). Only the SHA-256 of the token is stored.
 model PasswordReset {
   id        String    @id @db.Uuid
   userId    String    @db.Uuid
@@ -495,10 +495,10 @@ enum InvitationStatus {
 model Invitation {
   id                      String           @id @db.Uuid
   tenantId                String           @db.Uuid
-  email                   String
+  email                   String?
   fullName                String
   roleKeys                String[]
-  /// SHA-256 (hex) of the invitation token; the raw token is only in the emailed link.
+  /// SHA-256 (hex) of the invitation token (internal: created and accepted on the server).
   tokenHash               String           @unique
   status                  InvitationStatus @default(PENDING)
   expiresAt               DateTime

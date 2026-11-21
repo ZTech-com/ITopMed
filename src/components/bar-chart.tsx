@@ -9,9 +9,10 @@ export function BarChart({ label, bars }: { label: string; bars: { key: string; 
     <figure className="space-y-2">
       <div className="flex h-36 items-end gap-1 sm:gap-1.5" role="img" aria-label={label}>
         {bars.map((b) => (
-          <div key={b.key} className="flex h-full min-w-0 flex-1 flex-col justify-end" title={`${b.short}: ${b.display}`}>
+          // Each day is a quiet track, so an empty week still reads as a week (not a blank box).
+          <div key={b.key} className="flex h-full min-w-0 flex-1 flex-col justify-end overflow-hidden rounded-[8px] bg-surface-2" title={`${b.short}: ${b.display}`}>
             <div
-              className={`w-full rounded-t-[4px] ${b.highlight ? "bg-accent-solid" : "bg-accent-soft"}`}
+              className={`w-full rounded-[8px] ${b.highlight ? "bg-accent-solid" : "bg-accent"}`}
               style={{ height: `${b.value > 0 ? Math.max(3, Math.round((b.value / max) * 100)) : 0}%` }}
             />
           </div>

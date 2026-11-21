@@ -7,10 +7,7 @@ import type { PlatformPrincipal, RequestMeta } from "../auth/platform-auth";
 import { platformCan, type PlatformPermission } from "../authz/platform";
 import { ROLE_TEMPLATES, SYSTEM_ROLE_KEYS } from "../authz/permissions";
 import { platformDb, withPlatform, type Tx } from "../db";
-import { sendEmail } from "../email";
 import { DomainError } from "../errors";
-import { invitationEmail } from "../email/templates";
-import { env } from "../env";
 import { PRESET_MODULES, clinicPresetSchema } from "../clinic/practice";
 import { MODULES, isModuleKey } from "../modules/catalog";
 import { passwordSchema } from "../security/password";
@@ -54,7 +51,9 @@ export async function assertTenantInScope(tx: Tx, actor: PlatformPrincipal, tena
  * Creates a fully isolated clinic workspace in ONE transaction:
  * tenant → main branch → role set from templates → trial subscription →
  * module flags → owner invitation → audit events. Nothing is partially created.
- * Returns the raw invitation token for delivery; it is never persisted.
+ * The invitation is internal: it is accepted on the server right away with the
+ * owner's login and password (createClinicWithOwner). Its raw token is returned
+ * for that step only and never persisted, shown or sent anywhere.
  */
 export async function provisionClinic(actor: PlatformPrincipal, raw: unknown, meta: RequestMeta) {
   authorize(actor, "tenants.create");
@@ -89,7 +88,6 @@ export async function provisionClinic(actor: PlatformPrincipal, raw: unknown, me
           status: trial ? "TRIAL" : "ACTIVE",
           defaultLocale: input.defaultLocale,
           timezone: input.timezone,
-          contactEmail: input.contactEmail,
           contactPhone: input.contactPhone,
           address: input.address,
           createdById: actor.user.id,
@@ -135,7 +133,6 @@ export async function provisionClinic(actor: PlatformPrincipal, raw: unknown, me
         data: {
           id: invitationId,
           tenantId,
-          email: input.ownerEmail,
           fullName: input.ownerFullName,
           roleKeys: ["clinic_owner"],
           tokenHash: sha256Hex(token),
@@ -152,106 +149,33 @@ export async function provisionClinic(actor: PlatformPrincipal, raw: unknown, me
     throw e;
   }
 
-  return { tenantId, slug: input.slug, inviteToken: token, ownerEmail: input.ownerEmail, ownerFullName: input.ownerFullName, locale: input.defaultLocale, clinicName: input.name };
+  return { tenantId, slug: input.slug, inviteToken: token, ownerFullName: input.ownerFullName };
 }
 
-export function invitationLink(token: string) {
-  return `${env().APP_URL.replace(/\/$/, "")}/invite/${token}`;
-}
-
-export async function deliverInvitation(a: { to: string; name: string; clinicName: string; locale: string; token: string }) {
-  const msg = await invitationEmail({
-    locale: a.locale,
-    to: a.to,
-    inviteeName: a.name,
-    clinicName: a.clinicName,
-    link: invitationLink(a.token),
-    expiresInHours: INVITATION_TTL_HOURS,
-  });
-  return sendEmail(msg);
-}
-
-export const ownerAccessSchema = z.discriminatedUnion("ownerMode", [
-  z.object({
-    ownerMode: z.literal("password"),
-    /** The owner's login; without one their email is the login. */
-    ownerUsername: z.preprocess((v) => (v === "" || v === null ? undefined : v), usernameSchema.optional()),
-    ownerPassword: passwordSchema,
-  }),
-  z.object({ ownerMode: z.literal("invite") }),
-]);
-
-export type OwnerAccessResult = "password" | "invited" | "existing_account";
+export const ownerAccessSchema = z.object({
+  /** The owner's login (no email anywhere: accounts are identified by login). */
+  ownerUsername: usernameSchema,
+  ownerPassword: passwordSchema,
+});
 
 /**
- * Creates the clinic and gives the owner access in one step, the way the
- * platform admin chose:
- *  - "password": the owner account is created now with the password the admin
- *    set (they hand it over in person). It is the same invitation, accepted at
- *    once on the server, so the clinic-side rules (RLS, audit) are unchanged.
- *    If the email already has an ITop Med account, its password is never
- *    touched: the invitation is emailed instead and that person accepts it
- *    after signing in.
- *  - "invite": the owner receives an emailed link and sets their own password.
- * The password is never stored in plain text, logged, or put in a URL.
+ * Creates the clinic and its owner account in one step: the platform admin
+ * sets the owner's login and first password and hands them over in person;
+ * the owner then links Telegram (sign-in and password reset by the clinic's
+ * bot). Internally it is the same invitation, accepted at once on the server,
+ * so the clinic-side rules (RLS, audit) are unchanged. The password is never
+ * stored in plain text, logged, or put in a URL.
  */
 export async function createClinicWithOwner(actor: PlatformPrincipal, raw: unknown, meta: RequestMeta) {
-  const access = ownerAccessSchema.parse({ ownerMode: "invite", ...(raw as object) });
+  const access = ownerAccessSchema.parse(raw);
   // Checked before the clinic exists, so a taken login does not leave a half-made clinic behind.
-  if (access.ownerMode === "password" && access.ownerUsername && (await platformDb().user.findUnique({ where: { username: access.ownerUsername }, select: { id: true } }))) {
+  if (await platformDb().user.findUnique({ where: { username: access.ownerUsername }, select: { id: true } })) {
     throw new DomainError("errors.usernameTaken");
   }
   const r = await provisionClinic(actor, raw, meta);
-  let owner: OwnerAccessResult = "invited";
-  let delivered = false;
-  if (access.ownerMode === "password") {
-    try {
-      await acceptInvitation(r.inviteToken, { fullName: r.ownerFullName, username: access.ownerUsername, password: access.ownerPassword, confirmPassword: access.ownerPassword }, meta);
-      owner = "password";
-      await withPlatform((tx) => audit(tx, actor, meta, { tenantId: r.tenantId, action: "tenant.owner_account_created", entityType: "Tenant", entityId: r.tenantId, metadata: { by: "platform" } }));
-    } catch (e) {
-      if (!(e instanceof DomainError && e.code === "errors.accountExistsSignIn")) throw e;
-      owner = "existing_account";
-    }
-  }
-  if (owner !== "password") {
-    delivered = (await deliverInvitation({ to: r.ownerEmail, name: r.ownerFullName, clinicName: r.clinicName, locale: r.locale, token: r.inviteToken })).delivered;
-  }
-  return { tenantId: r.tenantId, slug: r.slug, owner, invitationDelivered: delivered };
-}
-
-/** Rotates the token (old link stops working), extends expiry and re-sends. */
-export async function resendInvitation(actor: PlatformPrincipal, invitationId: string, meta: RequestMeta) {
-  authorize(actor, "tenants.manage");
-  const token = randomToken();
-  const inv = await withPlatform(async (tx) => {
-    const inv = await tx.invitation.findUnique({ where: { id: invitationId }, include: { tenant: true } });
-    if (!inv || inv.status !== "PENDING") throw new DomainError("errors.invitationNotPending");
-    await assertTenantInScope(tx, actor, inv.tenantId);
-    await tx.invitation.update({
-      where: { id: inv.id },
-      data: {
-        tokenHash: sha256Hex(token),
-        expiresAt: new Date(Date.now() + INVITATION_TTL_HOURS * 3_600_000),
-        sendCount: { increment: 1 },
-        lastSentAt: new Date(),
-      },
-    });
-    await audit(tx, actor, meta, { tenantId: inv.tenantId, action: "invitation.resent", entityType: "Invitation", entityId: inv.id });
-    return inv;
-  });
-  return deliverInvitation({ to: inv.email, name: inv.fullName, clinicName: inv.tenant.name, locale: inv.tenant.defaultLocale, token });
-}
-
-export async function revokeInvitation(actor: PlatformPrincipal, invitationId: string, meta: RequestMeta) {
-  authorize(actor, "tenants.manage");
-  await withPlatform(async (tx) => {
-    const inv = await tx.invitation.findUnique({ where: { id: invitationId } });
-    if (!inv || inv.status !== "PENDING") throw new DomainError("errors.invitationNotPending");
-    await assertTenantInScope(tx, actor, inv.tenantId);
-    await tx.invitation.update({ where: { id: inv.id }, data: { status: "REVOKED", revokedAt: new Date() } });
-    await audit(tx, actor, meta, { tenantId: inv.tenantId, action: "invitation.revoked", entityType: "Invitation", entityId: inv.id });
-  });
+  await acceptInvitation(r.inviteToken, { fullName: r.ownerFullName, username: access.ownerUsername, password: access.ownerPassword, confirmPassword: access.ownerPassword }, meta);
+  await withPlatform((tx) => audit(tx, actor, meta, { tenantId: r.tenantId, action: "tenant.owner_account_created", entityType: "Tenant", entityId: r.tenantId, metadata: { by: "platform" } }));
+  return { tenantId: r.tenantId, slug: r.slug };
 }
 
 export type LifecycleAction = "activate" | "suspend" | "reactivate" | "archive";
@@ -352,7 +276,6 @@ export async function getTenantDetail(actor: PlatformPrincipal, tenantId: string
       modules: true,
       network: { select: { id: true, name: true } },
       branches: { orderBy: { createdAt: "asc" } },
-      invitations: { orderBy: { createdAt: "desc" }, take: 20 },
       _count: { select: { memberships: true, branches: true, roles: true } },
     },
   });

@@ -5,22 +5,20 @@ import { registerWalkIn } from "@/server/appointments/appointments";
 import { addInvoiceLine, createInvoice, getInvoice, issueInvoice, listInvoices, recordPayment, refundPayment, uninvoicedVisits, voidInvoice } from "@/server/billing/billing";
 import { closeShift, createExpense, myShifts, openShift } from "@/server/billing/cash";
 import { financialReport, operationalReport } from "@/server/billing/reports";
-import { inviteStaff, listBranches, listClinicAudit, listStaff } from "@/server/clinic/admin";
+import { addStaffMember, listBranches, listClinicAudit, listStaff } from "@/server/clinic/admin";
 import { saveDoctorProfile } from "@/server/clinic/doctors";
 import { createService } from "@/server/clinic/resources";
 import { registerPatient } from "@/server/patients/patients";
 import { todayIn } from "@/server/scheduling/time";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 const TZ = "Asia/Tashkent";
 
 async function staff(owner: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: string[]) {
-  const email = `${uniq("s")}@clinic.test`;
-  const inv = await inviteStaff(owner.ctx, { fullName: `Synthetic ${roleKeys[0]}`, email, roleKeys }, META);
-  await acceptInvitation(inv.token, { fullName: `Synthetic ${roleKeys[0]}`, password: PASSWORD, confirmPassword: PASSWORD }, META);
-  const m = (await listStaff(owner.ctx)).members.find((x) => x.user.email === email)!;
-  return { email, membershipId: m.id, ctx: await clinicContext(email, owner.slug) };
+  const login = uniq("s");
+  await addStaffMember(owner.ctx, { fullName: `Synthetic ${roleKeys[0]}`, username: login, roleKeys, password: PASSWORD }, META);
+  const m = (await listStaff(owner.ctx)).members.find((x) => x.user.username === login)!;
+  return { login, membershipId: m.id, ctx: await clinicContext(login, owner.slug) };
 }
 
 let n = 0;

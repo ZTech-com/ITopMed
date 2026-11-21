@@ -4,18 +4,18 @@ Manzil: **https://itopmed.itoppos.uz/login** (internet orqali). Hech narsa o'rna
 
 ## 0. Klinika ochilgan (15.11.2026)
 - Manzil: **https://itopmed.itoppos.uz/c/farhod-medservis**
-- Egasi va shifokor: **Qoraboyev Farhod**. Login hozircha SuperAdmin'ning emaili — keyin almashtirish mumkin.
+- Egasi va shifokor: **Qoraboyev Farhod**. Kirish — login va parol; keyin Telegram ulanadi.
 - Parol: Telegram orqali yuborilgan **bir martalik havola** bilan Farhod aka o'zi qo'yadi. Havola 72 soat amal qiladi va faqat bir marta ishlaydi.
 - Havola eskirsa, serverda yangisini chiqaring: **Parolni unutdingizmi?** yoki SuperAdmin'dan so'rang.
 - **Yangilanish:** dastur serverda turadi. Har bir yangi versiya hammaga o'zi yetib boradi, klinikada hech narsa qilish kerak emas.
 
 Boshqa klinikani shu tarzda ochish (serverda):
 ```bash
-/opt/itopmed/bin/itopmed-clinic farhod-medservis email@example.uz "Ism Familiya" --link
+/opt/itopmed/bin/itopmed-clinic farhod-medservis farhod.admin "Ism Familiya"
 ```
 
 ## 1. Klinikada — Farhod akaning kompyuterida (10 daqiqa)
-1. Chrome yoki Edge'da **itopmed.itoppos.uz/login** ni oching → email va parol bilan kiring.
+1. Chrome yoki Edge'da **itopmed.itoppos.uz/login** ni oching → login va parol bilan kiring.
 2. Telefoniga **Google Authenticator** o'rnating → ekrandagi QR kodni skanerlang → 6 xonali kodni kiriting.
 3. **Tiklash kodlarini yarating** → qog'ozga yozib, seyfga qo'ying.
 4. **Sozlamalar** bo'limida:
@@ -26,10 +26,10 @@ Boshqa klinikani shu tarzda ochish (serverda):
 7. Brauzer menyusidan **"Ilovani o'rnatish"** ni tanlang — ish stolida ITop Med belgisi paydo bo'ladi.
 
 ## 2. Registratorni qo'shish (2 daqiqa)
-1. **Xodimlar** bo'limida registratorning ismi va emailini yozing.
+1. **Xodimlar** bo'limida registratorning ismi, logini va parolini yozing.
 2. Rollaridan **Registrator** va **Kassir** ni belgilang.
 3. Kirish usulida **"Parolni hozir beraman"** ni tanlang → parolni qog'ozga yozing → **Xodimni qo'shish**.
-4. Registrator o'z kompyuterida **itopmed.itoppos.uz/login** ni ochadi → shu email va parol bilan kiradi → **Qabulxona** bo'limi ochiladi. Unga Google Authenticator kerak emas.
+4. Registrator o'z kompyuterida **itopmed.itoppos.uz/login** ni ochadi → shu login va parol bilan kiradi → **Qabulxona** bo'limi ochiladi. Unga Google Authenticator kerak emas.
 
 ## 3. Printerlar
 - **A4 printer** (ko'rik varag'i va retsept uchun) va **chek printeri** (80 yoki 58 mm) Windows'ga odatdagidek ulanadi.
@@ -58,7 +58,7 @@ Boshqa klinikani shu tarzda ochish (serverda):
 
 ## Muammo bo'lsa
 - **Kira olmayapti:**
-  - email yoki parolni tekshiring;
+  - login yoki parolni tekshiring;
   - xodim parolini unutsa: **Xodimlar** → xodimni oching → **"Yangi parol berish"**.
 - **Farhod aka telefonini yo'qotsa:** tiklash kodlaridan biri bilan kiradi.
 - **Internet uzilsa:** sayt ishlamaydi. Internet qaytgach, hammasi joyida bo'ladi — ma'lumot serverda saqlanadi. Har kuni 03:30 da zaxira nusxa olinadi.

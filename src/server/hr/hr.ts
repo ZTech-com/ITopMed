@@ -87,7 +87,7 @@ export async function listStaffHr(ctx: ClinicContext) {
     const members = await tx.membership.findMany({
       where: { tenantId: ctx.tenant.id, status: { in: ["ACTIVE", "SUSPENDED"] } },
       include: {
-        user: { select: { fullName: true, email: true } },
+        user: { select: { fullName: true, username: true } },
         roles: { include: { role: { select: { key: true, name: true } } } },
         staffProfile: { include: { department: { select: { name: true } } } },
         credentials: { where: { archivedAt: null }, select: { expiresOn: true } },
@@ -110,7 +110,7 @@ export async function getStaffHr(ctx: ClinicContext, membershipId: string) {
   return inClinic(ctx, async (tx) => {
     const m = await loadMember(tx, ctx, membershipId);
     const [user, profile, credentials, leaves, roles] = await sequential([
-      tx.user.findUnique({ where: { id: m.userId }, select: { fullName: true, email: true } }),
+      tx.user.findUnique({ where: { id: m.userId }, select: { fullName: true, username: true } }),
       tx.staffProfile.findUnique({ where: { membershipId: m.id } }),
       tx.staffCredential.findMany({ where: { membershipId: m.id, archivedAt: null }, orderBy: [{ expiresOn: { sort: "asc", nulls: "last" } }] }),
       tx.staffLeave.findMany({ where: { membershipId: m.id }, orderBy: { startsOn: "desc" }, take: 50 }),

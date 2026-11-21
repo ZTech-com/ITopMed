@@ -32,8 +32,6 @@ export function createEnvFile(target: string, opts: { port?: number } = {}): boo
     `APP_ENCRYPTION_KEY=${key()}`,
     `AUDIT_HMAC_KEY=${key()}`,
     `BACKUP_ENCRYPTION_KEY=${key()}`,
-    "EMAIL_FROM=ITop Med <no-reply@itopmed.local>",
-    "# Real email: SMTP_URL=smtps://login:password@smtp.example.uz:465",
     "",
   ];
   fs.mkdirSync(path.dirname(target), { recursive: true });

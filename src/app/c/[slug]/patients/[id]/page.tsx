@@ -62,7 +62,6 @@ export default async function PatientPage({ params, searchParams }: { params: Pr
               { label: t("clinic.patients.pinfl"), value: <span className="font-mono">{ident("PINFL")}</span> },
               { label: t("clinic.patients.passport"), value: <span className="font-mono">{ident("PASSPORT")}</span> },
               { label: t("clinic.patients.phone"), value: p.phone ?? "—" },
-              { label: t("clinic.patients.email"), value: p.email ?? "—" },
               { label: t("clinic.patients.address"), value: p.address ?? "—" },
             ]}
           />

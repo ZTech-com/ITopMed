@@ -23,22 +23,24 @@ export async function verifyPassword(stored: string | null | undefined, password
   }
 }
 
-/** Shared password policy. Messages are i18n keys under `validation.*`. */
-export const passwordSchema = z
-  .string()
-  .min(12, "validation.passwordTooShort")
-  .max(128, "validation.passwordTooLong")
-  .refine((v) => /[a-zA-Zа-яА-ЯёЁўЎқҚғҒҳҲ]/.test(v) && /\d/.test(v), "validation.passwordWeak");
+/**
+ * Shared password policy: at least 8 characters, nothing else required (kept
+ * simple on purpose for clinic staff). Brute force is held back by the account
+ * lockout (5 failures → 15 min) and per-IP rate limits. Messages are i18n keys.
+ */
+export const PASSWORD_MIN = 8;
+export const passwordSchema = z.string().min(PASSWORD_MIN, "validation.passwordTooShort").max(128, "validation.passwordTooLong");
 
-const SUGGEST_LETTERS = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ";
+const SUGGEST_LETTERS = "abcdefghjkmnpqrstuvwxyz";
 const SUGGEST_DIGITS = "23456789";
 
 /**
- * A strong password that is easy to read aloud and copy by hand (no 0/O, 1/l/I),
- * e.g. "Kxm7-Pqt4-Wre9-Hns3": 4 groups of 3 letters + 1 digit, about 84 bits.
- * Shown once to the platform admin who sets up a clinic owner; never stored.
+ * An easy first password to read aloud and copy by hand: 4 lowercase letters +
+ * 4 digits, no look-alikes (no 0/o, 1/l/i), e.g. "kxmp4827". Shown once to the
+ * administrator who creates the account; never stored in clear.
  */
 export function suggestPassword(): string {
-  const group = () => Array.from({ length: 3 }, () => SUGGEST_LETTERS[randomInt(SUGGEST_LETTERS.length)]).join("") + SUGGEST_DIGITS[randomInt(SUGGEST_DIGITS.length)];
-  return [group(), group(), group(), group()].join("-");
+  const letters = Array.from({ length: 4 }, () => SUGGEST_LETTERS[randomInt(SUGGEST_LETTERS.length)]).join("");
+  const digits = Array.from({ length: 4 }, () => SUGGEST_DIGITS[randomInt(SUGGEST_DIGITS.length)]).join("");
+  return letters + digits;
 }

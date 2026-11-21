@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { bookAppointment, cancelAppointment, registerWalkIn, rescheduleAppointment } from "@/server/appointments/appointments";
 import { addInvoiceLine, createInvoice, getInvoice, issueInvoice, recordPayment } from "@/server/billing/billing";
 import { openShift } from "@/server/billing/cash";
-import { inviteStaff, listBranches, listStaff } from "@/server/clinic/admin";
+import { addStaffMember, listBranches, listStaff } from "@/server/clinic/admin";
 import { addScheduleBlock, saveDoctorProfile } from "@/server/clinic/doctors";
 import { controlCenter } from "@/server/clinic/oversight";
 import { getClinicPolicy, updateClinicPolicy } from "@/server/clinic/policy";
@@ -14,17 +14,15 @@ import { addPrescription, allergyMatches, cancelPrescription } from "@/server/em
 import { addAllergy, getEncounter, startVisit } from "@/server/emr/record";
 import { registerPatient } from "@/server/patients/patients";
 import { addDays, isoWeekday, localToInstant, todayIn } from "@/server/scheduling/time";
-import { acceptInvitation } from "@/server/tenancy/invitations";
 import { META, PASSWORD, clinicContext, clinicWithOwner, platformActor, uniq } from "./helpers/fixtures";
 
 const TZ = "Asia/Tashkent";
 
 async function staff(owner: Awaited<ReturnType<typeof clinicWithOwner>>, roleKeys: string[]) {
-  const email = `${uniq("s")}@clinic.test`;
-  const inv = await inviteStaff(owner.ctx, { fullName: `Synthetic ${roleKeys.join("+")}`, email, roleKeys }, META);
-  await acceptInvitation(inv.token, { fullName: `Synthetic ${roleKeys.join("+")}`, password: PASSWORD, confirmPassword: PASSWORD }, META);
-  const m = (await listStaff(owner.ctx)).members.find((x) => x.user.email === email)!;
-  return { email, membershipId: m.id, ctx: await clinicContext(email, owner.slug) };
+  const login = uniq("s");
+  await addStaffMember(owner.ctx, { fullName: `Synthetic ${roleKeys.join("+")}`, username: login, roleKeys, password: PASSWORD }, META);
+  const m = (await listStaff(owner.ctx)).members.find((x) => x.user.username === login)!;
+  return { login, membershipId: m.id, ctx: await clinicContext(login, owner.slug) };
 }
 
 let n = 0;
@@ -39,7 +37,7 @@ async function setup() {
   const service = await createService(a.ctx, { code: `S${++n}`, name: "Synthetic consultation", kind: "CONSULTATION", durationMinutes: 20, price: "200000", currency: "UZS" }, META);
   const patient = await registerPatient(reception.ctx, { lastName: "Sintetik", firstName: `Bemor${n}`, birthDate: "1980-03-03", sex: "MALE" }, { confirmNotDuplicate: true }, META);
   if (!patient.ok) throw new Error("patient");
-  return { a, branch: branch!, reception, cashier, admin, doctor, profileId, service, patientId: patient.id, doctorCtx: await clinicContext(doctor.email, a.slug) };
+  return { a, branch: branch!, reception, cashier, admin, doctor, profileId, service, patientId: patient.id, doctorCtx: await clinicContext(doctor.login, a.slug) };
 }
 
 describe("clinic control policy: discount limits", () => {
@@ -59,7 +57,7 @@ describe("clinic control policy: discount limits", () => {
     // The owner may exceed the limit (still with a reason, the rule applies to everyone). A small-practice
     // owner who also runs the front desk gets the cashier role through the setup assistant.
     await completeSetup(s.a.ctx, { practiceType: "SOLO_PRACTICE", applyModules: false, addStarterServices: false, ownerIsDoctor: false, ownerFrontDesk: true, specialty: "", weekdaySchedule: false }, META);
-    const ownerCtx = await clinicContext(s.a.ownerEmail, s.a.slug);
+    const ownerCtx = await clinicContext(s.a.ownerLogin, s.a.slug);
     await addInvoiceLine(ownerCtx, inv, { serviceId: s.service, quantity: 1, discount: "100000", discountReason: "Owner decision" }, META);
 
     const full = (await getInvoice(s.cashier.ctx, inv))!;
@@ -79,7 +77,7 @@ describe("control centre", () => {
     await recordPayment(s.cashier.ctx, inv, { amount: "300000", method: "CASH", idempotencyKey: crypto.randomUUID() }, META);
 
     await expect(controlCenter(s.cashier.ctx)).rejects.toThrow("errors.forbidden");
-    const c = await controlCenter(await clinicContext(s.a.ownerEmail, s.a.slug));
+    const c = await controlCenter(await clinicContext(s.a.ownerLogin, s.a.slug));
     expect(c.money?.todayNet).toBe(30_000_000n); // 300 000 so'm in tiyin
     expect(c.money?.outstandingMinor).toBe(25_000_000n); // 600 000 − 50 000 − 300 000
     expect(c.shifts).toHaveLength(1);
@@ -107,7 +105,7 @@ describe("prescriptions", () => {
 
     const other = await staff(s.a, ["doctor"]);
     await saveDoctorProfile(s.a.ctx, other.membershipId, { specialty: "therapy", defaultSlotMinutes: 20, acceptsOnlineBooking: false }, META);
-    const otherCtx = await clinicContext(other.email, s.a.slug);
+    const otherCtx = await clinicContext(other.login, s.a.slug);
     await expect(addPrescription(otherCtx, enc, rx, META)).rejects.toThrow();
     await expect(cancelPrescription(otherCtx, id, META)).rejects.toThrow("errors.notYourPatient");
     await cancelPrescription(s.doctorCtx, id, META);
